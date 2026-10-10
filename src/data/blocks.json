@@ -1,0 +1,26 @@
+[
+  {
+    "id": "block-a",
+    "label": "Men's Block A"
+  },
+  {
+    "id": "block-b",
+    "label": "Ladies' Block B"
+  },
+  {
+    "id": "block-c",
+    "label": "Ladies' Block C"
+  },
+  {
+    "id": "block-d",
+    "label": "Men's Block D"
+  },
+  {
+    "id": "block-e",
+    "label": "Men's Block E"
+  },
+  {
+    "id": "block-f",
+    "label": "Men's Block F"
+  }
+]

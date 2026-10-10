@@ -1,0 +1,18 @@
+[
+  {
+    "id": "veg",
+    "label": "Veg"
+  },
+  {
+    "id": "non-veg",
+    "label": "Non-Veg"
+  },
+  {
+    "id": "special",
+    "label": "Special"
+  },
+  {
+    "id": "food park",
+    "label": "food park"
+  }
+]
