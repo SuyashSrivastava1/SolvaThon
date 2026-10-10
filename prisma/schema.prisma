@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Team {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  teamCode     String        @unique @default(cuid())
+  createdAt    DateTime      @default(now())
+  
+  participants Participant[] // Hard max limit of 4 enforced in logic
+}
+
+model Participant {
+  id               String   @id @default(uuid())
+  
+  // Firebase Integration
+  firebaseUid      String   @unique // The unique ID provided by Firebase Auth
+  emailId          String   @unique // The verified email from Firebase
+  
+  // Registration Form Data
+  fullName         String
+  mobileNumber     String   @unique
+  hostelBlock      String   // e.g., "Men's Block A"
+  roomNumber       String   // e.g., "412"
+  messCaterer      String   // e.g., "PR Food"
+  messType         String   // e.g., "Veg", "Non-Veg"
+  consentAgreed    Boolean  @default(true)
+  
+  // Metadata
+  registrationTime DateTime @default(now())
+  ticketId         String   @unique @default(cuid()) // Generated Node PIN
+  
+  // Foreign Key to Team (Optional: they can register individually first)
+  teamId           String?
+  team             Team?    @relation(fields: [teamId], references: [id])
+}

@@ -1,0 +1,97 @@
+"use server";
+
+import prisma from "@/lib/prisma";
+
+export async function createTeam(firebaseUid: string, teamName: string) {
+  try {
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    if (!participant) return { success: false, error: "Participant not found. Please register first." };
+    if (participant.teamId) return { success: false, error: "You are already in a team." };
+
+    if (!teamName || teamName.length < 3) return { success: false, error: "Team name must be at least 3 characters." };
+
+    const existingTeam = await prisma.team.findUnique({ where: { name: teamName } });
+    if (existingTeam) return { success: false, error: "Team name already taken." };
+
+    let newTeamCode = "";
+    let isUnique = false;
+    while (!isUnique) {
+      // Generate 6-character alphanumeric code in uppercase
+      newTeamCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Ensure we have exactly 6 characters (sometimes random yields fewer)
+      newTeamCode = newTeamCode.padEnd(6, 'X'); 
+      const existingCode = await prisma.team.findUnique({ where: { teamCode: newTeamCode } });
+      if (!existingCode) isUnique = true;
+    }
+
+    const team = await prisma.team.create({
+      data: { name: teamName, teamCode: newTeamCode },
+    });
+
+    await prisma.participant.update({
+      where: { id: participant.id },
+      data: { teamId: team.id },
+    });
+
+    return { success: true, teamCode: team.teamCode };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Failed to create team." };
+  }
+}
+
+export async function joinTeam(firebaseUid: string, teamCode: string) {
+  try {
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    if (!participant) return { success: false, error: "Participant not found." };
+    if (participant.teamId) return { success: false, error: "You are already in a team." };
+
+    const team = await prisma.team.findUnique({ where: { teamCode } });
+    if (!team) return { success: false, error: "Invalid Team Code." };
+
+    const memberCount = await prisma.participant.count({ where: { teamId: team.id } });
+    // STRICT CAP OF 4 MEMBERS
+    if (memberCount >= 4) return { success: false, error: "This team has reached the maximum limit of 4 members." };
+
+    await prisma.participant.update({
+      where: { id: participant.id },
+      data: { teamId: team.id },
+    });
+
+    return { success: true, teamId: team.id };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Failed to join team." };
+  }
+}
+
+export async function getTeamDetails(firebaseUid: string) {
+  try {
+    const participant = await prisma.participant.findUnique({
+      where: { firebaseUid },
+      include: { team: { include: { participants: true } } }
+    });
+    
+    if (!participant) return { success: false, error: "Participant not found." };
+    
+    // If not in a team, return participant info but no team
+    if (!participant.team) return { success: true, hasTeam: false, participant };
+
+    return { 
+      success: true, 
+      hasTeam: true, 
+      team: {
+        name: participant.team.name,
+        teamCode: participant.team.teamCode,
+        members: participant.team.participants.map(p => ({
+          name: p.fullName,
+          ticketId: p.ticketId
+        }))
+      },
+      participant
+    };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: "Failed to fetch team details." };
+  }
+}
