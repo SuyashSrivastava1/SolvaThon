@@ -33,9 +33,18 @@ export async function getAdminData(tokenOrEmail?: string | null) {
 
   const dbUrl = getDatabaseUrl();
   if (!dbUrl) {
+    let cfEnvKeys: string[] = [];
+    try {
+      const { getCloudflareContext } = require("@opennextjs/cloudflare");
+      const ctx = getCloudflareContext();
+      if (ctx?.env) {
+        cfEnvKeys = Object.keys(ctx.env);
+      }
+    } catch (e) {}
+
     return {
       success: false,
-      error: "DATABASE_URL is missing in Cloudflare environment variables. Please add it in Cloudflare Dashboard under Settings > Variables and Secrets and make sure to click Save/Deploy."
+      error: `DATABASE_URL not found in Runtime Bindings (Current keys: [${cfEnvKeys.join(", ")}]). In your Cloudflare Worker Settings sidebar, click "Bindings" (above Observability) and add DATABASE_URL there.`
     };
   }
 
