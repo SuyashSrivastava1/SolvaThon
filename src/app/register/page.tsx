@@ -46,7 +46,7 @@ export default function RegisterPage() {
 
       if (!isValidAuthDomain(email)) {
         await auth.signOut();
-        setAuthError("You must use your @vitstudent.ac.in or @vit.ac.in email address to register.");
+        setAuthError("You must use your @vitstudent.ac.in email address to register.");
         setAuthLoading(false);
         return;
       }
@@ -82,7 +82,7 @@ export default function RegisterPage() {
 
       if (!isValidAuthDomain(user.email)) {
         auth.signOut();
-        setAuthError("You must use your @vitstudent.ac.in or @vit.ac.in email address to register.");
+        setAuthError("You must use your @vitstudent.ac.in email address to register.");
         setCheckingReg(false);
         return;
       }
@@ -136,7 +136,7 @@ export default function RegisterPage() {
           </div>
           <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
           <p className="text-white/60 text-sm mb-6">
-            Please sign in with your verified <span className="text-cyan-400">@vitstudent.ac.in</span> or <span className="text-cyan-400">@vit.ac.in</span> Google account to register for Hostelle Solvathon.
+            Please sign in with your verified <span className="text-cyan-400">@vitstudent.ac.in</span> Google account to register for Hostelle Solvathon.
           </p>
 
           <button

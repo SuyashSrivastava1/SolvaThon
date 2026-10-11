@@ -19,7 +19,8 @@ const problemStatements = [
     icon: "bolt",
     color: "#38bdf8",
     tags: ["IoT / ESP32", "Reinforcement Learning"],
-    description: "Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods."
+    description: "Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods.",
+    detailedDescription: "During nocturnal diesel generator failovers and peak electrical load intervals, individual hostel blocks experience acute voltage drops and localized circuit breaker trips. Teams must architect an edge IoT telemetry and load-balancing system. The solution should ingest high-frequency current and voltage metrics from micro-inverter and sensor nodes, predict consumption spikes with lightweight algorithms, and automatically orchestrate phase and circuit switching across hostel wings—guaranteeing continuous, uninterrupted power for critical study spaces and campus amenities."
   },
   {
     id: "PS-02",
@@ -28,7 +29,8 @@ const problemStatements = [
     icon: "restaurant",
     color: "#34d399",
     tags: ["YOLOv8 Edge", "WebSockets API"],
-    description: "Build an edge-deployed computer vision pipeline that estimates tray depletion rates and predicts queue wait times across 4 dining halls."
+    description: "Build an edge-deployed computer vision pipeline that estimates tray depletion rates and predicts queue wait times across 4 dining halls.",
+    detailedDescription: "Hostel dining halls accommodate thousands of students within concentrated meal windows, causing heavy entry queues, unpredictable wait times, and significant food wastage. This challenge requires developing an edge-deployed computer vision pipeline that processes real-time camera streams to monitor queue length and measure buffet tray depletion rates. The system must push dynamic wait-time forecasts and refill alerts to student dashboards via low-latency WebSockets while adhering strictly to privacy standards by eliminating biometric storage."
   },
   {
     id: "PS-03",
@@ -37,7 +39,8 @@ const problemStatements = [
     icon: "cell_tower",
     color: "#a855f7",
     tags: ["LoRaWAN", "Cryptographic Gossip"],
-    description: "Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between hostel blocks for emergency notifications."
+    description: "Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between hostel blocks for emergency notifications.",
+    detailedDescription: "During extreme weather events, cyclones, or campus fiber optic disruptions, standard cellular towers and internet gateways frequently experience complete outages. Participants must engineer a zero-infrastructure, peer-to-peer wireless mesh network spanning residential hostel blocks. Utilizing LoRa packet radios and decentralized gossip forwarding, nodes must reliably transmit encrypted warden broadcast notifications, emergency distress beacons, and medical dispatch requests without relying on centralized telecommunication infrastructure."
   },
   {
     id: "PS-04",
@@ -46,7 +49,8 @@ const problemStatements = [
     icon: "face",
     color: "#f59e0b",
     tags: ["TensorRT", "Local SQLite Cache"],
-    description: "Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals for 4,000+ students."
+    description: "Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals for 4,000+ students.",
+    detailedDescription: "Nightly residential biometric roll-calls for 4,000+ hostel students generate massive physical bottlenecks and administrative overhead. This challenge requires engineering an embedded anti-spoofing optical verification engine that executes purely on local edge servers without external cloud latency. The system must achieve sub-second verification against local encrypted caches, reject printed photo or screen replay attacks, and seamlessly sync confirmed check-in logs with warden administrative portals."
   },
   {
     id: "PS-05",
@@ -55,7 +59,8 @@ const problemStatements = [
     icon: "water_drop",
     color: "#22d3ee",
     tags: ["Ultrasonic Sensors", "MQTT Pipeline"],
-    description: "Automated hydrostatic pressure sensors and overhead water volume forecasting engine to eliminate nocturnal dryouts across blocks A–D."
+    description: "Automated hydrostatic pressure sensors and overhead water volume forecasting engine to eliminate nocturnal dryouts across blocks A–D.",
+    detailedDescription: "Residential blocks rely on complex overhead and underground reservoir systems where sudden midnight consumption spikes can cause acute water dryouts. Participants must architect an automated telemetry pipeline utilizing hydrostatic pressure and ultrasonic level sensors. The solution must ingest data through lightweight MQTT channels, model consumption trends per hostel wing, detect latent pipeline leakages, and trigger automated pump actuation routines before reserves reach critical exhaustion thresholds."
   },
   {
     id: "PS-06",
@@ -64,7 +69,8 @@ const problemStatements = [
     icon: "graphic_eq",
     color: "#f43f5e",
     tags: ["MEMS Array", "Edge Impulse"],
-    description: "Spatial audio classification of decibel spikes and automated gentle visual warnings to preserve nocturnal study atmospheres without human intervention."
+    description: "Spatial audio classification of decibel spikes and automated gentle visual warnings to preserve nocturnal study atmospheres without human intervention.",
+    detailedDescription: "Late-night residential study halls require quiet, focused environments, but physical supervision by security personnel is sporadic and intrusive. Teams must construct a spatial acoustic sensing unit equipped with a MEMS microphone array and edge audio classification. The device will filter ambient background noise from persistent disruptive conversations, triggering gentle, non-intrusive progressive visual warnings to maintain study room etiquette automatically."
   },
 ];
 
@@ -265,6 +271,29 @@ const fadeItem: Variants = {
   },
 };
 
+const popCard: Variants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.88,
+    y: 20,
+    transition: {
+      duration: 0.25,
+      ease: "easeInOut",
+    },
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 260,
+      damping: 20,
+      mass: 0.8,
+    },
+  },
+};
+
 /* ═══════════════════════════════════════════
    GDG-STYLE LAYERED OUTLINE TIMER COMPONENT
    ═══════════════════════════════════════════ */
@@ -313,6 +342,16 @@ export default function Home() {
   const participantCount = useAnimatedNumber(rawCount);
 
   const [scrolled, setScrolled] = useState(false);
+  const [activeModalPS, setActiveModalPS] = useState<typeof problemStatements[0] | null>(null);
+
+  // Close modal on escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveModalPS(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Sync live hackathon timer from system config
   useEffect(() => {
@@ -539,12 +578,12 @@ export default function Home() {
                     { icon: 'groups', val: `${participantCount}+`, label: 'Registered' },
                     { icon: 'timer', val: '24h', label: 'Hackathon' },
                     { icon: 'apartment', val: 'VIT', label: 'Chennai' },
-                    { icon: 'payments', val: '₹1.5L', label: 'Prizes' },
+                    { icon: 'payments', val: '₹1L', label: 'Prizes' },
                   ].map((s) => (
                     <motion.div
-                      variants={fadeItem}
+                      variants={popCard}
                       key={s.label}
-                      className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 transition-all hover:border-cyan-400/40 hover:-translate-y-1 bg-[#090e1a]/85 group"
+                      className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#090e1a]/85 group"
                       style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.5)' }}
                     >
                       <span className="material-symbols-outlined transition-transform group-hover:scale-110" style={{ fontSize: 32, color: '#38bdf8' }}>{s.icon}</span>
@@ -558,7 +597,7 @@ export default function Home() {
               {/* Bottom Row: Full-Width GDG Live Timer Display */}
               <motion.div 
                 variants={fadeItem}
-                className="w-full pt-4 pb-2 mt-auto"
+                className="w-full pt-2 sm:pt-3 pb-8 sm:pb-12 mt-auto"
               >
                 {/* Centered 'Registration Ends in' header with glowing cyan lines beside it */}
                 <div className="w-full flex items-center justify-center gap-3 sm:gap-5 pb-2 px-2">
@@ -576,7 +615,7 @@ export default function Home() {
             </motion.div>
           </section>
 
-          {/* ════════ PROBLEM STATEMENTS MARQUEE (LEFT → RIGHT) ════════ */}
+          {/* ════════ PROBLEM STATEMENTS MARQUEE (SEAMLESS INFINITE ROLLER) ════════ */}
           <motion.section 
             variants={staggerContainer}
             initial="hidden"
@@ -587,85 +626,116 @@ export default function Home() {
           >
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-8">
               <div className="flex flex-col items-center text-center gap-2.5">
-                <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                  Engineering Challenges
-                </motion.span>
-                <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+                <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
                   Problem Statements
                 </motion.h2>
               </div>
             </div>
 
-            {/* Continuous Marquee Track (Travels Right to Left, Fast & Smooth) */}
+            {/* Continuous Marquee Track (Smooth Continuous Infinite Roller, Right to Left) */}
             <motion.div variants={fadeItem} className="relative w-full overflow-hidden py-4">
               {/* Fade gradients at edges */}
               <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(90deg, #030712, transparent)' }} />
               <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(270deg, #030712, transparent)' }} />
 
               <div className="ps-marquee-track">
-                {[...problemStatements, ...problemStatements, ...problemStatements].map((ps, i) => (
-                  <div key={`${ps.title}-${i}`} className="ps-banner group">
-                    {/* Front state: Themed Large Icon + Title (Clean, Greyed-out square banner) */}
-                    <div className="ps-front">
-                      <div
-                        className="w-20 h-20 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 mb-3"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                        }}
-                      >
-                        <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-cyan-300 transition-colors">
-                          {ps.icon}
-                        </span>
+                {/* Track Group 1 */}
+                <div className="flex gap-6 pr-6 shrink-0">
+                  {[...problemStatements, ...problemStatements].map((ps, i) => (
+                    <div 
+                      key={`track1-${ps.id}-${i}`} 
+                      className="ps-banner group cursor-pointer"
+                      onClick={() => setActiveModalPS(ps)}
+                    >
+                      {/* Front state: Themed Large Icon + Title (Clean, Greyed-out square banner) */}
+                      <div className="ps-front">
+                        <div
+                          className="w-20 h-20 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 mb-3"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-cyan-300 transition-colors">
+                            {ps.icon}
+                          </span>
+                        </div>
+                        <h3
+                          style={{
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            fontWeight: 800,
+                            fontSize: 18,
+                            lineHeight: 1.35,
+                            color: '#e2e8f0',
+                          }}
+                          className="px-2 line-clamp-3 text-center"
+                        >
+                          {ps.title}
+                        </h3>
                       </div>
-                      <h3
-                        style={{
-                          fontFamily: "'Plus Jakarta Sans', sans-serif",
-                          fontWeight: 800,
-                          fontSize: 18,
-                          lineHeight: 1.35,
-                          color: '#e2e8f0',
-                        }}
-                        className="px-2 line-clamp-3 text-center"
-                      >
-                        {ps.title}
-                      </h3>
-                    </div>
 
-                    {/* Hover state: Description + Tags */}
-                    <div className="ps-desc-container">
-                      <div className="flex flex-col items-center gap-2.5 my-auto">
-                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: 1.3, color: '#f8fafc' }}>
+                      {/* Hover state: Clean Centered Title + Short Description (No tag pills) */}
+                      <div className="ps-desc-container">
+                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.65rem' }}>
                           {ps.title}
                         </h3>
                         <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
                           {ps.description}
                         </p>
                       </div>
+                    </div>
+                  ))}
+                </div>
 
-                      <div className="flex flex-wrap justify-center gap-1.5 w-full pt-2.5 border-t border-cyan-500/20">
-                        {ps.tags.map(tag => (
-                          <span
-                            key={tag}
-                            style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: 9.5,
-                              fontWeight: 600,
-                              padding: '3px 8px',
-                              borderRadius: 6,
-                              background: 'rgba(56,189,248,0.1)',
-                              border: '1px solid rgba(56,189,248,0.25)',
-                              color: '#7dd3fc',
-                            }}
-                          >
-                            {tag}
+                {/* Track Group 2 (Identical Clone for 100% Seamless Continuous Roller Loop) */}
+                <div className="flex gap-6 pr-6 shrink-0" aria-hidden="true">
+                  {[...problemStatements, ...problemStatements].map((ps, i) => (
+                    <div 
+                      key={`track2-${ps.id}-${i}`} 
+                      className="ps-banner group cursor-pointer"
+                      onClick={() => setActiveModalPS(ps)}
+                    >
+                      {/* Front state: Themed Large Icon + Title (Clean, Greyed-out square banner) */}
+                      <div className="ps-front">
+                        <div
+                          className="w-20 h-20 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 mb-3"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-cyan-300 transition-colors">
+                            {ps.icon}
                           </span>
-                        ))}
+                        </div>
+                        <h3
+                          style={{
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            fontWeight: 800,
+                            fontSize: 18,
+                            lineHeight: 1.35,
+                            color: '#e2e8f0',
+                          }}
+                          className="px-2 line-clamp-3 text-center"
+                        >
+                          {ps.title}
+                        </h3>
+                      </div>
+
+                      {/* Hover state: Clean Centered Title + Short Description (No tag pills) */}
+                      <div className="ps-desc-container">
+                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.65rem' }}>
+                          {ps.title}
+                        </h3>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
+                          {ps.description}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </motion.div>
           </motion.section>
@@ -815,7 +885,7 @@ export default function Home() {
                           height="115"
                         >
                           <div
-                            className="w-full flex flex-col items-center text-center p-2.5 rounded-xl transition-all"
+                            className="w-full flex flex-col items-center text-center p-2.5 rounded-xl card-pop cursor-pointer transition-all"
                             style={{
                               background: 'rgba(8, 12, 24, 0.92)',
                               border: `1px solid ${m.color}45`,
@@ -863,7 +933,7 @@ export default function Home() {
 
                 <div className="flex flex-col gap-8">
                   {timelineMilestones.map((item, i) => (
-                    <div key={i} className="relative flex flex-col gap-1.5 glass-card p-4 rounded-xl">
+                    <div key={i} className="relative flex flex-col gap-1.5 glass-card card-pop p-4 rounded-xl cursor-pointer">
                       {/* Node circle on the line */}
                       <div
                         className="absolute -left-[30px] top-4 w-[24px] h-[24px] rounded-full flex items-center justify-center"
@@ -919,7 +989,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {committeeMembers.map(p => (
-                  <motion.div variants={fadeItem} key={p.name} className="glass-card rounded-2xl overflow-hidden flex flex-col transition-all hover:scale-[1.02]">
+                  <motion.div variants={popCard} key={p.name} className="glass-card card-pop rounded-2xl overflow-hidden flex flex-col cursor-pointer">
                     <div className="w-full h-48 overflow-hidden relative" style={{ background: '#0f172a' }}>
                       <img className="w-full h-full object-cover" src={p.img} alt={p.name} />
                       <div
@@ -957,8 +1027,8 @@ export default function Home() {
 
               {/* Distinguished Chief Guest */}
               <motion.div
-                variants={fadeItem}
-                className="glass-card rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12"
+                variants={popCard}
+                className="glass-card card-pop rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 cursor-pointer"
                 style={{ boxShadow: '0 0 60px rgba(56,189,248,0.06), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)' }}
               >
                 <div className="w-full lg:w-1/3 aspect-square max-w-[280px] rounded-2xl overflow-hidden relative shadow-2xl shrink-0" style={{ background: '#0f172a' }}>
@@ -1005,7 +1075,7 @@ export default function Home() {
                     Bounties & Recognition
                   </motion.span>
                   <motion.h3 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
-                    ₹1,50,000 Prize Pool
+                    ₹1,00,000 Prize Pool
                   </motion.h3>
                   <motion.p variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                     Disbursed via instant direct bank transfer
@@ -1015,80 +1085,73 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {/* Champion */}
                   <motion.div
-                    variants={fadeItem}
-                    className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 relative overflow-hidden order-1 md:order-2"
-                    style={{ boxShadow: '0 0 60px rgba(56,189,248,0.08), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+                    variants={popCard}
+                    className="glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-4 relative overflow-hidden order-1 md:order-2 border-cyan-400/30 cursor-pointer"
+                    style={{ boxShadow: '0 0 60px rgba(56,189,248,0.12), 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)' }}
                   >
-                    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-cyan-400/10 blur-2xl" />
+                    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-cyan-400/10 blur-2xl pointer-events-none" />
                     <div className="relative z-10 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8' }}>1ST · CHAMPION</span>
                         <span className="material-symbols-outlined" style={{ fontSize: 26, color: '#38bdf8' }}>trophy</span>
                       </div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 42, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹75,000</div>
-                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                        Direct cash + V-TBI incubation interview + Rolling Championship Trophy.
-                      </p>
-                    </div>
-                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#34d399' }}>
-                      <span>+ ₹1,00,000 AWS GPU Credits</span>
-                      <span>+ Official DSW Citation</span>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 44, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹50,000</div>
                     </div>
                   </motion.div>
 
                   {/* Runner up */}
-                  <motion.div variants={fadeItem} className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 order-2 md:order-1">
+                  <motion.div variants={popCard} className="glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-3 order-2 md:order-1 cursor-pointer">
                     <div className="flex items-center justify-between">
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#cbd5e1' }}>2ND · RUNNER UP</span>
                       <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#cbd5e1' }}>military_tech</span>
                     </div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹45,000</div>
-                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                      Direct cash + GPU Cloud Credits + Team Commendation Medal.
-                    </p>
-                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
-                      <span>+ ₹50,000 Cloud Infrastructure</span>
-                      <span>+ Priority Internship Screening</span>
-                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 36, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹30,000</div>
                   </motion.div>
 
                   {/* Third */}
-                  <motion.div variants={fadeItem} className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 order-3">
+                  <motion.div variants={popCard} className="glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-3 order-3 cursor-pointer">
                     <div className="flex items-center justify-between">
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#fbbf24' }}>3RD · THIRD PLACE</span>
                       <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#fbbf24' }}>workspace_premium</span>
                     </div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹30,000</div>
-                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                      Direct cash + Edge Vision Hardware Dev Kits for each team member.
-                    </p>
-                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
-                      <span>+ Jetson / ESP32 Hardware Bundle</span>
-                      <span>+ Developer Guild Commendation</span>
-                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 36, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹20,000</div>
                   </motion.div>
                 </div>
 
-                {/* Certification Guarantee */}
+                {/* Certificate & Resume Enhancement Card */}
                 <motion.div
-                  variants={fadeItem}
-                  className="glass-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
-                  style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 4px 20px rgba(0,0,0,0.2)' }}
+                  variants={popCard}
+                  className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-cyan-500/25 cursor-pointer relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.06) 0%, rgba(10, 15, 26, 0.8) 100%)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#38bdf8' }}>verified_user</span>
-                    <div className="flex flex-col gap-0.5">
-                      <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 14, color: '#f1f5f9' }}>
-                        Digital Certificates for All Finalists
-                      </span>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569' }}>
-                        Verifiable credentials dispatched directly to @vitstudent.ac.in emails
+                  <div className="absolute top-0 right-0 w-64 h-full bg-cyan-400/5 blur-3xl pointer-events-none" />
+                  <div className="flex items-center gap-4 relative z-10 w-full sm:w-auto">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0 text-cyan-400 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                      <span className="material-symbols-outlined text-2xl">workspace_premium</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-center sm:text-left">
+                      <span
+                        style={{
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          fontWeight: 700,
+                          fontSize: 'clamp(0.95rem, 1.8vw, 1.12rem)',
+                          color: '#f8fafc',
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        Enhance your resume by getting the winners&apos; and participation certificate from <span className="text-cyan-400 font-extrabold">VIT CHENNAI HOSTEL OFFICE</span>.
                       </span>
                     </div>
                   </div>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399', letterSpacing: '0.1em', flexShrink: 0 }}>
-                    100% ISSUANCE
-                  </span>
+                  <div className="shrink-0 relative z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                    <span className="relative w-2 h-2 rounded-full bg-emerald-400 live-dot" />
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                      OFFICIAL CERTIFICATE
+                    </span>
+                  </div>
                 </motion.div>
               </div>
             </div>
@@ -1132,6 +1195,78 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ════════ PROBLEM STATEMENT DETAIL MODAL (SAME SIZE FOR ALL CARDS) ════════ */}
+      {activeModalPS && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md transition-all duration-200"
+          onClick={() => setActiveModalPS(null)}
+        >
+          {/* Bigger card: consistent uniform size for all cards */}
+          <div 
+            className="relative w-full max-w-[680px] h-[480px] sm:h-[500px] glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-cyan-500/35 shadow-[0_0_60px_rgba(56,189,248,0.2)] bg-[#0a0f1d]/95 backdrop-blur-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            style={{ boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 45px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12)' }}
+          >
+            {/* Top ambient aura */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-28 bg-cyan-500/10 blur-3xl pointer-events-none" />
+
+            {/* Top Bar: Track Badge */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 relative z-10 shrink-0">
+              <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                <span className="material-symbols-outlined text-cyan-400 text-lg">{activeModalPS.icon}</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  {activeModalPS.track}
+                </span>
+              </div>
+            </div>
+
+            {/* Problem Statement Title at the Top */}
+            <div className="pt-5 pb-3 relative z-10 shrink-0">
+              <h3 
+                style={{ 
+                  fontFamily: "'Outfit', sans-serif", 
+                  fontWeight: 800, 
+                  fontSize: 'clamp(1.35rem, 2.5vw, 1.85rem)', 
+                  lineHeight: 1.25,
+                  color: '#f8fafc',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                {activeModalPS.title}
+              </h3>
+            </div>
+
+            {/* Detailed Description Below It */}
+            <div className="flex-1 overflow-y-auto pr-2 relative z-10 custom-scrollbar">
+              <p 
+                style={{ 
+                  fontFamily: "'Inter', sans-serif", 
+                  fontSize: 15, 
+                  lineHeight: 1.75, 
+                  color: '#cbd5e1' 
+                }}
+              >
+                {activeModalPS.detailedDescription || activeModalPS.description}
+              </p>
+            </div>
+
+            {/* Footer Row */}
+            <div className="pt-4 mt-2 border-t border-white/10 flex items-center justify-between relative z-10 shrink-0">
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#64748b', letterSpacing: '0.1em' }}>
+                SOLVE-A-THON · VIT CHENNAI
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveModalPS(null)}
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:border-cyan-400/50 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
