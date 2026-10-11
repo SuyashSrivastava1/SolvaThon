@@ -725,12 +725,18 @@ export default function AdminPortalPage() {
             <p className="text-[10px] text-white/50">Docs &amp; Repos Logged</p>
           </div>
 
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 backdrop-blur-xl space-y-1 col-span-2 md:col-span-1">
-            <span className="text-[11px] font-mono text-white/40 uppercase">Jury Evaluated</span>
+          <div
+            onClick={() => setActiveTab("teams")}
+            className="bg-white/[0.03] border border-white/10 hover:border-purple-500/50 rounded-2xl p-5 backdrop-blur-xl space-y-1 col-span-2 md:col-span-1 cursor-pointer transition-all hover:scale-[1.02] group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono text-purple-300 uppercase font-semibold">Evaluation Frame</span>
+              <span className="text-[10px] font-mono text-purple-400 opacity-70 group-hover:opacity-100 transition-opacity">Open Table ↗</span>
+            </div>
             <div className="text-3xl font-black text-purple-400 tracking-tight">
               {stats.evaluatedTeamsCount || 0} / {stats.totalTeams}
             </div>
-            <p className="text-[10px] text-white/50">Teams Graded</p>
+            <p className="text-[10px] text-white/50">Teams Graded • Click to view entries</p>
           </div>
         </div>
 
@@ -745,7 +751,7 @@ export default function AdminPortalPage() {
             }`}
           >
             <span className="material-symbols-outlined text-lg">rate_review</span>
-            Team Rosters &amp; 3-Criteria Evaluations ({teams.length})
+            Evaluation Frame: Teams &amp; Leaders ({teams.length})
           </button>
 
           <button
@@ -835,377 +841,196 @@ export default function AdminPortalPage() {
               </div>
             </div>
 
-            {/* Teams Grid */}
-            <div className="grid grid-cols-1 gap-6">
-              {filteredTeams.length === 0 ? (
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-12 text-center text-white/40 font-mono">
-                  No teams found matching current query or filters.
+            {/* Quick Evaluation Launcher */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-cyan-950/20 border border-purple-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+                  <span className="material-symbols-outlined text-2xl">rate_review</span>
                 </div>
-              ) : (
-                filteredTeams.map((t: any) => {
-                  const form = evalForms[t.id] || {
-                    innovation: "",
-                    understanding: "",
-                    progress: "",
-                    notes: "",
-                  };
-                  const currentTotal = Number(
-                    (
-                      (parseFloat(String(form.innovation)) || 0) +
-                      (parseFloat(String(form.understanding)) || 0) +
-                      (parseFloat(String(form.progress)) || 0)
-                    ).toFixed(2)
-                  );
+                <div>
+                  <h3 className="text-white font-bold text-sm tracking-wide flex items-center gap-2">
+                    Official Evaluation Frame &amp; Directory
+                    <span className="text-[10px] font-mono uppercase bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
+                      Standalone Scoresheet
+                    </span>
+                  </h3>
+                  <p className="text-white/60 text-xs">
+                    Click any team below to open its dedicated evaluation page. Judges can toggle left or right between teams seamlessly.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <Link
+                  href="/admin/evaluate"
+                  className="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:via-indigo-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">arrow_forward</span>
+                  <span>Open Evaluation Workbench</span>
+                </Link>
+              </div>
+            </div>
 
-                  const isSavedEvaluated = t.scoreTotal !== null && t.scoreTotal !== undefined;
+            {/* Teams & Leadership Directory Table */}
+            <div className="bg-[#0b0f19]/80 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-white/[0.03] text-white/50 font-mono text-[11px] uppercase tracking-wider">
+                      <th className="py-4 px-4 w-12 text-center">#</th>
+                      <th className="py-4 px-5">Team Name &amp; Code</th>
+                      <th className="py-4 px-5">Team Leader (Creator)</th>
+                      <th className="py-4 px-5">Track</th>
+                      <th className="py-4 px-4 text-center">Members</th>
+                      <th className="py-4 px-5">Deliverables</th>
+                      <th className="py-4 px-5">Evaluation Status</th>
+                      <th className="py-4 px-5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredTeams.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-16 text-center text-white/40 font-mono">
+                          No teams found matching current query or filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTeams.map((t: any, idx: number) => {
+                        const isEvaluated = t.scoreTotal !== null && t.scoreTotal !== undefined;
+                        const leader = t.members && t.members.length > 0 ? t.members[0] : null;
+                        const leaderName = t.leaderName || leader?.fullName || "N/A";
+                        const leaderEmail = t.leaderEmail || leader?.emailId || "";
+                        const leaderPhone = t.leaderPhone || leader?.mobileNumber || "";
 
-                  return (
-                    <div
-                      key={t.id}
-                      className="bg-white/[0.03] border border-white/10 hover:border-white/20 rounded-2xl p-6 backdrop-blur-xl transition-all shadow-xl space-y-6"
-                    >
-                      {/* Top Team Header */}
-                      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
-                        <div>
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-black text-white">{t.name}</h3>
-                            <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-mono font-bold">
-                              CODE: {t.teamCode}
-                            </span>
-                            <span className="text-xs font-mono text-white/50">
-                              {t.memberCount}/4 Members
-                            </span>
-                          </div>
-                          <p className="text-xs text-cyan-400/90 font-semibold mt-1">
-                            Track: {t.problemStatement}
-                          </p>
-                        </div>
+                        return (
+                          <tr
+                            key={t.id}
+                            onClick={() => router.push(`/admin/evaluate/${t.id}`)}
+                            className="hover:bg-purple-500/5 transition-colors cursor-pointer group"
+                          >
+                            <td className="py-4 px-4 text-center font-mono text-white/40 group-hover:text-purple-300">
+                              {idx + 1}
+                            </td>
 
-                        {/* Submission status badges */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {t.finalDocUrl ? (
-                            <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono rounded-full font-bold flex items-center gap-1">
-                              <span className="material-symbols-outlined text-sm">task_alt</span>
-                              FINAL PROJECT SUBMITTED
-                            </span>
-                          ) : t.pptUrl ? (
-                            <span className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono rounded-full font-bold flex items-center gap-1">
-                              <span className="material-symbols-outlined text-sm">hourglass_top</span>
-                              IDEA STAGE RECORDED
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 bg-white/5 text-white/40 text-xs font-mono rounded-full">
-                              NO SUBMISSIONS YET
-                            </span>
-                          )}
-
-                          {isSavedEvaluated ? (
-                            <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-mono rounded-full font-bold">
-                              EVALUATED: {t.scoreTotal}/30
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono rounded-full font-bold">
-                              PENDING EVALUATION
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Deliverables Section: Side-by-Side (Stage 1 Idea vs Stage 2 Final) */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {/* Stage 1: Idea Deliverable */}
-                        <div className="bg-black/40 border border-white/5 rounded-xl p-4 space-y-3">
-                          <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                            <span className="text-[10px] font-mono text-cyan-400 uppercase font-bold flex items-center gap-1">
-                              <span className="material-symbols-outlined text-sm">lightbulb</span>
-                              STAGE 01 // IDEA SUBMISSION
-                            </span>
-                            <span className="text-[10px] font-mono text-white/40">
-                              {t.submittedAt ? new Date(t.submittedAt).toLocaleDateString() : "Pending"}
-                            </span>
-                          </div>
-
-                          {t.pptUrl ? (
-                            <div className="space-y-2 text-xs">
-                              <div>
-                                <span className="text-[10px] font-mono text-white/40 block">PRESENTATION / PPT LINK</span>
-                                <a
-                                  href={t.pptUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-cyan-300 hover:underline font-mono truncate block text-xs"
-                                >
-                                  {t.pptUrl} ↗
-                                </a>
+                            {/* Team Name & Code */}
+                            <td className="py-4 px-5">
+                              <div className="flex flex-col gap-1">
+                                <span className="font-bold text-white text-sm tracking-wide group-hover:text-purple-300 transition-colors">
+                                  {t.name}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-[10px] text-cyan-300 bg-cyan-950/60 border border-cyan-800/60 px-1.5 py-0.5 rounded">
+                                    CODE: {t.teamCode}
+                                  </span>
+                                </div>
                               </div>
-                              {t.understanding && (
-                                <div>
-                                  <span className="text-[10px] font-mono text-white/40 block">PROBLEM UNDERSTANDING</span>
-                                  <p className="text-white/80 text-xs leading-relaxed line-clamp-3">{t.understanding}</p>
-                                </div>
-                              )}
-                              {t.solutionSummary && (
-                                <div>
-                                  <span className="text-[10px] font-mono text-white/40 block">SOLUTION SUMMARY</span>
-                                  <p className="text-white/80 text-xs leading-relaxed line-clamp-3">{t.solutionSummary}</p>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-white/30 italic">No presentation deliverable uploaded yet.</p>
-                          )}
-                        </div>
+                            </td>
 
-                        {/* Stage 2: Final Project Deliverables */}
-                        <div className="bg-black/40 border border-emerald-500/20 rounded-xl p-4 space-y-3">
-                          <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                            <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold flex items-center gap-1">
-                              <span className="material-symbols-outlined text-sm">rocket_launch</span>
-                              STAGE 02 // FINAL PROJECT DELIVERABLE
-                            </span>
-                            <span className="text-[10px] font-mono text-white/40">
-                              {t.finalSubmittedAt ? new Date(t.finalSubmittedAt).toLocaleDateString() : "Pending"}
-                            </span>
-                          </div>
-
-                          {t.finalDocUrl ? (
-                            <div className="space-y-2 text-xs">
-                              <div>
-                                <span className="text-[10px] font-mono text-white/40 block">PROJECT DOCUMENTATION LINK</span>
-                                <a
-                                  href={t.finalDocUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-emerald-300 hover:underline font-mono truncate block text-xs font-semibold"
+                            {/* Team Leader (Creator) */}
+                            <td className="py-4 px-5">
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-sm shadow-amber-500/10"
+                                  title="Team Creator & Leader"
                                 >
-                                  {t.finalDocUrl} ↗
-                                </a>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <span className="text-[10px] font-mono text-white/40 block">GITHUB / CODE REPO</span>
-                                  {t.finalRepoUrl ? (
-                                    <a
-                                      href={t.finalRepoUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-cyan-300 hover:underline font-mono truncate block text-xs"
-                                    >
-                                      {t.finalRepoUrl} ↗
-                                    </a>
-                                  ) : (
-                                    <span className="text-white/30">N/A</span>
-                                  )}
+                                  <span className="text-sm">👑</span>
                                 </div>
                                 <div>
-                                  <span className="text-[10px] font-mono text-white/40 block">DEMO / VIDEO PITCH</span>
-                                  {t.finalDemoUrl ? (
-                                    <a
-                                      href={t.finalDemoUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-purple-300 hover:underline font-mono truncate block text-xs"
-                                    >
-                                      {t.finalDemoUrl} ↗
-                                    </a>
-                                  ) : (
-                                    <span className="text-white/30">N/A</span>
+                                  <div className="font-semibold text-white flex items-center gap-1.5">
+                                    <span>{leaderName}</span>
+                                    <span className="text-[9px] font-mono uppercase bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30">
+                                      Leader
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-white/50 font-mono">
+                                    {leaderEmail}
+                                  </div>
+                                  {leaderPhone && (
+                                    <div className="text-[10px] text-white/40 font-mono">
+                                      📞 {leaderPhone}
+                                    </div>
                                   )}
                                 </div>
                               </div>
-                              {t.finalSummary && (
-                                <div>
-                                  <span className="text-[10px] font-mono text-white/40 block">IMPLEMENTATION &amp; PROGRESS HIGHLIGHTS</span>
-                                  <p className="text-white/80 text-xs leading-relaxed line-clamp-3">{t.finalSummary}</p>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-white/30 italic">No final documentation or code repository submitted yet.</p>
-                          )}
-                        </div>
-                      </div>
+                            </td>
 
-                      {/* Team Members Roster */}
-                      <div>
-                        <span className="text-[10px] font-mono text-white/40 uppercase block mb-1">
-                          Team Roster ({t.members.length} Members)
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                          {t.members.map((m: any, i: number) => (
-                            <div
-                              key={i}
-                              className="bg-white/[0.02] border border-white/5 rounded-lg p-2.5 text-xs flex flex-col justify-between"
-                            >
-                              <div className="font-semibold text-white truncate">{m.fullName}</div>
-                              <div className="text-[10px] text-white/50 font-mono truncate">{m.emailId}</div>
-                              <div className="text-[10px] text-cyan-400 font-mono mt-1">
-                                {m.hostelBlock} • Rm {m.roomNumber} ({m.ticketId})
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* ═════════ 3-CRITERIA JURY EVALUATION CONSOLE ═════════ */}
-                      <div className="bg-gradient-to-r from-purple-950/30 via-slate-900/60 to-indigo-950/30 border border-purple-500/20 rounded-xl p-5 space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-purple-400 text-lg">fact_check</span>
-                            <h4 className="text-sm font-bold text-white tracking-wide">
-                              Official Evaluation Scorecard (3 Core Criteria)
-                            </h4>
-                          </div>
-                          {isSavedEvaluated && (
-                            <div className="text-[11px] font-mono text-purple-300">
-                              Evaluated by: <span className="font-semibold">{t.evaluatedBy}</span> on{" "}
-                              {new Date(t.evaluatedAt).toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 3 Criteria Inputs */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Criterion 1: Innovation */}
-                          <div className="space-y-1.5 bg-black/40 p-3 rounded-xl border border-white/5">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold text-white uppercase tracking-wider">
-                                1. Innovation
-                              </label>
-                              <span className="text-[10px] font-mono text-purple-300">0 - 10</span>
-                            </div>
-                            <input
-                              type="number"
-                              min="0"
-                              max="10"
-                              step="any"
-                              value={form.innovation}
-                              onChange={(e) =>
-                                setEvalForms({
-                                  ...evalForms,
-                                  [t.id]: {
-                                    ...form,
-                                    innovation: e.target.value,
-                                  },
-                                })
-                              }
-                              placeholder="Score (0-10)"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500/50 outline-none"
-                            />
-                            <p className="text-[10px] text-white/40">Creativity, originality, and technical novelty</p>
-                          </div>
-
-                          {/* Criterion 2: Understanding of Problem Statement */}
-                          <div className="space-y-1.5 bg-black/40 p-3 rounded-xl border border-white/5">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold text-white uppercase tracking-wider">
-                                2. Problem Understanding
-                              </label>
-                              <span className="text-[10px] font-mono text-purple-300">0 - 10</span>
-                            </div>
-                            <input
-                              type="number"
-                              min="0"
-                              max="10"
-                              step="any"
-                              value={form.understanding}
-                              onChange={(e) =>
-                                setEvalForms({
-                                  ...evalForms,
-                                  [t.id]: {
-                                    ...form,
-                                    understanding: e.target.value,
-                                  },
-                                })
-                              }
-                              placeholder="Score (0-10)"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500/50 outline-none"
-                            />
-                            <p className="text-[10px] text-white/40">Clarity of campus challenge and scope</p>
-                          </div>
-
-                          {/* Criterion 3: Progress */}
-                          <div className="space-y-1.5 bg-black/40 p-3 rounded-xl border border-white/5">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold text-white uppercase tracking-wider">
-                                3. Progress
-                              </label>
-                              <span className="text-[10px] font-mono text-purple-300">0 - 10</span>
-                            </div>
-                            <input
-                              type="number"
-                              min="0"
-                              max="10"
-                              step="any"
-                              value={form.progress}
-                              onChange={(e) =>
-                                setEvalForms({
-                                  ...evalForms,
-                                  [t.id]: {
-                                    ...form,
-                                    progress: e.target.value,
-                                  },
-                                })
-                              }
-                              placeholder="Score (0-10)"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500/50 outline-none"
-                            />
-                            <p className="text-[10px] text-white/40">Prototype quality, implementation &amp; demo</p>
-                          </div>
-                        </div>
-
-                        {/* Notes and Total Marks Bar */}
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
-                          <input
-                            type="text"
-                            value={form.notes}
-                            onChange={(e) =>
-                              setEvalForms({
-                                ...evalForms,
-                                [t.id]: { ...form, notes: e.target.value },
-                              })
-                            }
-                            placeholder="Optional jury remarks / constructive feedback..."
-                            className="bg-black/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-white/30 focus:ring-2 focus:ring-purple-500/50 outline-none flex-1 font-mono"
-                          />
-
-                          <div className="flex items-center gap-3 shrink-0">
-                            <div className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-xl font-mono text-center">
-                              <span className="text-[9px] text-purple-300 uppercase block">TOTAL SCORE</span>
-                              <span className="text-base font-black text-white">{currentTotal}/30</span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleSaveEvaluation(t.id)}
-                              disabled={savingEvalId === t.id}
-                              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-purple-500/20 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-                            >
-                              {savingEvalId === t.id ? (
-                                <>
-                                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                                  <span>Saving...</span>
-                                </>
+                            {/* Track */}
+                            <td className="py-4 px-5">
+                              {t.problemStatement && t.problemStatement !== "Not Selected" ? (
+                                <span className="inline-block px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 rounded-md text-[11px] font-mono max-w-[200px] truncate" title={t.problemStatement}>
+                                  {t.problemStatement}
+                                </span>
                               ) : (
-                                <>
-                                  <span className="material-symbols-outlined text-base">save</span>
-                                  <span>Save Marks</span>
-                                </>
+                                <span className="text-white/30 italic text-[11px]">
+                                  Not Selected
+                                </span>
                               )}
-                            </button>
-                          </div>
-                        </div>
+                            </td>
 
-                        {evalSuccessMap[t.id] && (
-                          <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs font-mono">
-                            {evalSuccessMap[t.id]}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                            {/* Members */}
+                            <td className="py-4 px-4 text-center">
+                              <span className="inline-block font-mono text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-white/80 border border-white/10">
+                                {t.members?.length || t.memberCount || 0}/4
+                              </span>
+                            </td>
+
+                            {/* Deliverables */}
+                            <td className="py-4 px-5">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${t.pptUrl ? "bg-emerald-400" : "bg-white/20"}`} />
+                                  <span className={`text-[10px] font-mono ${t.pptUrl ? "text-emerald-300" : "text-white/40"}`}>
+                                    S1: {t.pptUrl ? "Submitted" : "Pending"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${t.finalDocUrl ? "bg-emerald-400" : "bg-white/20"}`} />
+                                  <span className={`text-[10px] font-mono ${t.finalDocUrl ? "text-emerald-300" : "text-white/40"}`}>
+                                    S2: {t.finalDocUrl ? "Submitted" : "Pending"}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Evaluation Status & Score */}
+                            <td className="py-4 px-5">
+                              {isEvaluated ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono font-bold text-xs w-fit">
+                                    <span className="material-symbols-outlined text-xs">verified</span>
+                                    {t.scoreTotal} / 30
+                                  </span>
+                                  {t.evaluatedBy && (
+                                    <span className="text-[10px] text-white/40 font-mono truncate max-w-[150px]">
+                                      by {t.evaluatedBy}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[11px] w-fit">
+                                  <span className="material-symbols-outlined text-xs">schedule</span>
+                                  Pending Eval
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Action Button */}
+                            <td className="py-4 px-5 text-right">
+                              <Link
+                                href={`/admin/evaluate/${t.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 hover:border-transparent rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm"
+                              >
+                                <span>{isEvaluated ? "Review" : "Evaluate"}</span>
+                                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

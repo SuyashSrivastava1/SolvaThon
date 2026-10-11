@@ -44,7 +44,7 @@ export default function RulesPage() {
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono uppercase tracking-widest">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            CYFT HACKATHON 2025 // PROTOCOL GUIDELINES
+            GUIDELINES
           </div>
           <h1 className="text-3xl md:text-5xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent">
             Rules &amp; Regulations
@@ -88,9 +88,9 @@ export default function RulesPage() {
                   <span className="text-xs text-white/40">•</span>
                   <span className="text-xs text-blue-400 font-semibold uppercase">TEAM FORMATION</span>
                 </div>
-                <h2 className="text-xl font-bold">1 to 4 Members Cap per Team</h2>
+                <h2 className="text-xl font-bold">2 to 4 Members Cap per Team</h2>
                 <p className="text-white/70 text-sm leading-relaxed">
-                  Teams must consist of at least 1 member and no more than 4 members. Inter-block teams across Men&apos;s and Ladies&apos; blocks are permitted for collaborative development, but overnight lodging remains strictly confined to the allotted hackathon venue and respective hostel rooms.
+                  Teams must consist of at least 2 member and no more than 4 members. Inter-block teams across Men&apos;s and Ladies&apos; blocks are permitted for collaborative development, but overnight lodging remains strictly confined to the allotted hackathon venue and respective hostel rooms.
                 </p>
               </div>
             </div>
@@ -106,11 +106,11 @@ export default function RulesPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider">RULE 03</span>
                   <span className="text-xs text-white/40">•</span>
-                  <span className="text-xs text-amber-400 font-semibold uppercase">36-HOUR TIMELINE</span>
+                  <span className="text-xs text-amber-400 font-semibold uppercase">24-HOUR TIMELINE</span>
                 </div>
                 <h2 className="text-xl font-bold">Mandatory Attendance &amp; Roll Calls</h2>
                 <p className="text-white/70 text-sm leading-relaxed">
-                  Physical presence is mandatory during scheduled check-in stations. Wardens will conduct milestone roll calls at Day 1 (4:00 PM) and Day 2 (12:00 AM Midnight). Teams with absent or unverified members will be disqualified from final jury pitching.
+                  Physical presence is mandatory during scheduled check-in stations. Teams with absent or unverified members will be disqualified from final jury pitching.
                 </p>
               </div>
             </div>

@@ -44,7 +44,8 @@ export async function getAdminData(tokenOrEmail?: string | null) {
       prisma.team.findMany({
         include: {
           participants: {
-            select: { fullName: true, emailId: true, mobileNumber: true, hostelBlock: true, roomNumber: true, ticketId: true }
+            select: { fullName: true, emailId: true, mobileNumber: true, hostelBlock: true, roomNumber: true, ticketId: true, registrationTime: true },
+            orderBy: { registrationTime: "asc" }
           }
         },
         orderBy: { createdAt: "desc" }
@@ -106,40 +107,47 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         teamName: p.team?.name || "No Team",
         teamCode: p.team?.teamCode || "N/A"
       })),
-      teams: teams.map((t: any) => ({
-        id: t.id,
-        name: t.name,
-        teamCode: t.teamCode,
-        createdAt: t.createdAt.toISOString(),
-        memberCount: t.participants.length,
-        problemStatement: t.problemStatement || "Not Selected",
-        pptUrl: t.pptUrl,
-        understanding: t.understanding,
-        solutionSummary: t.solutionSummary,
-        submittedAt: t.submittedAt ? t.submittedAt.toISOString() : null,
-        // Final Project Submissions
-        finalDocUrl: t.finalDocUrl,
-        finalRepoUrl: t.finalRepoUrl,
-        finalDemoUrl: t.finalDemoUrl,
-        finalSummary: t.finalSummary,
-        finalSubmittedAt: t.finalSubmittedAt ? t.finalSubmittedAt.toISOString() : null,
-        // 3 Evaluation Criteria Scores
-        scoreInnovation: t.scoreInnovation,
-        scoreUnderstanding: t.scoreUnderstanding,
-        scoreProgress: t.scoreProgress,
-        scoreTotal: t.scoreTotal,
-        evaluatedBy: t.evaluatedBy,
-        evaluationNotes: t.evaluationNotes,
-        evaluatedAt: t.evaluatedAt ? t.evaluatedAt.toISOString() : null,
-        members: t.participants.map((m: any) => ({
-          fullName: m.fullName,
-          emailId: m.emailId,
-          mobileNumber: m.mobileNumber,
-          hostelBlock: m.hostelBlock,
-          roomNumber: m.roomNumber,
-          ticketId: m.ticketId
-        }))
-      }))
+      teams: teams.map((t: any) => {
+        const leader = t.participants && t.participants.length > 0 ? t.participants[0] : null;
+        return {
+          id: t.id,
+          name: t.name,
+          teamCode: t.teamCode,
+          leaderName: leader ? leader.fullName : "N/A",
+          leaderEmail: leader ? leader.emailId : "N/A",
+          leaderPhone: leader ? leader.mobileNumber : "N/A",
+          leaderTicketId: leader ? leader.ticketId : "N/A",
+          createdAt: t.createdAt.toISOString(),
+          memberCount: t.participants.length,
+          problemStatement: t.problemStatement || "Not Selected",
+          pptUrl: t.pptUrl,
+          understanding: t.understanding,
+          solutionSummary: t.solutionSummary,
+          submittedAt: t.submittedAt ? t.submittedAt.toISOString() : null,
+          // Final Project Submissions
+          finalDocUrl: t.finalDocUrl,
+          finalRepoUrl: t.finalRepoUrl,
+          finalDemoUrl: t.finalDemoUrl,
+          finalSummary: t.finalSummary,
+          finalSubmittedAt: t.finalSubmittedAt ? t.finalSubmittedAt.toISOString() : null,
+          // 3 Evaluation Criteria Scores
+          scoreInnovation: t.scoreInnovation,
+          scoreUnderstanding: t.scoreUnderstanding,
+          scoreProgress: t.scoreProgress,
+          scoreTotal: t.scoreTotal,
+          evaluatedBy: t.evaluatedBy,
+          evaluationNotes: t.evaluationNotes,
+          evaluatedAt: t.evaluatedAt ? t.evaluatedAt.toISOString() : null,
+          members: t.participants.map((m: any) => ({
+            fullName: m.fullName,
+            emailId: m.emailId,
+            mobileNumber: m.mobileNumber,
+            hostelBlock: m.hostelBlock,
+            roomNumber: m.roomNumber,
+            ticketId: m.ticketId
+          }))
+        };
+      })
     };
   } catch (error) {
     console.error("Admin Data Fetch Error:", error);
