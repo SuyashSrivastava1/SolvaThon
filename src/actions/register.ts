@@ -43,7 +43,8 @@ export async function registerParticipant(data: z.infer<typeof registrationSchem
       return { success: false, error: error.issues[0]?.message || "Validation failed" };
     }
     console.error("Registration Error:", error);
-    return { success: false, error: "Something went wrong during registration." };
+    const detail = error?.message ? `: ${error.message}` : "";
+    return { success: false, error: `Something went wrong during registration${detail}` };
   }
 }
 

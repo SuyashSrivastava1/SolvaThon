@@ -5,6 +5,19 @@
  * to prevent hardcoding sensitive credentials in source code.
  */
 
+const DEFAULT_SUPER_ADMIN_EMAILS = [
+  "atman.dash2025@vitstudent.ac.in",
+  "atmandash2007@gmail.com"
+];
+
+const DEFAULT_ADMIN_EMAILS = [
+  "atman.dash2025@vitstudent.ac.in",
+  "atmandash2007@gmail.com",
+  "suyash.srivastava2025@vitstudent.ac.in",
+  "triloknath.pandey@vit.ac.in",
+  "shashanka.shekhar2024@vitstudent.ac.in"
+];
+
 function parseEmailList(rawList?: string): string[] {
   if (!rawList) return [];
   return rawList
@@ -14,18 +27,19 @@ function parseEmailList(rawList?: string): string[] {
 }
 
 /**
- * Retrieves the list of Super Admin emails from environment variables (.env).
+ * Retrieves the list of Super Admin emails from environment variables (.env) or defaults.
  */
 export function getSuperAdminEmails(): string[] {
   const envEmails =
     process.env.SUPER_ADMIN_EMAILS ||
     process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS ||
     "";
-  return parseEmailList(envEmails);
+  const parsed = parseEmailList(envEmails);
+  return Array.from(new Set([...DEFAULT_SUPER_ADMIN_EMAILS, ...parsed]));
 }
 
 /**
- * Retrieves the list of all Admin emails (Super Admin + Evaluators) from environment variables (.env).
+ * Retrieves the list of all Admin emails (Super Admin + Evaluators) from environment variables (.env) or defaults.
  */
 export function getAdminEmails(): string[] {
   const envEmails =
@@ -34,7 +48,7 @@ export function getAdminEmails(): string[] {
     "";
   const admins = parseEmailList(envEmails);
   const superAdmins = getSuperAdminEmails();
-  return Array.from(new Set([...admins, ...superAdmins]));
+  return Array.from(new Set([...DEFAULT_ADMIN_EMAILS, ...admins, ...superAdmins]));
 }
 
 /**

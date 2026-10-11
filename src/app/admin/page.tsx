@@ -57,23 +57,10 @@ export default function AdminPortalPage() {
 
   const adminIdentifier = user?.email || "admin";
 
-  // Guard route: Only verified admin users are allowed; others are sent to the original registration page
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      router.replace("/register");
-      return;
-    }
-
-    if (!isAdminEmail(user.email)) {
-      router.replace("/register");
-      return;
-    }
-
+  const loadData = (email: string) => {
     setLoading(true);
     setErrorMsg("");
-    getAdminData(user.email).then((res) => {
+    getAdminData(email).then((res) => {
       if (res.success) {
         setData(res);
         initEvalForms(res.teams);
@@ -81,11 +68,33 @@ export default function AdminPortalPage() {
           setCustomTimerDate(toDatetimeLocal(res.systemSettings.targetDate));
         }
       } else {
-        setErrorMsg(res.error || "Failed to load admin records.");
-        router.replace("/register");
+        setErrorMsg(res.error || "Failed to load admin records from database.");
       }
       setLoading(false);
+    }).catch((err) => {
+      console.error("Error loading admin data:", err);
+      setErrorMsg("Failed to connect to the database. Please verify your connection.");
+      setLoading(false);
     });
+  };
+
+  // Guard route: Only verified admin users are allowed
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (!isAdminEmail(user.email)) {
+      router.replace("/profile");
+      return;
+    }
+
+    if (user.email) {
+      loadData(user.email);
+    }
   }, [user, authLoading, router]);
 
   const initEvalForms = (teams?: any[]) => {
@@ -366,6 +375,38 @@ export default function AdminPortalPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (errorMsg && !data) {
+    return (
+      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white font-sans px-4">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 max-w-md text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto text-2xl font-bold">
+            ⚠️
+          </div>
+          <h2 className="text-xl font-bold">Admin Console Notice</h2>
+          <p className="text-xs text-red-300 font-mono bg-black/40 p-3 rounded-lg border border-red-500/20 break-words">
+            {errorMsg}
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                if (user?.email) loadData(user.email);
+              }}
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
+            >
+              Retry Connection
+            </button>
+            <button
+              onClick={() => auth?.signOut()}
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold cursor-pointer transition-all"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading || loading || !data) {
     return (

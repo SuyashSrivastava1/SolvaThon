@@ -1,15 +1,67 @@
-import { PrismaClient } from '@prisma/client'
-
-const prismaClientSingleton = () => {
-  return new PrismaClient()
-}
+import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 declare global {
-  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
+  var prismaGlobal: PrismaClient | undefined;
+  var pgPoolGlobal: Pool | undefined;
 }
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
+function getDatabaseUrl(): string {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.DIRECT_URL ||
+    ""
+  );
+}
 
-export default prisma
+function createPrismaClient(): PrismaClient {
+  const connectionString = getDatabaseUrl();
 
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
+  if (connectionString) {
+    try {
+      const pool = globalThis.pgPoolGlobal ?? new Pool({
+        connectionString,
+        max: 5,
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000,
+      });
+
+      if (process.env.NODE_ENV !== 'production') {
+        globalThis.pgPoolGlobal = pool;
+      }
+
+      const adapter = new PrismaPg(pool);
+      return new PrismaClient({ adapter });
+    } catch (e) {
+      console.error('Failed to initialize PrismaPg adapter, falling back to standard PrismaClient:', e);
+    }
+  }
+
+  return new PrismaClient();
+}
+
+let cachedPrisma: PrismaClient | null = null;
+
+export function getPrismaClient(): PrismaClient {
+  if (globalThis.prismaGlobal) return globalThis.prismaGlobal;
+  if (cachedPrisma) return cachedPrisma;
+
+  const client = createPrismaClient();
+  if (process.env.NODE_ENV !== 'production') {
+    globalThis.prismaGlobal = client;
+  } else {
+    cachedPrisma = client;
+  }
+  return client;
+}
+
+const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getPrismaClient();
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
+  }
+});
+
+export default prisma;

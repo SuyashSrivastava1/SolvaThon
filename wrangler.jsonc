@@ -5,8 +5,12 @@
 	"compatibility_date": "2026-10-11",
 	"compatibility_flags": [
 		"nodejs_compat",
+		"nodejs_compat_populate_process_env",
 		"global_fetch_strictly_public"
 	],
+	"vars": {
+		"ADMIN_ACCESS_KEY": "warden_cyft_2025"
+	},
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
