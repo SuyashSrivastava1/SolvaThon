@@ -1,8 +1,12 @@
 import { z } from "zod";
+import { isValidAuthDomain } from "@/config/admin";
 
 export const registrationSchema = z.object({
   firebaseUid: z.string().min(1, "User ID is required"),
-  emailId: z.string().email("Must be a valid email").endsWith("@vitstudent.ac.in", "Must be a VIT student email"),
+  emailId: z.string().email("Must be a valid email").refine(
+    (val) => isValidAuthDomain(val),
+    "Must be a valid @vitstudent.ac.in or @vit.ac.in email address"
+  ),
   fullName: z.string().min(2, "Name is too short"),
   mobileNumber: z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
   hostelBlock: z.string().min(1, "Block is required"),

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminEmail } from "@/config/admin";
 
 export default function RulesPage() {
   const { user } = useAuth();
+  const isAdmin = isAdminEmail(user?.email);
 
   return (
     <div className="min-h-screen bg-[#050B14] relative text-white font-sans selection:bg-cyan-500/30 py-16 px-4">
@@ -20,21 +22,22 @@ export default function RulesPage() {
             Back to Home
           </Link>
           <div className="flex items-center gap-4">
-            {user ? (
+            {isAdmin ? (
+              <Link href="/admin" className="px-5 py-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 font-semibold text-sm rounded-xl transition-all shadow-md shadow-purple-500/20 text-white">
+                Admin Portal
+              </Link>
+            ) : user ? (
               <Link href="/profile" className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-sm transition-all">
                 Team Dashboard
               </Link>
             ) : (
-              <Link href="/login" className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-sm transition-all">
-                Sign In
+              <Link
+                href="/register"
+                className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-semibold text-sm rounded-xl transition-all shadow-md shadow-cyan-500/20"
+              >
+                Register / Login
               </Link>
             )}
-            <Link
-              href="/register"
-              className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-semibold text-sm rounded-xl transition-all shadow-md shadow-cyan-500/20"
-            >
-              Register Now
-            </Link>
           </div>
         </div>
 
@@ -142,16 +145,10 @@ export default function RulesPage() {
           </p>
           <div className="pt-2 flex flex-wrap justify-center gap-4">
             <Link
-              href="/register"
+              href={isAdmin ? "/admin" : user ? "/profile" : "/register"}
               className="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/25"
             >
-              Start Registration
-            </Link>
-            <Link
-              href="/login"
-              className="px-8 py-3.5 bg-white/10 hover:bg-white/15 text-white font-medium rounded-xl transition-all"
-            >
-              Login to Account
+              {isAdmin ? "Open Admin Portal" : user ? "Go to Dashboard" : "Register / Login"}
             </Link>
           </div>
         </div>

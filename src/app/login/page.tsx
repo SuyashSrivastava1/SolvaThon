@@ -5,6 +5,7 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
 import { checkIsRegistered } from "@/actions/register";
+import { isAdminEmail, isValidAuthDomain } from "@/config/admin";
 
 export default function LoginPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -17,18 +18,22 @@ export default function LoginPage() {
 
     try {
       const provider = new GoogleAuthProvider();
-      // Force Google to only accept @vitstudent.ac.in emails
-      provider.setCustomParameters({
-        hd: "vitstudent.ac.in",
-      });
 
       const result = await signInWithPopup(auth, provider);
+      const email = result.user.email;
+      const isAdmin = isAdminEmail(email);
       
-      // Double check domain just in case
-      if (!result.user.email?.endsWith("@vitstudent.ac.in")) {
+      // Allow @vitstudent.ac.in, @vit.ac.in, and admins
+      if (!isValidAuthDomain(email)) {
         await auth.signOut();
         setStatus("error");
-        setMessage("You must use your @vitstudent.ac.in email address to register.");
+        setMessage("You must use your @vitstudent.ac.in or @vit.ac.in email address to participate.");
+        return;
+      }
+
+      // If admin, immediately redirect to Admin Portal
+      if (isAdmin) {
+        router.replace("/admin");
         return;
       }
 

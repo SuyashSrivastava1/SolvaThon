@@ -4,6 +4,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link';
 import { motion, type Variants } from 'framer-motion';
 import { getParticipantCount } from '@/actions/stats';
+import { getSystemSettings } from '@/actions/team';
+import { useAuth } from '@/context/AuthContext';
+import { isAdminEmail } from '@/config/admin';
 
 /* ═══════════════════════════════════════════
    DATA
@@ -274,11 +277,11 @@ function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minut
   const timeDisplay = `${d}d : ${h}h : ${m}m : ${s}s`;
 
   return (
-    <div className="w-full flex flex-col items-center justify-center select-none py-1" suppressHydrationWarning>
+    <div className="w-full flex flex-col items-center justify-center select-none py-2" suppressHydrationWarning>
       <div
         className="gdg-timer-stack w-full flex justify-center text-center tracking-tight"
         style={{
-          fontSize: 'clamp(2.2rem, 5.8vw, 6.2rem)',
+          fontSize: 'clamp(1.85rem, 6.8vw, 7.5rem)',
         }}
         suppressHydrationWarning
       >
@@ -301,13 +304,24 @@ function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minut
    MAIN PAGE
    ═══════════════════════════════════════════ */
 export default function Home() {
-  const targetDate = useMemo(() => new Date('2026-12-01T23:59:59+05:30'), []);
+  const { user } = useAuth();
+  const isAdmin = isAdminEmail(user?.email);
+  const [targetDate, setTargetDate] = useState(() => new Date('2026-12-01T23:59:59+05:30'));
   const timeLeft = useCountdown(targetDate);
 
   const [rawCount, setRawCount] = useState(0);
   const participantCount = useAnimatedNumber(rawCount);
 
   const [scrolled, setScrolled] = useState(false);
+
+  // Sync live hackathon timer from system config
+  useEffect(() => {
+    getSystemSettings().then((res) => {
+      if (res?.targetDate) {
+        setTargetDate(new Date(res.targetDate));
+      }
+    });
+  }, []);
 
   // Live participant count
   useEffect(() => {
@@ -410,32 +424,29 @@ export default function Home() {
               </div>
 
               <Link
-                className="hidden md:inline-flex px-3 py-1.5 transition-colors"
-                href="/login"
-                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: '#94a3b8' }}
-              >
-                Login
-              </Link>
-
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center px-5 py-2 rounded-xl font-semibold text-[13px] transition-all hover:scale-[1.03] active:scale-[0.98]"
+                href={isAdmin ? "/admin" : user ? "/profile" : "/register"}
+                className="inline-flex items-center justify-center px-4 sm:px-5 py-2 rounded-xl font-semibold text-[13px] transition-all hover:scale-[1.03] active:scale-[0.98]"
                 style={{
-                  background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
-                  color: '#030712',
+                  background: isAdmin
+                    ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                    : 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                  color: isAdmin ? '#ffffff' : '#030712',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  boxShadow: '0 0 24px rgba(56,189,248,0.3)',
+                  boxShadow: isAdmin ? '0 0 24px rgba(168,85,247,0.35)' : '0 0 24px rgba(56,189,248,0.3)',
                 }}
               >
-                Register
+                {isAdmin ? "Admin Portal" : user ? "Dashboard" : "Register / Login"}
               </Link>
 
               <Link
-                href="/profile"
+                href={isAdmin ? "/admin" : "/profile"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all hover:bg-white/[0.08]"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                title={isAdmin ? "Admin Console" : "Profile / Team"}
               >
-                <span className="material-symbols-outlined text-slate-400" style={{ fontSize: 17 }}>person</span>
+                <span className={`material-symbols-outlined ${isAdmin ? 'text-purple-400' : 'text-slate-400'}`} style={{ fontSize: 17 }}>
+                  {isAdmin ? 'admin_panel_settings' : 'person'}
+                </span>
               </Link>
             </div>
           </div>
@@ -494,17 +505,21 @@ export default function Home() {
                   {/* CTAs */}
                   <motion.div variants={fadeItem} className="flex flex-wrap items-center gap-3.5 pt-1">
                     <Link
-                      href="/register"
+                      href={isAdmin ? "/admin" : user ? "/profile" : "/register"}
                       className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold transition-all hover:scale-[1.03] active:scale-[0.98] text-sm sm:text-base"
                       style={{
-                        background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
-                        color: '#030712',
+                        background: isAdmin
+                          ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                          : 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                        color: isAdmin ? '#ffffff' : '#030712',
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        boxShadow: '0 0 30px rgba(56,189,248,0.35)',
+                        boxShadow: isAdmin ? '0 0 30px rgba(168,85,247,0.4)' : '0 0 30px rgba(56,189,248,0.35)',
                       }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>how_to_reg</span>
-                      Register Now
+                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
+                        {isAdmin ? 'admin_panel_settings' : 'how_to_reg'}
+                      </span>
+                      {isAdmin ? "Open Admin Portal" : user ? "Go to Dashboard" : "Register Now"}
                     </Link>
                     <a
                       href="#problems"
@@ -543,18 +558,18 @@ export default function Home() {
               {/* Bottom Row: Full-Width GDG Live Timer Display */}
               <motion.div 
                 variants={fadeItem}
-                className="w-full pt-4 pb-2 border-t border-white/[0.08] mt-auto"
+                className="w-full pt-4 pb-2 mt-auto"
               >
-                <div className="flex items-center justify-between pb-1 px-1">
-                  <div className="flex items-center gap-2">
+                {/* Centered 'Registration Ends in' header with glowing cyan lines beside it */}
+                <div className="w-full flex items-center justify-center gap-3 sm:gap-5 pb-2 px-2">
+                  <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-r from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
+                  <div className="flex items-center gap-2 shrink-0 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.15)]">
                     <span className="relative w-2 h-2 rounded-full bg-cyan-400 live-dot" />
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.14em' }}>
-                      HACKATHON COMMENCES IN · DEC 01, 2026
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+                      Registration Ends in
                     </span>
                   </div>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, color: '#64748b', letterSpacing: '0.12em' }} className="hidden sm:inline">
-                    LIVE COUNTDOWN TO KICKOFF
-                  </span>
+                  <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-l from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                 </div>
                 <GDGTimer timeLeft={timeLeft} />
               </motion.div>

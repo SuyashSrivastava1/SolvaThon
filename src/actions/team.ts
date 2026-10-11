@@ -16,9 +16,7 @@ export async function createTeam(firebaseUid: string, teamName: string) {
     let newTeamCode = "";
     let isUnique = false;
     while (!isUnique) {
-      // Generate 6-character alphanumeric code in uppercase
       newTeamCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      // Ensure we have exactly 6 characters (sometimes random yields fewer)
       newTeamCode = newTeamCode.padEnd(6, 'X'); 
       const existingCode = await prisma.team.findUnique({ where: { teamCode: newTeamCode } });
       if (!existingCode) isUnique = true;
@@ -50,7 +48,6 @@ export async function joinTeam(firebaseUid: string, teamCode: string) {
     if (!team) return { success: false, error: "Invalid Team Code." };
 
     const memberCount = await prisma.participant.count({ where: { teamId: team.id } });
-    // STRICT CAP OF 4 MEMBERS
     if (memberCount >= 4) return { success: false, error: "This team has reached the maximum limit of 4 members." };
 
     await prisma.participant.update({
@@ -67,19 +64,31 @@ export async function joinTeam(firebaseUid: string, teamCode: string) {
 
 export async function getTeamDetails(firebaseUid: string) {
   try {
-    const participant = await prisma.participant.findUnique({
-      where: { firebaseUid },
-      include: { team: { include: { participants: true } } }
-    });
+    const [participant, phaseConfig] = await Promise.all([
+      prisma.participant.findUnique({
+        where: { firebaseUid },
+        include: { team: { include: { participants: true } } }
+      }),
+      prisma.systemConfig.findUnique({ where: { key: "submission_phase" } })
+    ]);
     
     if (!participant) return { success: false, error: "Participant not found." };
     
-    // If not in a team, return participant info but no team
-    if (!participant.team) return { success: true, hasTeam: false, participant };
+    const submissionPhase = (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA";
+
+    if (!participant.team) {
+      return { 
+        success: true, 
+        hasTeam: false, 
+        participant,
+        submissionPhase
+      };
+    }
 
     return { 
       success: true, 
       hasTeam: true, 
+      submissionPhase,
       team: {
         id: participant.team.id,
         name: participant.team.name,
@@ -89,6 +98,17 @@ export async function getTeamDetails(firebaseUid: string) {
         understanding: participant.team.understanding,
         solutionSummary: participant.team.solutionSummary,
         submittedAt: participant.team.submittedAt,
+        finalDocUrl: participant.team.finalDocUrl,
+        finalRepoUrl: participant.team.finalRepoUrl,
+        finalDemoUrl: participant.team.finalDemoUrl,
+        finalSummary: participant.team.finalSummary,
+        finalSubmittedAt: participant.team.finalSubmittedAt,
+        scoreInnovation: participant.team.scoreInnovation,
+        scoreUnderstanding: participant.team.scoreUnderstanding,
+        scoreProgress: participant.team.scoreProgress,
+        scoreTotal: participant.team.scoreTotal,
+        evaluationNotes: participant.team.evaluationNotes,
+        evaluatedAt: participant.team.evaluatedAt,
         members: participant.team.participants.map((p: any) => ({
           name: p.fullName,
           ticketId: p.ticketId
@@ -132,15 +152,15 @@ export async function submitProject(
     }
 
     if (!data.pptUrl || (!data.pptUrl.startsWith("http://") && !data.pptUrl.startsWith("https://"))) {
-      return { success: false, error: "Please provide a valid PPT / Presentation link (e.g. Google Slides, Canva, Drive)." };
+      return { success: false, error: "Please provide a valid presentation link (Google Slides, Canva, Drive)." };
     }
 
     if (!data.understanding || data.understanding.trim().length < 10) {
-      return { success: false, error: "Please provide a detailed explanation of your understanding of the problem statement." };
+      return { success: false, error: "Please provide a detailed explanation of your problem understanding." };
     }
 
     if (!data.solutionSummary || data.solutionSummary.trim().length < 10) {
-      return { success: false, error: "Please provide a brief description of your problem statement and proposed solution." };
+      return { success: false, error: "Please provide a brief description of your proposed solution." };
     }
 
     await prisma.team.update({
@@ -160,3 +180,64 @@ export async function submitProject(
   }
 }
 
+export async function submitFinalProject(
+  firebaseUid: string,
+  data: {
+    finalDocUrl: string;
+    finalRepoUrl?: string;
+    finalDemoUrl?: string;
+    finalSummary?: string;
+  }
+) {
+  try {
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "You must be in a team to submit the final project." };
+    }
+
+    if (!data.finalDocUrl || (!data.finalDocUrl.startsWith("http://") && !data.finalDocUrl.startsWith("https://"))) {
+      return { success: false, error: "Please provide a valid document link (Google Docs, Drive, PDF URL, Notion)." };
+    }
+
+    await prisma.team.update({
+      where: { id: participant.teamId },
+      data: {
+        finalDocUrl: data.finalDocUrl.trim(),
+        finalRepoUrl: data.finalRepoUrl?.trim() || null,
+        finalDemoUrl: data.finalDemoUrl?.trim() || null,
+        finalSummary: data.finalSummary?.trim() || null,
+        finalSubmittedAt: new Date(),
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Submit final project error:", error);
+    return { success: false, error: "Failed to submit final project deliverable." };
+  }
+}
+
+export async function getSystemSettings() {
+  try {
+    const [phaseConfig, timerConfig, pauseConfig] = await Promise.all([
+      prisma.systemConfig.findUnique({ where: { key: "submission_phase" } }),
+      prisma.systemConfig.findUnique({ where: { key: "target_date" } }),
+      prisma.systemConfig.findUnique({ where: { key: "timer_paused" } }),
+    ]);
+
+    return {
+      success: true,
+      submissionPhase: (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA",
+      targetDate: timerConfig?.value || "2026-12-01T23:59:59+05:30",
+      isPaused: pauseConfig?.value === "true",
+    };
+  } catch (error) {
+    console.error("getSystemSettings error:", error);
+    return {
+      success: true,
+      submissionPhase: "IDEA" as const,
+      targetDate: "2026-12-01T23:59:59+05:30",
+      isPaused: false,
+    };
+  }
+}

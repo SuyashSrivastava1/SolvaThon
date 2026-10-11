@@ -14,12 +14,28 @@ model Team {
   teamCode     String        @unique @default(cuid())
   createdAt    DateTime      @default(now())
   
-  // Track selection & submission
+  // Phase 1: Track selection & Idea submission
   problemStatement String?
   pptUrl           String?
   understanding    String?
   solutionSummary  String?
   submittedAt      DateTime?
+
+  // Phase 2: Final Project submission
+  finalDocUrl      String?
+  finalRepoUrl     String?
+  finalDemoUrl     String?
+  finalSummary     String?
+  finalSubmittedAt DateTime?
+
+  // Evaluation & Scoring (3 Criteria: Innovation, Understanding of Problem Statement, Progress)
+  scoreInnovation     Float?
+  scoreUnderstanding  Float?
+  scoreProgress       Float?
+  scoreTotal          Float?
+  evaluatedBy         String?
+  evaluationNotes     String?
+  evaluatedAt         DateTime?
   
   participants Participant[] // Hard max limit of 4 enforced in logic
 }
@@ -47,4 +63,10 @@ model Participant {
   // Foreign Key to Team (Optional: they can register individually first)
   teamId           String?
   team             Team?    @relation(fields: [teamId], references: [id])
+}
+
+model SystemConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
