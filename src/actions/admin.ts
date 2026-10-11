@@ -168,8 +168,8 @@ export async function getAdminData(tokenOrEmail?: string | null) {
     };
   } catch (error: any) {
     console.error("Admin Data Fetch Error:", error);
-    const detail = error?.message ? `: ${error.message}` : "";
-    return { success: false, error: `Failed to load admin records from database${detail}` };
+    const detail = error?.message || (typeof error === "string" ? error : JSON.stringify(error));
+    return { success: false, error: `Failed to load admin records from database: ${detail}` };
   }
 }
 

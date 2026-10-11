@@ -4,7 +4,6 @@ import { PrismaPg } from '@prisma/adapter-pg';
 
 declare global {
   var prismaGlobal: PrismaClient | undefined;
-  var pgPoolGlobal: Pool | undefined;
 }
 
 export function getDatabaseUrl(): string {
@@ -29,24 +28,34 @@ export function getDatabaseUrl(): string {
   return "";
 }
 
+function cleanDatabaseUrl(url: string): string {
+  if (!url) return "";
+  if (!url.includes("sslmode=")) {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}sslmode=require`;
+  }
+  return url;
+}
+
 function createPrismaClient(): PrismaClient {
-  const connectionString = getDatabaseUrl();
+  const rawUrl = getDatabaseUrl();
+  const connectionString = cleanDatabaseUrl(rawUrl);
 
   if (connectionString) {
     try {
-      const pool = globalThis.pgPoolGlobal ?? new Pool({
+      const pool = new Pool({
         connectionString,
+        ssl: { rejectUnauthorized: false },
         max: 5,
         connectionTimeoutMillis: 10000,
-        idleTimeoutMillis: 30000,
+        idleTimeoutMillis: 10000,
       });
 
-      if (process.env.NODE_ENV !== 'production') {
-        globalThis.pgPoolGlobal = pool;
-      }
-
       const adapter = new PrismaPg(pool);
-      return new PrismaClient({ adapter });
+      return new PrismaClient({
+        adapter,
+        log: ['error', 'warn']
+      });
     } catch (e) {
       console.error('Failed to initialize PrismaPg adapter, falling back to standard PrismaClient:', e);
     }
@@ -55,17 +64,13 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient();
 }
 
-let cachedPrisma: PrismaClient | null = null;
-
 export function getPrismaClient(): PrismaClient {
-  if (globalThis.prismaGlobal) return globalThis.prismaGlobal;
-  if (cachedPrisma) return cachedPrisma;
-
+  if (process.env.NODE_ENV !== 'production' && globalThis.prismaGlobal) {
+    return globalThis.prismaGlobal;
+  }
   const client = createPrismaClient();
   if (process.env.NODE_ENV !== 'production') {
     globalThis.prismaGlobal = client;
-  } else {
-    cachedPrisma = client;
   }
   return client;
 }
