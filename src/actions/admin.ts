@@ -31,6 +31,13 @@ export async function getAdminData(tokenOrEmail?: string | null) {
 
   const isSuperAdmin = isSuperAdminEmail(tokenOrEmail) || isKeyValid;
 
+  if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+    return {
+      success: false,
+      error: "DATABASE_URL is missing in Cloudflare environment variables. Please add it in Cloudflare Dashboard under Settings > Variables and Secrets."
+    };
+  }
+
   try {
     const [participants, teams, phaseConfig, timerConfig, pauseConfig] = await Promise.all([
       prisma.participant.findMany({
@@ -149,9 +156,10 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         };
       })
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Admin Data Fetch Error:", error);
-    return { success: false, error: "Failed to load admin records from database." };
+    const detail = error?.message ? `: ${error.message}` : "";
+    return { success: false, error: `Failed to load admin records from database${detail}` };
   }
 }
 
