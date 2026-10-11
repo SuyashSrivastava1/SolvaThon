@@ -1,0 +1,62 @@
+[
+  {
+    "time": "DAY 1 · 09:00",
+    "title": "Check-in & Team Verification",
+    "desc": "DSW pass validation & biometrics",
+    "icon": "badge",
+    "color": "#38bdf8",
+    "x": 90,
+    "y": 470,
+    "pinDirection": "down"
+  },
+  {
+    "time": "DAY 1 · 11:00",
+    "title": "Problem Statements Released",
+    "desc": "24-hour hackathon timer starts",
+    "icon": "rocket_launch",
+    "color": "#22d3ee",
+    "x": 295,
+    "y": 280,
+    "pinDirection": "up"
+  },
+  {
+    "time": "DAY 1 · 17:00",
+    "title": "Mentorship & Architecture Review",
+    "desc": "Milestone-1 checkpoint",
+    "icon": "groups",
+    "color": "#34d399",
+    "x": 515,
+    "y": 470,
+    "pinDirection": "down"
+  },
+  {
+    "time": "DAY 2 · 00:00",
+    "title": "Midnight Hack & Fuel Refuel",
+    "desc": "Energy boosters & nocturnal dev",
+    "icon": "restaurant",
+    "color": "#a855f7",
+    "x": 725,
+    "y": 280,
+    "pinDirection": "up"
+  },
+  {
+    "time": "DAY 2 · 08:00",
+    "title": "Code Freeze & Intranet Eval",
+    "desc": "Submissions lock & judging",
+    "icon": "gavel",
+    "color": "#f43f5e",
+    "x": 935,
+    "y": 470,
+    "pinDirection": "down"
+  },
+  {
+    "time": "DAY 2 · 11:00",
+    "title": "Valedictory & Cash Awards",
+    "desc": "Final pitches & prize ceremony",
+    "icon": "trophy",
+    "color": "#f59e0b",
+    "x": 1115,
+    "y": 280,
+    "pinDirection": "up"
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "PS-01",
+    "title": "Autonomous Hostel Energy Grid Balancing",
+    "track": "Power Systems",
+    "icon": "bolt",
+    "color": "#38bdf8",
+    "tags": ["IoT / ESP32", "Reinforcement Learning", "Edge Telemetry"],
+    "description": "Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods without shedding critical room loads.",
+    "detailedDescription": "During nocturnal diesel generator failovers and peak electrical load intervals, individual hostel blocks experience acute voltage drops and localized circuit breaker trips. Teams must architect an edge IoT telemetry and load-balancing system. The solution should ingest high-frequency current and voltage metrics from micro-inverter and sensor nodes, predict consumption spikes with lightweight algorithms, and automatically orchestrate phase and circuit switching across hostel wings—guaranteeing continuous, uninterrupted power for critical study spaces and campus amenities.",
+    "mentor": "Dr. Ramanathan",
+    "difficulty": "Level 4/5"
+  },
+  {
+    "id": "PS-02",
+    "title": "Real-time Mess Queue & Waste Analytics",
+    "track": "Smart Dining",
+    "icon": "restaurant",
+    "color": "#34d399",
+    "tags": ["YOLOv8 Edge", "WebSockets API", "Vision AI"],
+    "description": "Build an edge-deployed computer vision pipeline that estimates tray depletion rates, predicts queue wait times across dining halls, and triggers automated surplus notifications for hostel staff.",
+    "detailedDescription": "Hostel dining halls accommodate thousands of students within concentrated meal windows, causing heavy entry queues, unpredictable wait times, and significant food wastage. This challenge requires developing an edge-deployed computer vision pipeline that processes real-time camera streams to monitor queue length and measure buffet tray depletion rates. The system must push dynamic wait-time forecasts and refill alerts to student dashboards via low-latency WebSockets while adhering strictly to privacy standards by eliminating biometric storage.",
+    "mentor": "Prof. Narayanan",
+    "difficulty": "Level 3/5"
+  },
+  {
+    "id": "PS-03",
+    "title": "Localized Mesh Network for Disaster Comms",
+    "track": "Disaster Comms",
+    "icon": "cell_tower",
+    "color": "#a855f7",
+    "tags": ["LoRaWAN", "Cryptographic Gossip", "Hardware Mesh"],
+    "description": "Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between Block A through Block G for emergency notifications when centralized ISP routing drops.",
+    "detailedDescription": "During extreme weather events, cyclones, or campus fiber optic disruptions, standard cellular towers and internet gateways frequently experience complete outages. Participants must engineer a zero-infrastructure, peer-to-peer wireless mesh network spanning residential hostel blocks. Utilizing LoRa packet radios and decentralized gossip forwarding, nodes must reliably transmit encrypted warden broadcast notifications, emergency distress beacons, and medical dispatch requests without relying on centralized telecommunication infrastructure.",
+    "mentor": "Dr. Priya Nair",
+    "difficulty": "Level 5/5"
+  },
+  {
+    "id": "PS-04",
+    "title": "Attendance Verification via Edge Vision",
+    "track": "Residential Access",
+    "icon": "face",
+    "color": "#f59e0b",
+    "tags": ["TensorRT", "Local SQLite Cache", "Edge AI"],
+    "description": "Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals, logging 4,000 students under 20 minutes without queue stalling or remote server lag.",
+    "detailedDescription": "Nightly residential biometric roll-calls for 4,000+ hostel students generate massive physical bottlenecks and administrative overhead. This challenge requires engineering an embedded anti-spoofing optical verification engine that executes purely on local edge servers without external cloud latency. The system must achieve sub-second verification against local encrypted caches, reject printed photo or screen replay attacks, and seamlessly sync confirmed check-in logs with warden administrative portals.",
+    "mentor": "Cyber Lead Guild",
+    "difficulty": "Level 4/5"
+  },
+  {
+    "id": "PS-05",
+    "title": "Hostel Water Storage & Telemetry Pipeline",
+    "track": "Hydro-Telemetry",
+    "icon": "water_drop",
+    "color": "#22d3ee",
+    "tags": ["Ultrasonic Sensors", "MQTT Pipeline", "Hydrostatic Telemetry"],
+    "description": "Automated hydrostatic pressure sensors and overhead water volume forecasting engine to eliminate nocturnal dryouts across blocks A–D.",
+    "detailedDescription": "Residential blocks rely on complex overhead and underground reservoir systems where sudden midnight consumption spikes can cause acute water dryouts. Participants must architect an automated telemetry pipeline utilizing hydrostatic pressure and ultrasonic level sensors. The solution must ingest data through lightweight MQTT channels, model consumption trends per hostel wing, detect latent pipeline leakages, and trigger automated pump actuation routines before reserves reach critical exhaustion thresholds.",
+    "mentor": "Facilities & IoT Guild",
+    "difficulty": "Level 3/5"
+  },
+  {
+    "id": "PS-06",
+    "title": "Acoustic Silence Enforcement in Study Halls",
+    "track": "Acoustic Sensing",
+    "icon": "graphic_eq",
+    "color": "#f43f5e",
+    "tags": ["MEMS Array", "Edge Impulse", "Spatial Audio"],
+    "description": "Spatial audio classification of decibel spikes and automated gentle visual warnings to preserve nocturnal study atmospheres without human intervention.",
+    "detailedDescription": "Late-night residential study halls require quiet, focused environments, but physical supervision by security personnel is sporadic and intrusive. Teams must construct a spatial acoustic sensing unit equipped with a MEMS microphone array and edge audio classification. The device will filter ambient background noise from persistent disruptive conversations, triggering gentle, non-intrusive progressive visual warnings to maintain study room etiquette automatically.",
+    "mentor": "Smart Infrastructure Lead",
+    "difficulty": "Level 4/5"
+  }
+]
