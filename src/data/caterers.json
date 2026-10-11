@@ -1,7 +1,38 @@
 [
-  { "id": "pr-food", "label": "PR Food" },
-  { "id": "darling", "label": "Darling" },
-  { "id": "zenith", "label": "Zenith" },
-  { "id": "crcl", "label": "CRCL" },
-  { "id": "foodys", "label": "Foody's" }
+  {
+    "id": "Rassence",
+    "label": "Rassence"
+  },
+  {
+    "id": "Fusion",
+    "label": "Fusion"
+  },
+  {
+    "id": "Sri Rajalakshmi",
+    "label": "Sri Rajalakshmi"
+  },
+  {
+    "id": "Proodle",
+    "label": "Proodle"
+  },
+  {
+    "id": "SRRC",
+    "label": "SRRC"
+  },
+  {
+    "id": "J Sathya PR",
+    "label": "J Sathya PR"
+  },
+  {
+    "id": "Zenith",
+    "label": "Zenith"
+  },
+  {
+    "id": "Sakti",
+    "label": "Sakti"
+  },
+  {
+    "id": "Food Exo",
+    "label": "Food Exo"
+  }
 ]

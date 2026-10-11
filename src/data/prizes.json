@@ -1,0 +1,47 @@
+{
+  "totalPool": "₹1,50,000 Prize Pool",
+  "disbursementNote": "Disbursed via instant direct bank transfer",
+  "tiers": [
+    {
+      "rank": "1ST · CHAMPION",
+      "icon": "trophy",
+      "amount": "₹75,000",
+      "color": "#38bdf8",
+      "order": "order-1 md:order-2",
+      "desc": "Direct cash + V-TBI incubation interview + Rolling Championship Trophy.",
+      "perks": [
+        "+ ₹1,00,000 AWS GPU Credits",
+        "+ Official DSW Citation"
+      ]
+    },
+    {
+      "rank": "2ND · RUNNER UP",
+      "icon": "military_tech",
+      "amount": "₹45,000",
+      "color": "#cbd5e1",
+      "order": "order-2 md:order-1",
+      "desc": "Direct cash + GPU Cloud Credits + Team Commendation Medal.",
+      "perks": [
+        "+ ₹50,000 Cloud Infrastructure",
+        "+ Priority Internship Screening"
+      ]
+    },
+    {
+      "rank": "3RD · THIRD PLACE",
+      "icon": "workspace_premium",
+      "amount": "₹30,000",
+      "color": "#fbbf24",
+      "order": "order-3",
+      "desc": "Direct cash + Edge Vision Hardware Dev Kits for each team member.",
+      "perks": [
+        "+ Jetson / ESP32 Hardware Bundle",
+        "+ Developer Guild Commendation"
+      ]
+    }
+  ],
+  "certificate": {
+    "title": "Digital Certificates for All Finalists",
+    "desc": "Verifiable credentials dispatched directly to @vitstudent.ac.in emails",
+    "badge": "100% ISSUANCE"
+  }
+}

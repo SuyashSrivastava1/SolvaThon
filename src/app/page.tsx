@@ -7,168 +7,13 @@ import { getParticipantCount } from '@/actions/stats';
 import { getSystemSettings } from '@/actions/team';
 import { useAuth } from '@/context/AuthContext';
 import { isAdminEmail } from '@/config/admin';
+import problemStatements from '@/data/problemStatements.json';
+import committeeMembers from '@/data/committee.json';
+import timelineMilestones from '@/data/timeline.json';
+import chiefGuest from '@/data/chiefGuest.json';
+import prizes from '@/data/prizes.json';
 
-/* ═══════════════════════════════════════════
-   DATA
-   ═══════════════════════════════════════════ */
-const problemStatements = [
-  {
-    id: "PS-01",
-    title: "Autonomous Hostel Energy Grid Balancing",
-    track: "POWER SYSTEMS",
-    icon: "bolt",
-    color: "#38bdf8",
-    tags: ["IoT / ESP32", "Reinforcement Learning"],
-    description: "Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods."
-  },
-  {
-    id: "PS-02",
-    title: "Real-time Mess Queue & Waste Analytics",
-    track: "SMART DINING",
-    icon: "restaurant",
-    color: "#34d399",
-    tags: ["YOLOv8 Edge", "WebSockets API"],
-    description: "Build an edge-deployed computer vision pipeline that estimates tray depletion rates and predicts queue wait times across 4 dining halls."
-  },
-  {
-    id: "PS-03",
-    title: "Localized Mesh Network for Disaster Comms",
-    track: "DISASTER COMMS",
-    icon: "cell_tower",
-    color: "#a855f7",
-    tags: ["LoRaWAN", "Cryptographic Gossip"],
-    description: "Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between hostel blocks for emergency notifications."
-  },
-  {
-    id: "PS-04",
-    title: "Attendance Verification via Edge Vision",
-    track: "RESIDENTIAL ACCESS",
-    icon: "face",
-    color: "#f59e0b",
-    tags: ["TensorRT", "Local SQLite Cache"],
-    description: "Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals for 4,000+ students."
-  },
-  {
-    id: "PS-05",
-    title: "Hostel Water Storage & Telemetry Pipeline",
-    track: "HYDRO-TELEMETRY",
-    icon: "water_drop",
-    color: "#22d3ee",
-    tags: ["Ultrasonic Sensors", "MQTT Pipeline"],
-    description: "Automated hydrostatic pressure sensors and overhead water volume forecasting engine to eliminate nocturnal dryouts across blocks A–D."
-  },
-  {
-    id: "PS-06",
-    title: "Acoustic Silence Enforcement in Study Halls",
-    track: "ACOUSTIC SENSING",
-    icon: "graphic_eq",
-    color: "#f43f5e",
-    tags: ["MEMS Array", "Edge Impulse"],
-    description: "Spatial audio classification of decibel spikes and automated gentle visual warnings to preserve nocturnal study atmospheres without human intervention."
-  },
-];
 
-const committeeMembers = [
-  {
-    name: "Dr. S. Ramanathan",
-    role: "Director, Student Welfare",
-    desc: "Overseeing campus residential life and overall event logistics clearance.",
-    tag: "DIRECTORATE",
-    jurisdiction: "Central Campus",
-    email: "dsw@vitstudent.ac.in",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAUdGnz3R9OB7qp_hGpHYYmMqu0KqgDWw2hsdC_-sBAGaKvzXPXWwzMt5BcvFftLPfNxAgnVSpp2Ht22eKhBAMxjfQu8ekSq5xvkaV2mRLDYeiZOsW3kcHUPDRaul689PTwdLfgVdU-jMYoh9K8zxGf0SVj7Z0F2KYghmSN9qsQuS2J2VYC168-FW7D1KFTPz2eruF97CI2iXHCIgCjj_LjgpZ16d97oYTbzljpIQs4VIxTJ5jjtc69"
-  },
-  {
-    name: "Prof. K. Narayanan",
-    role: "Senior Warden, Men's Blocks",
-    desc: "Hostel Blocks A–D nocturnal logistics, entry permissions and power grid sync.",
-    tag: "WARDEN · MH",
-    jurisdiction: "Men's Hostel (Blocks A-D)",
-    email: "warden.mh@vit.ac.in",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCR1Psm8D6qvAeXUaQxiGZ7qiwAy6RlPSYWCw7mI0_T5xAGq2qpeM1EiXKp04mR6tz5JeSXGWkpC8rTp0rRaD_mMonEd6rTAS9UZesJ2L6iNBzsXI64WljzLJwreVbLv8OBJ7WrrIuLS-urURjLV6AkXaipMAqo-y5yfqyAlc2JDdQU6BVlz01VN7r4wsx50OfqFzomvl6-2Sw9S0zsor_ErFmU5KKb-WSbvUjvTVc6OdjnEiBhJ3iU"
-  },
-  {
-    name: "Dr. Priya Nair",
-    role: "Senior Warden, Women's Blocks",
-    desc: "Hostel Blocks E–G logistics, transit coordination and safety protocols.",
-    tag: "WARDEN · LH",
-    jurisdiction: "Ladies' Hostel (Blocks E-G)",
-    email: "warden.lh@vit.ac.in",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBe6yhOf-rEFb-98r6YVo1J1K1N7CijZF_fSiLgE_zhpO98QM9uP9EhCqoD4kPxqlt-35YKSfmyWMHyUMfWxS1Aa0fjk-HtJ4ODKA3HsbOZLj0uvJvB1KRTgtTM2HEBcAwz0ri8ntA2SwiaetyDnc_5wjSUTLLq6axtN1ZR6m18Z9UtVHm7fr70yVcDCCvYTGoWzGVsLUEk4GiNgxa6s87L1-Hz_5gt4vMllUTpVQn8hs-kDAZXIN2G"
-  },
-  {
-    name: "Arnav Deshmukh",
-    role: "Chief Technical Convener",
-    desc: "Lead architect of intranet judge pipelines, automated check-ins and hackathon logistics.",
-    tag: "STUDENT CHAIR",
-    jurisdiction: "Room 412, Block-B",
-    email: "techlead@cyfthack.org",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBUftHvl3VM7sCzAefpwNWol6Jfbm2_B6_Pvxc9M4RWfXTwTXE9C1W8VrjyWZkuAsvFIvakishLU7tlwPu3C6kzzU1n39So-fOHKYKXQB0eGMRMLixdLrLvX4O1Pev0Hg87NuqXdHISvd6b5v7--6y1k_mwI8IDct6HxPDHDBAM7BBt5mObUKl6gptyDdu6ps_jD02k9EEuKM64j_dEzTGFumEH9wGn_pvzmZqPXmsla213_TViCiWw"
-  },
-];
-
-const timelineMilestones = [
-  {
-    time: "DAY 1 · 09:00",
-    title: "Check-in & Team Verification",
-    desc: "DSW pass validation & biometrics",
-    icon: "badge",
-    color: "#38bdf8",
-    x: 90,
-    y: 470,
-    pinDirection: "down"
-  },
-  {
-    time: "DAY 1 · 11:00",
-    title: "Problem Statements Released",
-    desc: "24-hour hackathon timer starts",
-    icon: "rocket_launch",
-    color: "#22d3ee",
-    x: 295,
-    y: 280,
-    pinDirection: "up"
-  },
-  {
-    time: "DAY 1 · 17:00",
-    title: "Mentorship & Architecture Review",
-    desc: "Milestone-1 checkpoint",
-    icon: "groups",
-    color: "#34d399",
-    x: 515,
-    y: 470,
-    pinDirection: "down"
-  },
-  {
-    time: "DAY 2 · 00:00",
-    title: "Midnight Hack & Fuel Refuel",
-    desc: "Energy boosters & nocturnal dev",
-    icon: "restaurant",
-    color: "#a855f7",
-    x: 725,
-    y: 280,
-    pinDirection: "up"
-  },
-  {
-    time: "DAY 2 · 08:00",
-    title: "Code Freeze & Intranet Eval",
-    desc: "Submissions lock & judging",
-    icon: "gavel",
-    color: "#f43f5e",
-    x: 935,
-    y: 470,
-    pinDirection: "down"
-  },
-  {
-    time: "DAY 2 · 11:00",
-    title: "Valedictory & Cash Awards",
-    desc: "Final pitches & prize ceremony",
-    icon: "trophy",
-    color: "#f59e0b",
-    x: 1115,
-    y: 280,
-    pinDirection: "up"
-  },
-];
 
 
 
@@ -964,33 +809,30 @@ export default function Home() {
                 <div className="w-full lg:w-1/3 aspect-square max-w-[280px] rounded-2xl overflow-hidden relative shadow-2xl shrink-0" style={{ background: '#0f172a' }}>
                   <img
                     className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKsMK2gO37tRi6vz-xV5zP992AbGuqGODzPjjoIYUOO87QT8Wq3yQnrMFtwOE9B1wu65BP5Azla_wO8U_7dbbnHZgFhYJCf3l8Jyds88PyMA9HNknXVqWhp3M3lGKEWrjgv7jD032rdjp52X5Td76OjYqm1mqWGcU8gSilqPfazr0p6I-1P3mBwHQzOp8tB9MjWrqbTmZIIF8Jszr6xbUIeI39dGFRCgHLvihSdPsy8vXaClRQ7Kzy"
-                    alt="Chief Guest"
+                    src={chiefGuest.img}
+                    alt={chiefGuest.name}
                   />
                   <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg glass" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, color: '#38bdf8' }}>
-                    KEYNOTE GUEST
+                    {chiefGuest.badge}
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 flex-1">
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                    Distinguished Chief Guest
+                    {chiefGuest.subtitle}
                   </span>
                   <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
-                    Dr. Vikramaditya Sen
+                    {chiefGuest.name}
                   </h3>
                   <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: '#38bdf8' }}>
-                    VP & Global AI Research Director · Ex-DeepMind Pioneer
+                    {chiefGuest.role}
                   </p>
                   <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#94a3b8', lineHeight: 1.7 }}>
-                    Leading international frontiers in decentralized autonomy and embodied machine agents. Dr. Sen will conduct live architectural evaluations during the final round.
+                    {chiefGuest.bio}
                   </p>
                   <div className="flex flex-wrap items-center gap-4 pt-1">
-                    {[
-                      { icon: 'verified', text: 'In-Person Judging', c: '#38bdf8' },
-                      { icon: 'rocket_launch', text: 'Fast-Track Incubation', c: '#34d399' }
-                    ].map(b => (
+                    {chiefGuest.highlights.map(b => (
                       <div key={b.text} className="flex items-center gap-1.5" style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#e2e8f0' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 17, color: b.c }}>{b.icon}</span>
+                        <span className="material-symbols-outlined" style={{ fontSize: 17, color: b.color }}>{b.icon}</span>
                         {b.text}
                       </div>
                     ))}
@@ -1005,68 +847,43 @@ export default function Home() {
                     Bounties & Recognition
                   </motion.span>
                   <motion.h3 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
-                    ₹1,50,000 Prize Pool
+                    {prizes.totalPool}
                   </motion.h3>
                   <motion.p variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                    Disbursed via instant direct bank transfer
+                    {prizes.disbursementNote}
                   </motion.p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {/* Champion */}
-                  <motion.div
-                    variants={fadeItem}
-                    className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 relative overflow-hidden order-1 md:order-2"
-                    style={{ boxShadow: '0 0 60px rgba(56,189,248,0.08), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)' }}
-                  >
-                    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-cyan-400/10 blur-2xl" />
-                    <div className="relative z-10 flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8' }}>1ST · CHAMPION</span>
-                        <span className="material-symbols-outlined" style={{ fontSize: 26, color: '#38bdf8' }}>trophy</span>
+                  {prizes.tiers.map(tier => (
+                    <motion.div
+                      key={tier.rank}
+                      variants={fadeItem}
+                      className={`glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 relative overflow-hidden ${tier.order}`}
+                      style={{ boxShadow: tier.rank.includes('1ST') ? '0 0 60px rgba(56,189,248,0.08), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)' : undefined }}
+                    >
+                      {tier.rank.includes('1ST') && (
+                        <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-cyan-400/10 blur-2xl" />
+                      )}
+                      <div className="relative z-10 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: tier.color }}>{tier.rank}</span>
+                          <span className="material-symbols-outlined" style={{ fontSize: tier.rank.includes('1ST') ? 26 : 22, color: tier.color }}>{tier.icon}</span>
+                        </div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: tier.rank.includes('1ST') ? 900 : 800, fontSize: tier.rank.includes('1ST') ? 42 : 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>
+                          {tier.amount}
+                        </div>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
+                          {tier.desc}
+                        </p>
                       </div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 42, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹75,000</div>
-                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                        Direct cash + V-TBI incubation interview + Rolling Championship Trophy.
-                      </p>
-                    </div>
-                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#34d399' }}>
-                      <span>+ ₹1,00,000 AWS GPU Credits</span>
-                      <span>+ Official DSW Citation</span>
-                    </div>
-                  </motion.div>
-
-                  {/* Runner up */}
-                  <motion.div variants={fadeItem} className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 order-2 md:order-1">
-                    <div className="flex items-center justify-between">
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#cbd5e1' }}>2ND · RUNNER UP</span>
-                      <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#cbd5e1' }}>military_tech</span>
-                    </div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹45,000</div>
-                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                      Direct cash + GPU Cloud Credits + Team Commendation Medal.
-                    </p>
-                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
-                      <span>+ ₹50,000 Cloud Infrastructure</span>
-                      <span>+ Priority Internship Screening</span>
-                    </div>
-                  </motion.div>
-
-                  {/* Third */}
-                  <motion.div variants={fadeItem} className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 order-3">
-                    <div className="flex items-center justify-between">
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#fbbf24' }}>3RD · THIRD PLACE</span>
-                      <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#fbbf24' }}>workspace_premium</span>
-                    </div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹30,000</div>
-                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                      Direct cash + Edge Vision Hardware Dev Kits for each team member.
-                    </p>
-                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
-                      <span>+ Jetson / ESP32 Hardware Bundle</span>
-                      <span>+ Developer Guild Commendation</span>
-                    </div>
-                  </motion.div>
+                      <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: tier.rank.includes('1ST') ? '#34d399' : '#64748b' }}>
+                        {tier.perks.map(perk => (
+                          <span key={perk}>{perk}</span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
 
                 {/* Certification Guarantee */}
@@ -1079,15 +896,15 @@ export default function Home() {
                     <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#38bdf8' }}>verified_user</span>
                     <div className="flex flex-col gap-0.5">
                       <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 14, color: '#f1f5f9' }}>
-                        Digital Certificates for All Finalists
+                        {prizes.certificate.title}
                       </span>
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569' }}>
-                        Verifiable credentials dispatched directly to @vitstudent.ac.in emails
+                        {prizes.certificate.desc}
                       </span>
                     </div>
                   </div>
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399', letterSpacing: '0.1em', flexShrink: 0 }}>
-                    100% ISSUANCE
+                    {prizes.certificate.badge}
                   </span>
                 </motion.div>
               </div>
