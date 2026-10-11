@@ -9,7 +9,16 @@
 		"global_fetch_strictly_public"
 	],
 	"vars": {
-		"ADMIN_ACCESS_KEY": "warden_cyft_2025"
+		"ADMIN_ACCESS_KEY": "warden_cyft_2025",
+		"DATABASE_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require",
+		"DIRECT_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require",
+		"ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com,suyash.srivastava2025@vitstudent.ac.in,triloknath.pandey@vit.ac.in,shashanka.shekhar2024@vitstudent.ac.in",
+		"SUPER_ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com",
+		"NEXT_PUBLIC_ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com,suyash.srivastava2025@vitstudent.ac.in,triloknath.pandey@vit.ac.in,shashanka.shekhar2024@vitstudent.ac.in",
+		"NEXT_PUBLIC_SUPER_ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com",
+		"NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyBQZ0xOLGXQ9MDc9BfAgI_MrZxnO7SOyxY",
+		"NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "solvathon-8d5e3.firebaseapp.com",
+		"NEXT_PUBLIC_FIREBASE_PROJECT_ID": "solvathon-8d5e3"
 	},
 	"assets": {
 		"directory": ".open-next/assets",
