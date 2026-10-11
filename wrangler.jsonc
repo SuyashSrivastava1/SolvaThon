@@ -8,6 +8,13 @@
 		"nodejs_compat_populate_process_env",
 		"global_fetch_strictly_public"
 	],
+	"rules": [
+		{
+			"type": "CompiledWasm",
+			"globs": ["**/*.wasm"],
+			"fallthrough": true
+		}
+	],
 	"vars": {
 		"ADMIN_ACCESS_KEY": "warden_cyft_2025",
 		"DATABASE_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require",

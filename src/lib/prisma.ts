@@ -41,27 +41,23 @@ function createPrismaClient(): PrismaClient {
   const rawUrl = getDatabaseUrl();
   const connectionString = cleanDatabaseUrl(rawUrl);
 
-  if (connectionString) {
-    try {
-      const pool = new Pool({
-        connectionString,
-        ssl: { rejectUnauthorized: false },
-        max: 5,
-        connectionTimeoutMillis: 10000,
-        idleTimeoutMillis: 10000,
-      });
-
-      const adapter = new PrismaPg(pool);
-      return new PrismaClient({
-        adapter,
-        log: ['error', 'warn']
-      });
-    } catch (e) {
-      console.error('Failed to initialize PrismaPg adapter, falling back to standard PrismaClient:', e);
-    }
+  if (!connectionString) {
+    console.error('DATABASE_URL or DIRECT_URL not found in runtime environment.');
   }
 
-  return new PrismaClient();
+  const pool = new Pool({
+    connectionString: connectionString || undefined,
+    ssl: { rejectUnauthorized: false },
+    max: 5,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 10000,
+  });
+
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({
+    adapter,
+    log: ['error', 'warn']
+  });
 }
 
 export function getPrismaClient(): PrismaClient {
