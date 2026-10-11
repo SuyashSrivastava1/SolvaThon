@@ -7,12 +7,26 @@ declare global {
   var pgPoolGlobal: Pool | undefined;
 }
 
-function getDatabaseUrl(): string {
-  return (
-    process.env.DATABASE_URL ||
-    process.env.DIRECT_URL ||
-    ""
-  );
+export function getDatabaseUrl(): string {
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (process.env.DIRECT_URL) return process.env.DIRECT_URL;
+
+  try {
+    const { getCloudflareContext } = require("@opennextjs/cloudflare");
+    const cfCtx = getCloudflareContext();
+    if (cfCtx?.env?.DATABASE_URL) {
+      process.env.DATABASE_URL = cfCtx.env.DATABASE_URL as string;
+      return cfCtx.env.DATABASE_URL as string;
+    }
+    if (cfCtx?.env?.DIRECT_URL) {
+      process.env.DIRECT_URL = cfCtx.env.DIRECT_URL as string;
+      return cfCtx.env.DIRECT_URL as string;
+    }
+  } catch (e) {
+    // getCloudflareContext is not available outside cloudflare worker request
+  }
+
+  return "";
 }
 
 function createPrismaClient(): PrismaClient {

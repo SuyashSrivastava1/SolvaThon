@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import prisma, { getDatabaseUrl } from "@/lib/prisma";
 import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
 
 const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY || "warden_cyft_2025";
@@ -31,10 +31,11 @@ export async function getAdminData(tokenOrEmail?: string | null) {
 
   const isSuperAdmin = isSuperAdminEmail(tokenOrEmail) || isKeyValid;
 
-  if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+  const dbUrl = getDatabaseUrl();
+  if (!dbUrl) {
     return {
       success: false,
-      error: "DATABASE_URL is missing in Cloudflare environment variables. Please add it in Cloudflare Dashboard under Settings > Variables and Secrets."
+      error: "DATABASE_URL is missing in Cloudflare environment variables. Please add it in Cloudflare Dashboard under Settings > Variables and Secrets and make sure to click Save/Deploy."
     };
   }
 
