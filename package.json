@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "postinstall": "prisma generate",
+    "postinstall": "node scripts/patch-opennext.js && prisma generate",
     "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
