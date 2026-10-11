@@ -40,7 +40,7 @@ export async function registerParticipant(data: z.infer<typeof registrationSchem
     return { success: true, ticketId: participant.ticketId };
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message };
+      return { success: false, error: error.issues[0]?.message || "Validation failed" };
     }
     console.error("Registration Error:", error);
     return { success: false, error: "Something went wrong during registration." };
@@ -50,6 +50,7 @@ export async function registerParticipant(data: z.infer<typeof registrationSchem
 export async function checkIsRegistered(firebaseUid: string) {
   try {
     const user = await prisma.participant.findUnique({ where: { firebaseUid } });
+    console.log("checkIsRegistered", firebaseUid, !!user);
     return !!user;
   } catch (error) {
     console.error("Check Registration Error:", error);

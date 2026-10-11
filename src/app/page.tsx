@@ -1,607 +1,1122 @@
+"use client";
 
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { motion, type Variants } from 'framer-motion';
+import { getParticipantCount } from '@/actions/stats';
 
+/* ═══════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════ */
+const problemStatements = [
+  {
+    id: "PS-01",
+    title: "Autonomous Hostel Energy Grid Balancing",
+    track: "POWER SYSTEMS",
+    icon: "bolt",
+    color: "#38bdf8",
+    tags: ["IoT / ESP32", "Reinforcement Learning"],
+    description: "Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods."
+  },
+  {
+    id: "PS-02",
+    title: "Real-time Mess Queue & Waste Analytics",
+    track: "SMART DINING",
+    icon: "restaurant",
+    color: "#34d399",
+    tags: ["YOLOv8 Edge", "WebSockets API"],
+    description: "Build an edge-deployed computer vision pipeline that estimates tray depletion rates and predicts queue wait times across 4 dining halls."
+  },
+  {
+    id: "PS-03",
+    title: "Localized Mesh Network for Disaster Comms",
+    track: "DISASTER COMMS",
+    icon: "cell_tower",
+    color: "#a855f7",
+    tags: ["LoRaWAN", "Cryptographic Gossip"],
+    description: "Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between hostel blocks for emergency notifications."
+  },
+  {
+    id: "PS-04",
+    title: "Attendance Verification via Edge Vision",
+    track: "RESIDENTIAL ACCESS",
+    icon: "face",
+    color: "#f59e0b",
+    tags: ["TensorRT", "Local SQLite Cache"],
+    description: "Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals for 4,000+ students."
+  },
+  {
+    id: "PS-05",
+    title: "Hostel Water Storage & Telemetry Pipeline",
+    track: "HYDRO-TELEMETRY",
+    icon: "water_drop",
+    color: "#22d3ee",
+    tags: ["Ultrasonic Sensors", "MQTT Pipeline"],
+    description: "Automated hydrostatic pressure sensors and overhead water volume forecasting engine to eliminate nocturnal dryouts across blocks A–D."
+  },
+  {
+    id: "PS-06",
+    title: "Acoustic Silence Enforcement in Study Halls",
+    track: "ACOUSTIC SENSING",
+    icon: "graphic_eq",
+    color: "#f43f5e",
+    tags: ["MEMS Array", "Edge Impulse"],
+    description: "Spatial audio classification of decibel spikes and automated gentle visual warnings to preserve nocturnal study atmospheres without human intervention."
+  },
+];
+
+const committeeMembers = [
+  {
+    name: "Dr. S. Ramanathan",
+    role: "Director, Student Welfare",
+    desc: "Overseeing campus residential life and overall event logistics clearance.",
+    tag: "DIRECTORATE",
+    jurisdiction: "Central Campus",
+    email: "dsw@vitstudent.ac.in",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAUdGnz3R9OB7qp_hGpHYYmMqu0KqgDWw2hsdC_-sBAGaKvzXPXWwzMt5BcvFftLPfNxAgnVSpp2Ht22eKhBAMxjfQu8ekSq5xvkaV2mRLDYeiZOsW3kcHUPDRaul689PTwdLfgVdU-jMYoh9K8zxGf0SVj7Z0F2KYghmSN9qsQuS2J2VYC168-FW7D1KFTPz2eruF97CI2iXHCIgCjj_LjgpZ16d97oYTbzljpIQs4VIxTJ5jjtc69"
+  },
+  {
+    name: "Prof. K. Narayanan",
+    role: "Senior Warden, Men's Blocks",
+    desc: "Hostel Blocks A–D nocturnal logistics, entry permissions and power grid sync.",
+    tag: "WARDEN · MH",
+    jurisdiction: "Men's Hostel (Blocks A-D)",
+    email: "warden.mh@vit.ac.in",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCR1Psm8D6qvAeXUaQxiGZ7qiwAy6RlPSYWCw7mI0_T5xAGq2qpeM1EiXKp04mR6tz5JeSXGWkpC8rTp0rRaD_mMonEd6rTAS9UZesJ2L6iNBzsXI64WljzLJwreVbLv8OBJ7WrrIuLS-urURjLV6AkXaipMAqo-y5yfqyAlc2JDdQU6BVlz01VN7r4wsx50OfqFzomvl6-2Sw9S0zsor_ErFmU5KKb-WSbvUjvTVc6OdjnEiBhJ3iU"
+  },
+  {
+    name: "Dr. Priya Nair",
+    role: "Senior Warden, Women's Blocks",
+    desc: "Hostel Blocks E–G logistics, transit coordination and safety protocols.",
+    tag: "WARDEN · LH",
+    jurisdiction: "Ladies' Hostel (Blocks E-G)",
+    email: "warden.lh@vit.ac.in",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBe6yhOf-rEFb-98r6YVo1J1K1N7CijZF_fSiLgE_zhpO98QM9uP9EhCqoD4kPxqlt-35YKSfmyWMHyUMfWxS1Aa0fjk-HtJ4ODKA3HsbOZLj0uvJvB1KRTgtTM2HEBcAwz0ri8ntA2SwiaetyDnc_5wjSUTLLq6axtN1ZR6m18Z9UtVHm7fr70yVcDCCvYTGoWzGVsLUEk4GiNgxa6s87L1-Hz_5gt4vMllUTpVQn8hs-kDAZXIN2G"
+  },
+  {
+    name: "Arnav Deshmukh",
+    role: "Chief Technical Convener",
+    desc: "Lead architect of intranet judge pipelines, automated check-ins and hackathon logistics.",
+    tag: "STUDENT CHAIR",
+    jurisdiction: "Room 412, Block-B",
+    email: "techlead@cyfthack.org",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBUftHvl3VM7sCzAefpwNWol6Jfbm2_B6_Pvxc9M4RWfXTwTXE9C1W8VrjyWZkuAsvFIvakishLU7tlwPu3C6kzzU1n39So-fOHKYKXQB0eGMRMLixdLrLvX4O1Pev0Hg87NuqXdHISvd6b5v7--6y1k_mwI8IDct6HxPDHDBAM7BBt5mObUKl6gptyDdu6ps_jD02k9EEuKM64j_dEzTGFumEH9wGn_pvzmZqPXmsla213_TViCiWw"
+  },
+];
+
+const timelineMilestones = [
+  {
+    time: "DAY 1 · 09:00",
+    title: "Check-in & Team Verification",
+    desc: "DSW pass validation & biometrics",
+    icon: "badge",
+    color: "#38bdf8",
+    x: 90,
+    y: 470,
+    pinDirection: "down"
+  },
+  {
+    time: "DAY 1 · 11:00",
+    title: "Problem Statements Released",
+    desc: "24-hour hackathon timer starts",
+    icon: "rocket_launch",
+    color: "#22d3ee",
+    x: 295,
+    y: 280,
+    pinDirection: "up"
+  },
+  {
+    time: "DAY 1 · 17:00",
+    title: "Mentorship & Architecture Review",
+    desc: "Milestone-1 checkpoint",
+    icon: "groups",
+    color: "#34d399",
+    x: 515,
+    y: 470,
+    pinDirection: "down"
+  },
+  {
+    time: "DAY 2 · 00:00",
+    title: "Midnight Hack & Fuel Refuel",
+    desc: "Energy boosters & nocturnal dev",
+    icon: "restaurant",
+    color: "#a855f7",
+    x: 725,
+    y: 280,
+    pinDirection: "up"
+  },
+  {
+    time: "DAY 2 · 08:00",
+    title: "Code Freeze & Intranet Eval",
+    desc: "Submissions lock & judging",
+    icon: "gavel",
+    color: "#f43f5e",
+    x: 935,
+    y: 470,
+    pinDirection: "down"
+  },
+  {
+    time: "DAY 2 · 11:00",
+    title: "Valedictory & Cash Awards",
+    desc: "Final pitches & prize ceremony",
+    icon: "trophy",
+    color: "#f59e0b",
+    x: 1115,
+    y: 280,
+    pinDirection: "up"
+  },
+];
+
+
+
+/* ═══════════════════════════════════════════
+   HOOKS
+   ═══════════════════════════════════════════ */
+
+/** Live countdown to Target Date */
+function useCountdown(target: Date) {
+  const calc = useCallback(() => {
+    const diff = target.getTime() - Date.now();
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diff % (1000 * 60)) / 1000),
+    };
+  }, [target]);
+
+  const [t, setT] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+  }, [calc]);
+  return t;
+}
+
+/** Smooth animated number counter */
+function useAnimatedNumber(target: number, duration = 1200) {
+  const [val, setVal] = useState(0);
+  const rafRef = useRef(0);
+  const startRef = useRef<number | null>(null);
+  const fromRef = useRef(0);
+
+  useEffect(() => {
+    if (target === 0) return;
+    fromRef.current = val;
+    startRef.current = null;
+
+    const step = (ts: number) => {
+      if (!startRef.current) startRef.current = ts;
+      const elapsed = ts - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setVal(Math.round(fromRef.current + (target - fromRef.current) * eased));
+      if (progress < 1) rafRef.current = requestAnimationFrame(step);
+    };
+
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
+
+  return val;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION VARIANTS (CASCADE IN, FADE OUT ALL AT ONCE)
+   ═══════════════════════════════════════════ */
+const staggerContainer: Variants = {
+  hidden: {
+    transition: {
+      duration: 0.35,
+      ease: "easeInOut",
+      staggerChildren: 0, // When leaving viewport: fade out all at once!
+    },
+  },
+  visible: {
+    transition: {
+      duration: 0.4,
+      staggerChildren: 0.1, // When entering viewport: fade in element by element!
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const fadeItem: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 16,
+    transition: {
+      duration: 0.25,
+      ease: "easeInOut",
+    },
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
+/* ═══════════════════════════════════════════
+   GDG-STYLE LAYERED OUTLINE TIMER COMPONENT
+   ═══════════════════════════════════════════ */
+function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) {
+  const d = String(timeLeft.days).padStart(2, '0');
+  const h = String(timeLeft.hours).padStart(2, '0');
+  const m = String(timeLeft.minutes).padStart(2, '0');
+  const s = String(timeLeft.seconds).padStart(2, '0');
+
+  const timeDisplay = `${d}d : ${h}h : ${m}m : ${s}s`;
+
+  return (
+    <div className="w-full flex flex-col items-center justify-center select-none py-1" suppressHydrationWarning>
+      <div
+        className="gdg-timer-stack w-full flex justify-center text-center tracking-tight"
+        style={{
+          fontSize: 'clamp(2.2rem, 5.8vw, 6.2rem)',
+        }}
+        suppressHydrationWarning
+      >
+        {/* Top 2nd layered outline */}
+        <div className="gdg-timer-layer-top2" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Top 1st layered outline */}
+        <div className="gdg-timer-layer-top1" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Center Glowing Main Outline */}
+        <div className="gdg-timer-layer-center" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Bottom 1st layered outline */}
+        <div className="gdg-timer-layer-bot1" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Bottom 2nd layered outline */}
+        <div className="gdg-timer-layer-bot2" suppressHydrationWarning>{timeDisplay}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   MAIN PAGE
+   ═══════════════════════════════════════════ */
 export default function Home() {
+  const targetDate = useMemo(() => new Date('2026-12-01T23:59:59+05:30'), []);
+  const timeLeft = useCountdown(targetDate);
+
+  const [rawCount, setRawCount] = useState(0);
+  const participantCount = useAnimatedNumber(rawCount);
+
+  const [scrolled, setScrolled] = useState(false);
+
+  // Live participant count
+  useEffect(() => {
+    const fetch_ = async () => {
+      const c = await getParticipantCount();
+      setRawCount(c);
+    };
+    fetch_();
+    const id = setInterval(fetch_, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Navbar scroll background trigger to prevent hero text overlapping
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Support direct section deep-linking via query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sec = params.get('section');
+    if (sec) {
+      setTimeout(() => {
+        document.getElementById(sec)?.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }, 50);
+    }
+  }, []);
+
+  const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <>
-<header className="fixed top-0 w-full z-50 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div className="h-20 w-full max-w-[1440px] mx-auto px-gutter-mobile lg:px-gutter flex items-center justify-between gap-space-md"><div className="flex items-center gap-space-md shrink-0"><img alt="CYFT Hackathon Logo" className="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UUEiCGnn5c_bL-wgu_f9haQuNvG0PPpo-bxmRNghgv5oV9BPGKdOeWF5tHDOfYPrtxRlGQi5nl8Is3SKJkRdCs_CcoAx0fv2GMcozlJYRvLfDPbhCltT8Jlinez_oxmOKJOKCb9887ptoUHuymDVPsogBFq079iIewYsQUdPxgV5SEfhMP2CVDcevbSk2iSJv9Fp9TnFOZPs4Mk2dHyrBT3K7KSBZQVqoE9mgo1DDlg784vtZVlvouJNI"/><div className="flex flex-col"><div className="flex items-center gap-space-sm"><span className="font-headline-sm text-headline-sm tracking-tight text-on-surface">CYFT // HACK 2025</span><div className="flex items-center gap-space-xs px-space-xs py-0.5 rounded-full bg-surface-container-high"><span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span><span className="font-label-sm text-label-sm text-tertiary uppercase">LIVE EVENT</span></div></div></div></div><nav className="hidden xl:flex items-center gap-space-lg" data-active-classes="text-primary font-semibold"><a className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="problem-statements" href="#">Problem Statements</a><a className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="timeline" href="#">Timeline</a><a className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="committee-and-wardens" href="#">Committee &amp; Wardens</a><a className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="guests-and-prizes" href="#">Guests &amp; Prizes</a><a className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="rules" href="#">Rules</a></nav><div className="flex items-center gap-space-md shrink-0"><div className="hidden sm:flex items-center gap-space-sm px-space-md py-1.5 rounded-full bg-surface-container-high"><span className="w-2 h-2 rounded-full bg-primary-container animate-ping"></span><span className="font-label-sm text-label-sm text-primary tracking-wider uppercase font-medium">142 PARTICIPANTS</span></div><a className="hidden md:inline-flex font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors px-space-sm py-1.5" data-path="login" href="#">Login</a><a className="inline-flex items-center justify-center px-space-lg py-2 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm font-semibold hover:bg-secondary-container hover:text-on-secondary transition-all shadow-[0_0_24px_-4px_rgba(56,189,248,0.25)]" data-path="register" href="#">Register Now</a><div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main className="w-full pt-20 bg-background"><div className="flex flex-col w-full">
+      {/* ── HIGH-DENSITY SOLID/GLASS NAV (PREVENTS OVERLAPPING CLASH) ── */}
+      <header className="fixed top-0 w-full z-50 transition-all duration-300">
+        <div
+          className={`mx-3 sm:mx-6 mt-3 rounded-2xl transition-all duration-300 ${
+            scrolled
+              ? 'bg-[#030712]/95 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.05)]'
+              : 'bg-[#030712]/70 backdrop-blur-xl border border-white/[0.08]'
+          }`}
+        >
+          <div className="h-16 max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+              <div
+                className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center transition-transform group-hover:scale-105"
+                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 15, color: '#030712' }}
+              >
+                S
+              </div>
+              <div className="hidden sm:flex flex-col leading-none">
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
+                  Solve-a-thon
+                </span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 500, fontSize: 10, color: '#64748b', letterSpacing: '0.05em' }}>
+                  2026-27
+                </span>
+              </div>
+            </Link>
 
-<section className="relative w-full overflow-hidden px-gutter-mobile lg:px-gutter py-space-xl lg:py-24">
+            <nav className="hidden xl:flex items-center gap-6">
+              {[
+                { l: 'Problem Statements', id: 'problems' },
+                { l: 'Timeline', id: 'timeline' },
+                { l: 'Committee', id: 'committee' },
+                { l: 'Prizes', id: 'guests-prizes' },
+              ].map(n => (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  onClick={e => scrollTo(e, n.id)}
+                  style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#f1f5f9')}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
+                >
+                  {n.l}
+                </a>
+              ))}
+              <Link href="/rules" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: '#94a3b8' }} className="hover:!text-slate-100 transition-colors">
+                Rules
+              </Link>
+            </nav>
 
-<div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-primary/10 rounded-full blur-[140px] pointer-events-none"></div>
-<div className="absolute top-1/3 -right-24 w-[420px] h-[420px] bg-tertiary/5 rounded-full blur-[120px] pointer-events-none"></div>
-<div className="max-w-[1440px] mx-auto flex flex-col gap-space-xl relative z-10">
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Live registration counter pill */}
+              <div
+                className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <span className="relative w-[7px] h-[7px] rounded-full bg-emerald-400 live-dot" />
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#34d399', letterSpacing: '0.08em' }}>
+                  {participantCount} REGISTERED
+                </span>
+              </div>
 
-<div className="flex flex-wrap items-center gap-space-sm">
-<div className="inline-flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-surface-container-high/70 backdrop-blur-md">
-<span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-<span className="font-label-sm text-label-sm text-primary uppercase tracking-wider font-semibold">Vellore Institute of Technology • Flagship Hackathon 2025</span>
-</div>
-<div className="hidden sm:inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-lowest text-outline">
-<span className="font-label-sm text-label-sm">NODE: VIT-VLR-HOSTEL-RESIDENCY</span>
-</div>
-</div>
+              <Link
+                className="hidden md:inline-flex px-3 py-1.5 transition-colors"
+                href="/login"
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 500, color: '#94a3b8' }}
+              >
+                Login
+              </Link>
 
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
-<div className="lg:col-span-8 flex flex-col gap-space-md">
-<h1 className="font-headline-xl text-headline-xl uppercase tracking-tighter text-on-surface">
-            CYFT // INTELLIGENCE <br/>
-<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-container to-secondary-fixed">IN RESIDENCE</span>
-</h1>
-<p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            The premier 36-hour residential engineering hackathon exclusively for hostel innovators and autonomous builders. Built within the residential halls to solve ground-level spatial, computational, and micro-grid challenges.
-          </p>
-<div className="flex flex-wrap items-center gap-space-md pt-space-sm">
-<a className="inline-flex items-center justify-center gap-space-xs px-space-xl py-3.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-md font-bold shadow-[0_0_32px_rgba(56,189,248,0.3)] hover:bg-secondary-container hover:text-on-secondary transition-all" href="/rules">
-<span className="material-symbols-outlined text-[20px]">how_to_reg</span>
-              Register Now — Hostellites Only
-            </a>
-<a className="inline-flex items-center justify-center gap-space-xs px-space-lg py-3.5 rounded-lg bg-surface-container-high/80 text-on-surface hover:bg-surface-bright transition-colors font-headline-sm text-body-md font-medium" href="#problems">
-<span className="material-symbols-outlined text-[18px]">terminal</span>
-              Explore Problem Statements
-            </a>
-</div>
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center px-5 py-2 rounded-xl font-semibold text-[13px] transition-all hover:scale-[1.03] active:scale-[0.98]"
+                style={{
+                  background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                  color: '#030712',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  boxShadow: '0 0 24px rgba(56,189,248,0.3)',
+                }}
+              >
+                Register
+              </Link>
 
-
-<div className="flex flex-col items-start mt-12 w-full select-none">
-  <div className="relative font-bold tracking-tighter leading-none" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 'clamp(3rem, 8vw, 8rem)' }}>
-    <div className="absolute -top-[20%] opacity-10 text-transparent" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.4)' }}>00d:00h:00m</div>
-    <div className="absolute -top-[10%] opacity-30 text-transparent" style={{ WebkitTextStroke: '1.5px rgba(255,255,255,0.6)' }}>00d:00h:00m</div>
-    <div className="relative text-transparent" style={{ WebkitTextStroke: '2px rgba(255,255,255,1)' }}>00d:00h:00m</div>
-    <div className="absolute -bottom-[10%] opacity-30 text-transparent" style={{ WebkitTextStroke: '1.5px rgba(255,255,255,0.6)' }}>00d:00h:00m</div>
-    <div className="absolute -bottom-[20%] opacity-10 text-transparent" style={{ WebkitTextStroke: '1px rgba(255,255,255,0.4)' }}>00d:00h:00m</div>
-  </div>
-  <p className="mt-[20%] sm:mt-[15%] md:mt-[10%] lg:mt-16 font-label-md text-primary tracking-widest uppercase text-sm font-semibold">Time remaining until registrations close</p>
-</div>
-</div>
-
-<div className="lg:col-span-4 flex flex-col gap-space-md w-full">
-  <div className="bg-surface-container-low/90 backdrop-blur-xl p-space-lg rounded-xl shadow-xl flex flex-col gap-space-md">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-space-xs">
-        <span className="w-2 h-2 rounded-full bg-tertiary"></span>
-        <span className="font-label-sm text-label-sm text-tertiary uppercase font-medium">SYS.MONITOR // VERIFIED</span>
-      </div>
-      <span className="font-label-sm text-label-sm text-outline">SLOTS: 200 CAP</span>
-    </div>
-    <div className="flex items-baseline justify-between">
-      <div>
-        <span className="font-headline-xl text-[68px] leading-none font-extrabold text-on-surface tracking-tight" id="live-counter">148</span>
-        <div className="font-label-sm text-label-sm text-outline uppercase mt-1">Live Registered Participants</div>
-      </div>
-      <div className="text-right">
-        <span className="inline-flex items-center px-space-xs py-0.5 rounded bg-tertiary/10 text-tertiary font-label-sm text-label-sm">
-          &gt;100 THRESHOLD MET
-        </span>
-        <div className="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center justify-end gap-1">
-          <span className="material-symbols-outlined text-[14px] text-tertiary">check_circle</span>
-          HOSTEL VERIFIED
+              <Link
+                href="/profile"
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all hover:bg-white/[0.08]"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <span className="material-symbols-outlined text-slate-400" style={{ fontSize: 17 }}>person</span>
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-    <div className="w-full bg-surface-container-lowest/60 p-space-sm rounded-lg flex flex-col gap-space-xs">
-      <div className="flex justify-between items-center text-outline font-label-sm text-label-sm">
-        <span>INTAKE ACCELERATION</span>
-        <span className="text-primary font-medium">+4 checked in 12m ago</span>
-      </div>
-      <svg className="w-full h-12 text-primary" fill="none" viewBox="0 0 320 48">
-        <path d="M0 40 L30 38 L60 32 L90 35 L120 28 L150 24 L180 30 L210 18 L240 22 L270 12 L300 8 L320 4" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-        <path d="M0 40 L30 38 L60 32 L90 35 L120 28 L150 24 L180 30 L210 18 L240 22 L270 12 L300 8 L320 4 L320 48 L0 48 Z" fill="currentColor" fillOpacity="0.08" />
-      </svg>
-    </div>
-  </div>
-</div>
-</div>
+      </header>
 
-<div className="grid grid-cols-2 md:grid-cols-4 gap-space-md pt-space-md">
-  <div className="bg-surface-container-low p-space-md rounded-lg flex items-center gap-space-sm">
-    <span className="material-symbols-outlined text-primary text-[24px]">apartment</span>
-    <div className="flex flex-col">
-      <span className="font-headline-sm text-body-md font-semibold text-on-surface">Campus Core</span>
-      <span className="font-body-sm text-body-sm text-outline">Smart Room 101 Labs</span>
-    </div>
-  </div>
-  <div className="bg-surface-container-low p-space-md rounded-lg flex items-center gap-space-sm">
-    <span className="material-symbols-outlined text-tertiary text-[24px]">offline_bolt</span>
-    <div className="flex flex-col">
-      <span className="font-headline-sm text-body-md font-semibold text-on-surface">Zero Cloud Failover</span>
-      <span className="font-body-sm text-body-sm text-outline">Intranet Mesh &amp; Power</span>
-    </div>
-  </div>
-  <div className="bg-surface-container-low p-space-md rounded-lg flex items-center gap-space-sm">
-    <span className="material-symbols-outlined text-secondary text-[24px]">security</span>
-    <div className="flex flex-col">
-      <span className="font-headline-sm text-body-md font-semibold text-on-surface">Hostel Bio-Pass</span>
-      <span className="font-body-sm text-body-sm text-outline">Strict Late-Night Entry</span>
-    </div>
-  </div>
-  <div className="bg-surface-container-low p-space-md rounded-lg flex items-center gap-space-sm">
-    <span className="material-symbols-outlined text-primary-container text-[24px]">payments</span>
-    <div className="flex flex-col">
-      <span className="font-headline-sm text-body-md font-semibold text-on-surface">₹1,50,000 Pool</span>
-      <span className="font-body-sm text-body-sm text-outline">Direct Cash &amp; Credits</span>
-    </div>
-  </div>
-</div>
-</div>
-</section>
+      {/* ── MAIN CONTENT ── */}
+      <main className="w-full pt-16 sm:pt-20 bg-[#030712] overflow-x-clip">
+        <div className="flex flex-col w-full">
 
-<section className="w-full px-gutter-mobile lg:px-gutter py-space-xl bg-surface-container-lowest/50" id="problems">
-<div className="max-w-[1440px] mx-auto flex flex-col gap-space-xl">
+          {/* ════════ HERO SECTION (FITS FULLY ON LAPTOP SCREEN, GDG FULL-WIDTH BOTTOM TIMER) ════════ */}
+          <section id="hero" className="relative w-full min-h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-4.5rem)] flex flex-col justify-between pt-2 sm:pt-4 pb-3 sm:pb-4 overflow-hidden">
+            {/* Ambient lighting orbs */}
+            <div className="absolute top-[-100px] left-[20%] w-[550px] h-[350px] rounded-full bg-cyan-500/[0.08] blur-[160px] pointer-events-none ambient-orb" />
+            <div className="absolute top-[35%] right-[-5%] w-[450px] h-[450px] rounded-full bg-indigo-500/[0.05] blur-[140px] pointer-events-none ambient-orb-delay" />
+            <div className="absolute bottom-[-50px] left-[-10%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.04] blur-[120px] pointer-events-none ambient-orb" />
 
-<div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
-<div className="flex flex-col gap-space-xs">
-<div className="flex items-center gap-space-xs">
-<span className="font-label-sm text-label-sm text-primary uppercase">PROTOCOL // 02</span>
-<span className="text-outline">•</span>
-<span className="font-label-sm text-label-sm text-outline uppercase">ENGINEERING CHALLENGES</span>
-</div>
-<h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">CHALLENGE DOMAINS &amp; TRACKS</h2>
-<p className="font-body-md text-body-md text-on-surface-variant max-w-xl">
-            Selected problem statements engineered to address high-friction bottlenecks within university residential infrastructure.
-          </p>
-</div>
+            <motion.div 
+              variants={staggerContainer}
+              initial="hidden" 
+              whileInView="visible" 
+              viewport={{ once: false, amount: 0.05 }} 
+              className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-between h-full flex-1"
+            >
+              {/* Top Row: Left Side (Text & CTAs) and Right Side (Large Stat Cards) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2 sm:pt-4 my-auto">
+                {/* Left Side: Big Bold Text & CTAs shifted upwards */}
+                <div className="lg:col-span-7 flex flex-col items-start text-left gap-3.5 sm:gap-4">
+                  {/* Pill badge */}
+                  <motion.div variants={fadeItem} className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full glass-card" style={{ boxShadow: 'none' }}>
+                    <span className="relative w-[6px] h-[6px] rounded-full bg-cyan-400 live-dot" />
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#67e8f9', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                      VIT Chennai · Hostellite Hackathon
+                    </span>
+                  </motion.div>
 
-<div className="flex flex-wrap items-center gap-space-xs" id="track-filters">
-<button className="px-space-md py-1.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm font-semibold transition-all" type="button">All Domains</button>
-<button className="px-space-md py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-all" type="button">Edge Intelligence</button>
-<button className="px-space-md py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-all" type="button">Campus Logistics</button>
-<button className="px-space-md py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-all" type="button">Autonomous Agents</button>
-</div>
-</div>
+                  {/* Massive Title */}
+                  <motion.div variants={fadeItem} className="flex flex-col">
+                    <h1 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 0.95, fontSize: 'clamp(3.2rem, 5.8vw, 6.4rem)' }} className="flex flex-col">
+                      <span className="text-white">SOLVE</span>
+                      <div className="flex items-center gap-3">
+                        <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-emerald-400 bg-clip-text" style={{ WebkitTextFillColor: 'transparent' }}>-A-</span>
+                        <span className="text-white">THON</span>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: '#64748b', letterSpacing: '0.15em', marginLeft: 8 }} className="self-center">
+                          2026-27
+                        </span>
+                      </div>
+                    </h1>
+                  </motion.div>
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+                  {/* Subtitle (24 hours!) */}
+                  <motion.p variants={fadeItem} className="max-w-xl" style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, lineHeight: 1.6, color: '#94a3b8' }}>
+                    VIT Chennai&apos;s premier hackathon exclusively for hostellites. 24 hours of nocturnal engineering, distributed systems, and real campus challenges.
+                  </motion.p>
 
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col justify-between gap-space-md hover:bg-surface-container transition-all shadow-md">
-<div className="flex flex-col gap-space-sm">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary px-space-xs py-0.5 bg-primary/10 rounded">TRACK // POWER SYSTEMS</span>
-<span className="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
-<span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-                HIGH IMPACT
-              </span>
-</div>
-<h3 className="font-headline-md text-headline-md text-on-surface">PS-01: Autonomous Hostel Energy Grid Balancing</h3>
-<p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-              Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods without shedding critical room loads.
-            </p>
-</div>
-<div className="flex flex-col gap-space-sm pt-space-sm">
-<div className="flex flex-wrap items-center gap-space-xs text-outline font-label-sm text-label-sm">
-<span className="bg-surface-container-high px-space-xs py-1 rounded">IoT / ESP32</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Reinforcement Learning</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Mentor: Dr. Ramanathan</span>
-</div>
-<div className="flex items-center justify-between pt-2">
-<span className="font-body-sm text-body-sm text-outline">Difficulty: Level 4/5</span>
-<button className="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-secondary transition-colors font-medium">
-                View Technical Spec <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-</button>
-</div>
-</div>
-</div>
+                  {/* CTAs */}
+                  <motion.div variants={fadeItem} className="flex flex-wrap items-center gap-3.5 pt-1">
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold transition-all hover:scale-[1.03] active:scale-[0.98] text-sm sm:text-base"
+                      style={{
+                        background: 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                        color: '#030712',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        boxShadow: '0 0 30px rgba(56,189,248,0.35)',
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>how_to_reg</span>
+                      Register Now
+                    </Link>
+                    <a
+                      href="#problems"
+                      onClick={(e: any) => { e.preventDefault(); document.getElementById('problems')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl glass-card font-semibold transition-all hover:scale-[1.02] text-sm sm:text-base text-slate-200"
+                      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: 'none' }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>terminal</span>
+                      View Challenges
+                    </a>
+                  </motion.div>
+                </div>
 
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col justify-between gap-space-md hover:bg-surface-container transition-all shadow-md">
-<div className="flex flex-col gap-space-sm">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary px-space-xs py-0.5 bg-primary/10 rounded">TRACK // SMART DINING</span>
-<span className="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
-<span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-                CRITICAL NEED
-              </span>
-</div>
-<h3 className="font-headline-md text-headline-md text-on-surface">PS-02: Real-time Mess Queue &amp; Waste Analytics</h3>
-<p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-              Build an edge-deployed computer vision pipeline that estimates tray depletion rates, predicts queue wait times across 4 dining halls, and triggers automated surplus notifications for hostel staff.
-            </p>
-</div>
-<div className="flex flex-col gap-space-sm pt-space-sm">
-<div className="flex flex-wrap items-center gap-space-xs text-outline font-label-sm text-label-sm">
-<span className="bg-surface-container-high px-space-xs py-1 rounded">YOLOv8 Edge</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">WebSockets API</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Mentor: Prof. Narayanan</span>
-</div>
-<div className="flex items-center justify-between pt-2">
-<span className="font-body-sm text-body-sm text-outline">Difficulty: Level 3/5</span>
-<button className="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-secondary transition-colors font-medium">
-                View Technical Spec <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-</button>
-</div>
-</div>
-</div>
+                {/* Right Side: Bigger, More Prominent Stat Cards */}
+                <div className="lg:col-span-5 grid grid-cols-2 gap-4 w-full max-w-[480px] mx-auto lg:ml-auto lg:mr-0">
+                  {[
+                    { icon: 'groups', val: `${participantCount}+`, label: 'Registered' },
+                    { icon: 'timer', val: '24h', label: 'Hackathon' },
+                    { icon: 'apartment', val: 'VIT', label: 'Chennai' },
+                    { icon: 'payments', val: '₹1.5L', label: 'Prizes' },
+                  ].map((s) => (
+                    <motion.div
+                      variants={fadeItem}
+                      key={s.label}
+                      className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 transition-all hover:border-cyan-400/40 hover:-translate-y-1 bg-[#090e1a]/85 group"
+                      style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.5)' }}
+                    >
+                      <span className="material-symbols-outlined transition-transform group-hover:scale-110" style={{ fontSize: 32, color: '#38bdf8' }}>{s.icon}</span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 32, color: '#f1f5f9', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.val}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.14em', textTransform: 'uppercase' }}>{s.label}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
 
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col justify-between gap-space-md hover:bg-surface-container transition-all shadow-md">
-<div className="flex flex-col gap-space-sm">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary px-space-xs py-0.5 bg-primary/10 rounded">TRACK // DISASTER COMMS</span>
-<span className="font-label-sm text-label-sm text-secondary-fixed flex items-center gap-1">
-<span className="w-1.5 h-1.5 rounded-full bg-secondary-fixed"></span>
-                HARDWARE HEAVY
-              </span>
-</div>
-<h3 className="font-headline-md text-headline-md text-on-surface">PS-03: Localized Mesh Network for Disaster Comms</h3>
-<p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-              Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between Block A through Block G for emergency notifications when centralized ISP routing drops.
-            </p>
-</div>
-<div className="flex flex-col gap-space-sm pt-space-sm">
-<div className="flex flex-wrap items-center gap-space-xs text-outline font-label-sm text-label-sm">
-<span className="bg-surface-container-high px-space-xs py-1 rounded">LoRaWAN</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Cryptographic Gossip</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Mentor: Dr. Priya Nair</span>
-</div>
-<div className="flex items-center justify-between pt-2">
-<span className="font-body-sm text-body-sm text-outline">Difficulty: Level 5/5</span>
-<button className="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-secondary transition-colors font-medium">
-                View Technical Spec <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-</button>
-</div>
-</div>
-</div>
+              {/* Bottom Row: Full-Width GDG Live Timer Display */}
+              <motion.div 
+                variants={fadeItem}
+                className="w-full pt-4 pb-2 border-t border-white/[0.08] mt-auto"
+              >
+                <div className="flex items-center justify-between pb-1 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="relative w-2 h-2 rounded-full bg-cyan-400 live-dot" />
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.14em' }}>
+                      HACKATHON COMMENCES IN · DEC 01, 2026
+                    </span>
+                  </div>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, color: '#64748b', letterSpacing: '0.12em' }} className="hidden sm:inline">
+                    LIVE COUNTDOWN TO KICKOFF
+                  </span>
+                </div>
+                <GDGTimer timeLeft={timeLeft} />
+              </motion.div>
+            </motion.div>
+          </section>
 
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col justify-between gap-space-md hover:bg-surface-container transition-all shadow-md">
-<div className="flex flex-col gap-space-sm">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary px-space-xs py-0.5 bg-primary/10 rounded">TRACK // RESIDENTIAL ACCESS</span>
-<span className="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
-<span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-                EDGE EMBEDDED
-              </span>
-</div>
-<h3 className="font-headline-md text-headline-md text-on-surface">PS-04: Attendance Verification via Edge Vision</h3>
-<p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-              Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals, logging 4,000 students under 20 minutes without queue stalling or remote server lag.
-            </p>
-</div>
-<div className="flex flex-col gap-space-sm pt-space-sm">
-<div className="flex flex-wrap items-center gap-space-xs text-outline font-label-sm text-label-sm">
-<span className="bg-surface-container-high px-space-xs py-1 rounded">TensorRT</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Local SQLite Cache</span>
-<span className="bg-surface-container-high px-space-xs py-1 rounded">Mentor: Cyber Lead Guild</span>
-</div>
-<div className="flex items-center justify-between pt-2">
-<span className="font-body-sm text-body-sm text-outline">Difficulty: Level 4/5</span>
-<button className="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-secondary transition-colors font-medium">
-                View Technical Spec <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-</button>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-
-<section className="w-full px-gutter-mobile lg:px-gutter py-space-xl" id="timeline">
-<div className="max-w-[1440px] mx-auto flex flex-col gap-space-xl">
-<div className="flex flex-col gap-space-xs">
-<div className="flex items-center gap-space-xs">
-<span className="font-label-sm text-label-sm text-primary uppercase">PROTOCOL // 03</span>
-<span className="text-outline">•</span>
-<span className="font-label-sm text-label-sm text-outline uppercase">CHRONOLOGICAL EXECUTION</span>
-</div>
-<h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">36-HOUR RESIDENTIAL TIMELINE</h2>
-<p className="font-body-md text-body-md text-on-surface-variant max-w-xl">
-          Non-stop development lifecycle anchored in Smart Room 101 with continuous warden gate oversight and milestone evaluations.
-        </p>
-</div>
-
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md relative">
-
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col gap-space-sm relative overflow-hidden group hover:bg-surface-container transition-all">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary font-bold">DAY 1 • 09:00 AM</span>
-<span className="px-space-xs py-0.5 rounded bg-surface-container-high text-tertiary font-label-sm text-label-sm">STATION-1</span>
-</div>
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Check-in &amp; Hostellite Verification</h4>
-<p className="font-body-sm text-body-sm text-on-surface-variant">
-            Physical check-in at Smart Room 101. Student ID, room biometric validation, and allocation of dedicated high-speed switch drops.
-          </p>
-<div className="mt-auto pt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-<span className="material-symbols-outlined text-[14px]">pin_drop</span> Smart Room 101, Technology Tower
-          </div>
-</div>
-
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col gap-space-sm relative overflow-hidden group hover:bg-surface-container transition-all">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary font-bold">DAY 1 • 11:00 AM</span>
-<span className="px-space-xs py-0.5 rounded bg-primary/10 text-primary font-label-sm text-label-sm">KEY TRIGGER</span>
-</div>
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Problem Statements &amp; Clock Start</h4>
-<p className="font-body-sm text-body-sm text-on-surface-variant">
-            Master 36-Hour Hackathon timer begins. GitHub Classroom team repositories unlocked and initial architecture draft submission window opens.
-          </p>
-<div className="mt-auto pt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-<span className="material-symbols-outlined text-[14px]">timer</span> Master Clock Locked: 36:00:00
-          </div>
-</div>
-
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col gap-space-sm relative overflow-hidden group hover:bg-surface-container transition-all">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary font-bold">DAY 1 • 04:00 PM</span>
-<span className="px-space-xs py-0.5 rounded bg-surface-container-high text-outline font-label-sm text-label-sm">MILESTONE 1</span>
-</div>
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Mentorship Review &amp; Roll Call</h4>
-<p className="font-body-sm text-body-sm text-on-surface-variant">
-            Hostel wardens and technical faculty review repository commit progress. Mandatory hostellite residency roll-call check.
-          </p>
-<div className="mt-auto pt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-<span className="material-symbols-outlined text-[14px]">checklist</span> 100% In-Person Verification
-          </div>
-</div>
-
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col gap-space-sm relative overflow-hidden group hover:bg-surface-container transition-all">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-tertiary font-bold">DAY 2 • 12:00 AM</span>
-<span className="px-space-xs py-0.5 rounded bg-tertiary/10 text-tertiary font-label-sm text-label-sm">ENERGY SURGE</span>
-</div>
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Midnight Hack &amp; Snack Drop</h4>
-<p className="font-body-sm text-body-sm text-on-surface-variant">
-            Night rations delivered by Hostel Mess Council. High-caffeine fueling round, rapid-fire lightning bug bounty challenges.
-          </p>
-<div className="mt-auto pt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-<span className="material-symbols-outlined text-[14px]">restaurant</span> Mess Guild Support Active
-          </div>
-</div>
-
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col gap-space-sm relative overflow-hidden group hover:bg-surface-container transition-all">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-error font-bold">DAY 2 • 08:00 AM</span>
-<span className="px-space-xs py-0.5 rounded bg-error/10 text-error font-label-sm text-label-sm">LOCKDOWN</span>
-</div>
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Code Freeze &amp; Final Evaluation</h4>
-<p className="font-body-sm text-body-sm text-on-surface-variant">
-            Strict repository commit freeze. Live hardware demo evaluation in front of technical jury and industry directors.
-          </p>
-<div className="mt-auto pt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-<span className="material-symbols-outlined text-[14px]">gavel</span> 5-Min Strict Pitch + 3-Min Q&amp;A
-          </div>
-</div>
-
-<div className="bg-surface-container-low p-space-lg rounded-xl flex flex-col gap-space-sm relative overflow-hidden group hover:bg-surface-container transition-all">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-secondary-fixed font-bold">DAY 2 • 11:30 AM</span>
-<span className="px-space-xs py-0.5 rounded bg-secondary-fixed/10 text-secondary-fixed font-label-sm text-label-sm">FINALE</span>
-</div>
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Valedictory &amp; Cash Prizes</h4>
-<p className="font-body-sm text-body-sm text-on-surface-variant">
-            Announcement of winners by Chief Guest and Director of Student Welfare. Immediate distribution of ₹1.5L prize pool and certificates.
-          </p>
-<div className="mt-auto pt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
-<span className="material-symbols-outlined text-[14px]">military_tech</span> Main Auditorium Stage
-          </div>
-</div>
-</div>
-</div>
-</section>
-
-<section className="w-full px-gutter-mobile lg:px-gutter py-space-xl bg-surface-container-lowest/50" id="committee">
-<div className="max-w-[1440px] mx-auto flex flex-col gap-space-xl">
-<div className="flex flex-col gap-space-xs">
-<div className="flex items-center gap-space-xs">
-<span className="font-label-sm text-label-sm text-primary uppercase">PROTOCOL // 04</span>
-<span className="text-outline">•</span>
-<span className="font-label-sm text-label-sm text-outline uppercase">GOVERNANCE &amp; WARDENS</span>
-</div>
-<h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">COMMITTEE, DIRECTORS &amp; WARDENS</h2>
-<p className="font-body-md text-body-md text-on-surface-variant max-w-xl">
-          Supervised under the patronage of Student Welfare and the residential hostel authorities ensuring seamless security and technical infrastructure.
-        </p>
-</div>
-
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
-
-<div className="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-md shadow-md">
-<div className="w-full h-48 rounded-lg overflow-hidden relative bg-surface-container">
-<img className="w-full h-full object-cover" data-alt="Distinguished South Asian senior academic director with glasses and formal jacket, smiling with academic authority against dark technology background with ambient cyan lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUdGnz3R9OB7qp_hGpHYYmMqu0KqgDWw2hsdC_-sBAGaKvzXPXWwzMt5BcvFftLPfNxAgnVSpp2Ht22eKhBAMxjfQu8ekSq5xvkaV2mRLDYeiZOsW3kcHUPDRaul689PTwdLfgVdU-jMYoh9K8zxGf0SVj7Z0F2KYghmSN9qsQuS2J2VYC168-FW7D1KFTPz2eruF97CI2iXHCIgCjj_LjgpZ16d97oYTbzljpIQs4VIxTJ5jjtc69"/>
-<div className="absolute top-2 right-2 px-space-xs py-0.5 rounded bg-surface-container-lowest/80 text-primary font-label-sm text-[10px]">DIRECTORATE</div>
-</div>
-<div className="flex flex-col gap-1">
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Dr. S. Ramanathan</h4>
-<span className="font-label-sm text-label-sm text-primary">Director, Student Welfare</span>
-<p className="font-body-sm text-body-sm text-on-surface-variant pt-1">
-              Overseeing campus residential life and overall event logistics clearance.
-            </p>
-</div>
-<div className="mt-auto pt-space-xs flex flex-col gap-1 font-label-sm text-[11px] text-outline">
-<span>JURISDICTION: Central Campus</span>
-<span className="text-on-surface-variant">dsw@vitstudent.ac.in</span>
-</div>
-</div>
-
-<div className="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-md shadow-md">
-<div className="w-full h-48 rounded-lg overflow-hidden relative bg-surface-container">
-<img className="w-full h-full object-cover" data-alt="Professional Indian male professor in formal shirt with determined expression in university lab setting, dark cyan ambient rim light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCR1Psm8D6qvAeXUaQxiGZ7qiwAy6RlPSYWCw7mI0_T5xAGq2qpeM1EiXKp04mR6tz5JeSXGWkpC8rTp0rRaD_mMonEd6rTAS9UZesJ2L6iNBzsXI64WljzLJwreVbLv8OBJ7WrrIuLS-urURjLV6AkXaipMAqo-y5yfqyAlc2JDdQU6BVlz01VN7r4wsx50OfqFzomvl6-2Sw9S0zsor_ErFmU5KKb-WSbvUjvTVc6OdjnEiBhJ3iU"/>
-<div className="absolute top-2 right-2 px-space-xs py-0.5 rounded bg-surface-container-lowest/80 text-tertiary font-label-sm text-[10px]">WARDEN // MH</div>
-</div>
-<div className="flex flex-col gap-1">
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Prof. K. Narayanan</h4>
-<span className="font-label-sm text-label-sm text-primary">Senior Warden, Men's Blocks</span>
-<p className="font-body-sm text-body-sm text-on-surface-variant pt-1">
-              Hostel Blocks A through D nocturnal logistics, entry permissions and power grid sync.
-            </p>
-</div>
-<div className="mt-auto pt-space-xs flex flex-col gap-1 font-label-sm text-[11px] text-outline">
-<span>JURISDICTION: Men's Hostel (Blocks A-D)</span>
-<span className="text-on-surface-variant">warden.mh@vit.ac.in</span>
-</div>
-</div>
-
-<div className="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-md shadow-md">
-<div className="w-full h-48 rounded-lg overflow-hidden relative bg-surface-container">
-<img className="w-full h-full object-cover" data-alt="Professional South Asian female engineering professor and hostel warden with confident calm expression in modern institutional office, deep dark cinematic shadows with soft cyan glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe6yhOf-rEFb-98r6YVo1J1K1N7CijZF_fSiLgE_zhpO98QM9uP9EhCqoD4kPxqlt-35YKSfmyWMHyUMfWxS1Aa0fjk-HtJ4ODKA3HsbOZLj0uvJvB1KRTgtTM2HEBcAwz0ri8ntA2SwiaetyDnc_5wjSUTLLq6axtN1ZR6m18Z9UtVHm7fr70yVcDCCvYTGoWzGVsLUEk4GiNgxa6s87L1-Hz_5gt4vMllUTpVQn8hs-kDAZXIN2G"/>
-<div className="absolute top-2 right-2 px-space-xs py-0.5 rounded bg-surface-container-lowest/80 text-secondary font-label-sm text-[10px]">WARDEN // LH</div>
-</div>
-<div className="flex flex-col gap-1">
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Dr. Priya Nair</h4>
-<span className="font-label-sm text-label-sm text-primary">Senior Warden, Women's Blocks</span>
-<p className="font-body-sm text-body-sm text-on-surface-variant pt-1">
-              Hostel Blocks E through G logistics, transit coordination and safety protocols.
-            </p>
-</div>
-<div className="mt-auto pt-space-xs flex flex-col gap-1 font-label-sm text-[11px] text-outline">
-<span>JURISDICTION: Ladies' Hostel (Blocks E-G)</span>
-<span className="text-on-surface-variant">warden.lh@vit.ac.in</span>
-</div>
-</div>
-
-<div className="bg-surface-container-low p-space-md rounded-xl flex flex-col gap-space-md shadow-md">
-<div className="w-full h-48 rounded-lg overflow-hidden relative bg-surface-container">
-<img className="w-full h-full object-cover" data-alt="Sharp young Indian student leader and software engineer standing in a server room with glowing blue network server racks, wearing dark branded tech hoodie" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUftHvl3VM7sCzAefpwNWol6Jfbm2_B6_Pvxc9M4RWfXTwTXE9C1W8VrjyWZkuAsvFIvakishLU7tlwPu3C6kzzU1n39So-fOHKYKXQB0eGMRMLixdLrLvX4O1Pev0Hg87NuqXdHISvd6b5v7--6y1k_mwI8IDct6HxPDHDBAM7BBt5mObUKl6gptyDdu6ps_jD02k9EEuKM64j_dEzTGFumEH9wGn_pvzmZqPXmsla213_TViCiWw"/>
-<div className="absolute top-2 right-2 px-space-xs py-0.5 rounded bg-surface-container-lowest/80 text-tertiary-fixed font-label-sm text-[10px]">STUDENT CHAIR</div>
-</div>
-<div className="flex flex-col gap-1">
-<h4 className="font-headline-sm text-headline-sm text-on-surface">Arnav Deshmukh</h4>
-<span className="font-label-sm text-label-sm text-primary">Chief Technical Convener</span>
-<p className="font-body-sm text-body-sm text-on-surface-variant pt-1">
-              Lead architect of intranet judge pipelines, automated check-ins and hackathon logistics.
-            </p>
-</div>
-<div className="mt-auto pt-space-xs flex flex-col gap-1 font-label-sm text-[11px] text-outline">
-<span>ROOM 412, BLOCK-B RESIDENCY</span>
-<span className="text-on-surface-variant">techlead@cyfthack.org</span>
-</div>
-</div>
-</div>
-</div>
-</section>
-
-<section className="w-full px-gutter-mobile lg:px-gutter py-space-xl" id="guests-prizes">
-<div className="max-w-[1440px] mx-auto flex flex-col gap-space-xl">
-
-<div className="bg-gradient-to-br from-surface-container-high/80 via-surface-container-low to-surface-container-lowest p-space-lg lg:p-space-xl rounded-2xl shadow-xl flex flex-col lg:flex-row items-center gap-space-xl">
-<div className="w-full lg:w-1/3 aspect-square max-w-[320px] rounded-xl overflow-hidden relative shadow-2xl bg-surface-dim shrink-0">
-<img className="w-full h-full object-cover" data-alt="Celebrated world-class artificial intelligence research scientist delivering a keynote, dramatic rim lighting in electric cyan and deep indigo, futuristic backdrop" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKsMK2gO37tRi6vz-xV5zP992AbGuqGODzPjjoIYUOO87QT8Wq3yQnrMFtwOE9B1wu65BP5Azla_wO8U_7dbbnHZgFhYJCf3l8Jyds88PyMA9HNknXVqWhp3M3lGKEWrjgv7jD032rdjp52X5Td76OjYqm1mqWGcU8gSilqPfazr0p6I-1P3mBwHQzOp8tB9MjWrqbTmZIIF8Jszr6xbUIeI39dGFRCgHLvihSdPsy8vXaClRQ7Kzy"/>
-<div className="absolute bottom-3 left-3 px-space-sm py-1 rounded bg-surface-container-lowest/90 text-primary font-label-sm text-label-sm">KEYNOTE GUEST OF HONOUR</div>
-</div>
-<div className="flex flex-col gap-space-md w-full">
-<div className="flex flex-wrap items-center gap-space-xs">
-<span className="font-label-sm text-label-sm text-tertiary uppercase font-medium">DISTINGUISHED CHIEF GUEST</span>
-<span className="text-outline">•</span>
-<span className="font-label-sm text-label-sm text-outline">VALEDICTORY KEYNOTE</span>
-</div>
-<h3 className="font-headline-lg text-headline-lg text-on-surface">Dr. Vikramaditya Sen</h3>
-<p className="font-label-md text-label-md text-primary font-semibold">VP &amp; Global AI Research Director • Ex-DeepMind Pioneer</p>
-<p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-            Leading international frontiers in decentralized autonomy and embodied machine agents. Dr. Sen will conduct live architectural evaluations during the final round and present exclusive incubation opportunities at Bangalore Research Labs.
-          </p>
-<div className="flex flex-wrap items-center gap-space-md pt-space-xs">
-<div className="flex items-center gap-space-xs text-on-surface font-body-sm text-body-sm">
-<span className="material-symbols-outlined text-primary text-[18px]">verified</span>
-              Direct In-Person Judging
+          {/* ════════ PROBLEM STATEMENTS MARQUEE (LEFT → RIGHT) ════════ */}
+          <motion.section 
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.05 }}
+            className="w-full py-14 sm:py-20 overflow-hidden relative" 
+            id="problems"
+          >
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+              <div className="flex flex-col items-center text-center gap-2.5">
+                <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  Engineering Challenges
+                </motion.span>
+                <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+                  Problem Statements
+                </motion.h2>
+              </div>
             </div>
-<div className="flex items-center gap-space-xs text-on-surface font-body-sm text-body-sm">
-<span className="material-symbols-outlined text-tertiary text-[18px]">rocket_launch</span>
-              Fast-Track Seed Incubation
+
+            {/* Continuous Marquee Track (Travels Right to Left, Fast & Smooth) */}
+            <motion.div variants={fadeItem} className="relative w-full overflow-hidden py-4">
+              {/* Fade gradients at edges */}
+              <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(90deg, #030712, transparent)' }} />
+              <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(270deg, #030712, transparent)' }} />
+
+              <div className="ps-marquee-track">
+                {[...problemStatements, ...problemStatements, ...problemStatements].map((ps, i) => (
+                  <div key={`${ps.title}-${i}`} className="ps-banner group">
+                    {/* Front state: Themed Large Icon + Title (Clean, Greyed-out square banner) */}
+                    <div className="ps-front">
+                      <div
+                        className="w-20 h-20 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 mb-3"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-cyan-300 transition-colors">
+                          {ps.icon}
+                        </span>
+                      </div>
+                      <h3
+                        style={{
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          fontWeight: 800,
+                          fontSize: 18,
+                          lineHeight: 1.35,
+                          color: '#e2e8f0',
+                        }}
+                        className="px-2 line-clamp-3 text-center"
+                      >
+                        {ps.title}
+                      </h3>
+                    </div>
+
+                    {/* Hover state: Description + Tags */}
+                    <div className="ps-desc-container">
+                      <div className="flex flex-col items-center gap-2.5 my-auto">
+                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: 1.3, color: '#f8fafc' }}>
+                          {ps.title}
+                        </h3>
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
+                          {ps.description}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap justify-center gap-1.5 w-full pt-2.5 border-t border-cyan-500/20">
+                        {ps.tags.map(tag => (
+                          <span
+                            key={tag}
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: 9.5,
+                              fontWeight: 600,
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              background: 'rgba(56,189,248,0.1)',
+                              border: '1px solid rgba(56,189,248,0.25)',
+                              color: '#7dd3fc',
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.section>
+
+          {/* ════════ 3D ROAD TIMELINE (GDG DEVFEST STYLE) ════════ */}
+          <motion.section
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.05 }}
+            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative overflow-hidden"
+            id="timeline"
+          >
+            <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-14">
+              <div className="flex flex-col items-center text-center gap-2">
+                <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.2rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+                  24-Hour Hackathon Timeline
+                </motion.h2>
+              </div>
+
+              {/* ── Desktop Isometric 3D Road (Scales via SVG viewBox) ── */}
+              <motion.div variants={fadeItem} className="hidden lg:block relative w-full" style={{ height: 640 }}>
+                <svg
+                  viewBox="0 0 1200 680"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-full select-none"
+                  preserveAspectRatio="xMidYMid meet"
+                >
+                  <defs>
+                    {/* Road Gradient — Cyan → Emerald → Violet → Pink → Amber */}
+                    <linearGradient id="cyberRoadGrad" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="22%" stopColor="#22d3ee" />
+                      <stop offset="44%" stopColor="#34d399" />
+                      <stop offset="66%" stopColor="#a855f7" />
+                      <stop offset="85%" stopColor="#f43f5e" />
+                      <stop offset="100%" stopColor="#f59e0b" />
+                    </linearGradient>
+
+                    {/* Dark 3D Extrusion Side-Bevel */}
+                    <linearGradient id="cyberRoadExtrusion" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#0284c7" />
+                      <stop offset="22%" stopColor="#0891b2" />
+                      <stop offset="44%" stopColor="#059669" />
+                      <stop offset="66%" stopColor="#7e22ce" />
+                      <stop offset="85%" stopColor="#be123c" />
+                      <stop offset="100%" stopColor="#b45309" />
+                    </linearGradient>
+
+                    {/* Faint Road Ambient Glow */}
+                    <filter id="roadNeonGlow" x="-10%" y="-10%" width="120%" height="120%">
+                      <feGaussianBlur stdDeviation="20" result="blur" />
+                    </filter>
+                  </defs>
+
+                  {/* 1. Topographic Elevation Background Lines */}
+                  <path
+                    d="M 50 380 C 150 210, 280 230, 360 290 C 440 350, 600 250, 720 310 C 840 370, 1000 190, 1150 280"
+                    stroke="rgba(56, 189, 248, 0.05)"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M 20 480 C 200 330, 340 370, 480 430 C 620 490, 780 370, 920 440 C 1020 490, 1100 380, 1180 410"
+                    stroke="rgba(168, 85, 247, 0.04)"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M 80 190 C 220 110, 380 120, 520 180 C 660 240, 800 130, 950 170 C 1050 200, 1120 140, 1180 160"
+                    stroke="rgba(52, 211, 153, 0.04)"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+
+                  {/* 2. Soft Ambient Blur Aura Behind Road */}
+                  <path
+                    d="M 50 470 C 130 470, 195 280, 295 280 C 395 280, 415 470, 515 470 C 615 470, 625 280, 725 280 C 825 280, 835 470, 935 470 C 1035 470, 1025 280, 1115 280"
+                    stroke="url(#cyberRoadGrad)"
+                    strokeWidth="56"
+                    strokeLinecap="round"
+                    fill="none"
+                    opacity="0.18"
+                    filter="url(#roadNeonGlow)"
+                  />
+
+                  {/* 3. 3D Isometric Extrusion (Bottom Bevel) */}
+                  <path
+                    d="M 50 482 C 130 482, 195 292, 295 292 C 395 292, 415 482, 515 482 C 615 482, 625 292, 725 292 C 825 292, 835 482, 935 482 C 1035 482, 1025 292, 1115 292"
+                    stroke="url(#cyberRoadExtrusion)"
+                    strokeWidth="32"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+
+                  {/* 4. Main 3D Road Ribbon (Top Surface) */}
+                  <path
+                    d="M 50 470 C 130 470, 195 280, 295 280 C 395 280, 415 470, 515 470 C 615 470, 625 280, 725 280 C 825 280, 835 470, 935 470 C 1035 470, 1025 280, 1115 280"
+                    stroke="url(#cyberRoadGrad)"
+                    strokeWidth="30"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+
+                  {/* 5. Center Road Dashed Guideline */}
+                  <path
+                    d="M 50 470 C 130 470, 195 280, 295 280 C 395 280, 415 470, 515 470 C 615 470, 625 280, 725 280 C 825 280, 835 470, 935 470 C 1035 470, 1025 280, 1115 280"
+                    stroke="rgba(255, 255, 255, 0.28)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="8 12"
+                    fill="none"
+                  />
+
+                  {/* 6. Milestone Nodes & Pinposts */}
+                  {timelineMilestones.map((m, idx) => {
+                    const isUp = m.pinDirection === "up";
+                    const pinTargetY = isUp ? m.y - 65 : m.y + 65;
+
+                    return (
+                      <g key={idx}>
+                        {/* Anchor Dot on the Road */}
+                        <circle cx={m.x} cy={m.y} r="7" fill="#030712" stroke={m.color} strokeWidth="3" />
+                        <circle cx={m.x} cy={m.y} r="2.5" fill="#ffffff" />
+
+                        {/* Vertical White/Color Pin Line */}
+                        <line
+                          x1={m.x}
+                          y1={isUp ? m.y - 8 : m.y + 8}
+                          x2={m.x}
+                          y2={pinTargetY}
+                          stroke={m.color}
+                          strokeWidth="2"
+                          strokeDasharray="3 3"
+                          opacity="0.8"
+                        />
+
+                        {/* Top/Bottom Terminal Node Circle */}
+                        <circle cx={m.x} cy={pinTargetY} r="4" fill={m.color} />
+
+                        {/* Milestone Card (Embedded via foreignObject for pixel-perfect responsiveness) */}
+                        <foreignObject
+                          x={m.x - 95}
+                          y={isUp ? pinTargetY - 118 : pinTargetY + 14}
+                          width="190"
+                          height="115"
+                        >
+                          <div
+                            className="w-full flex flex-col items-center text-center p-2.5 rounded-xl transition-all"
+                            style={{
+                              background: 'rgba(8, 12, 24, 0.92)',
+                              border: `1px solid ${m.color}45`,
+                              backdropFilter: 'blur(16px)',
+                              boxShadow: `0 8px 30px rgba(0,0,0,0.7), 0 0 20px ${m.color}25`,
+                            }}
+                          >
+                            {/* Icon Badge */}
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center mb-1 shrink-0"
+                              style={{ background: `${m.color}25`, border: `1px solid ${m.color}60` }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: 16, color: m.color }}>
+                                {m.icon}
+                              </span>
+                            </div>
+
+                            {/* Date Badge */}
+                            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9.5, fontWeight: 700, color: m.color, letterSpacing: '0.06em' }}>
+                              {m.time}
+                            </span>
+
+                            {/* Milestone Title */}
+                            <span
+                              className="font-bold text-slate-100 text-[12px] leading-tight mt-0.5 line-clamp-2"
+                              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                            >
+                              {m.title}
+                            </span>
+                          </div>
+                        </foreignObject>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </motion.div>
+
+              {/* ── Mobile Vertical Circuit Timeline (Clean, readable fallback) ── */}
+              <motion.div variants={fadeItem} className="lg:hidden relative pl-8">
+                {/* Vertical gradient circuit line */}
+                <div
+                  className="absolute left-3 top-0 bottom-0 w-[3px] rounded-full"
+                  style={{ background: 'linear-gradient(180deg, #38bdf8, #22d3ee, #34d399, #a855f7, #f43f5e, #f59e0b)' }}
+                />
+
+                <div className="flex flex-col gap-8">
+                  {timelineMilestones.map((item, i) => (
+                    <div key={i} className="relative flex flex-col gap-1.5 glass-card p-4 rounded-xl">
+                      {/* Node circle on the line */}
+                      <div
+                        className="absolute -left-[30px] top-4 w-[24px] h-[24px] rounded-full flex items-center justify-center"
+                        style={{
+                          background: '#030712',
+                          border: `2px solid ${item.color}`,
+                          boxShadow: `0 0 12px ${item.color}60`,
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: 13, color: item.color }}>
+                          {item.icon}
+                        </span>
+                      </div>
+
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: item.color }}>
+                        {item.time}
+                      </span>
+                      <span
+                        className="font-extrabold text-base text-slate-100"
+                        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                      >
+                        {item.title}
+                      </span>
+                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8' }}>
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
             </div>
-</div>
-</div>
-</div>
+          </motion.section>
 
-<div className="flex flex-col gap-space-lg">
-<div className="flex flex-col md:flex-row md:items-end justify-between gap-space-sm">
-<div>
-<span className="font-label-sm text-label-sm text-primary uppercase">BOUNTIES &amp; RECOGNITION</span>
-<h3 className="font-headline-lg text-headline-lg text-on-surface">₹1,50,000 TOTAL CASH POOL</h3>
-</div>
-<div className="font-label-sm text-label-sm text-outline">DISBURSED VIA INSTANT DIRECT BANK TRANSFER</div>
-</div>
+          {/* ════════ COMMITTEE & DIRECTORS ════════ */}
+          <motion.section
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.05 }}
+            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
+            id="committee"
+          >
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(56,189,248,0.02) 0%, transparent 70%)' }} />
+            <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-14 relative z-10">
+              <div className="flex flex-col items-center text-center gap-3">
+                <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  Governance
+                </motion.span>
+                <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+                  Committee & Directors
+                </motion.h2>
+              </div>
 
-<div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {committeeMembers.map(p => (
+                  <motion.div variants={fadeItem} key={p.name} className="glass-card rounded-2xl overflow-hidden flex flex-col transition-all hover:scale-[1.02]">
+                    <div className="w-full h-48 overflow-hidden relative" style={{ background: '#0f172a' }}>
+                      <img className="w-full h-full object-cover" src={p.img} alt={p.name} />
+                      <div
+                        className="absolute top-2 right-2 px-2 py-[3px] rounded-md"
+                        style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', color: '#38bdf8', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        {p.tag}
+                      </div>
+                    </div>
+                    <div className="p-4 sm:p-5 flex flex-col gap-1.5 flex-1">
+                      <h4 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 15, color: '#f1f5f9' }}>{p.name}</h4>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, color: '#38bdf8' }}>{p.role}</span>
+                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6, flex: 1 }}>{p.desc}</p>
+                      <div className="mt-auto pt-3 flex flex-col gap-1" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#475569' }}>
+                        <span>{p.jurisdiction}</span>
+                        <span style={{ color: '#64748b' }}>{p.email}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.section>
 
-<div className="bg-surface-container-high/60 backdrop-blur-md p-space-xl rounded-xl flex flex-col justify-between gap-space-lg shadow-xl relative overflow-hidden order-1 md:order-2">
-<div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-2xl"></div>
-<div className="flex flex-col gap-space-sm relative z-10">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-primary font-bold">1ST RANK • CHAMPION</span>
-<span className="material-symbols-outlined text-primary text-[28px]">trophy</span>
-</div>
-<div className="font-headline-xl text-[54px] font-black text-on-surface tracking-tight">₹75,000</div>
-<p className="font-body-md text-body-md text-on-surface-variant">
-                Direct cash award + Fast-track incubation interview with Vellore Technology Business Incubator (V-TBI) + Rolling Championship Trophy.
+          {/* ════════ CHIEF GUEST + PRIZES ════════ */}
+          <motion.section
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.05 }}
+            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
+            id="guests-prizes"
+          >
+            <div className="max-w-[1400px] mx-auto flex flex-col gap-12 sm:gap-16">
+
+              {/* Distinguished Chief Guest */}
+              <motion.div
+                variants={fadeItem}
+                className="glass-card rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12"
+                style={{ boxShadow: '0 0 60px rgba(56,189,248,0.06), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)' }}
+              >
+                <div className="w-full lg:w-1/3 aspect-square max-w-[280px] rounded-2xl overflow-hidden relative shadow-2xl shrink-0" style={{ background: '#0f172a' }}>
+                  <img
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKsMK2gO37tRi6vz-xV5zP992AbGuqGODzPjjoIYUOO87QT8Wq3yQnrMFtwOE9B1wu65BP5Azla_wO8U_7dbbnHZgFhYJCf3l8Jyds88PyMA9HNknXVqWhp3M3lGKEWrjgv7jD032rdjp52X5Td76OjYqm1mqWGcU8gSilqPfazr0p6I-1P3mBwHQzOp8tB9MjWrqbTmZIIF8Jszr6xbUIeI39dGFRCgHLvihSdPsy8vXaClRQ7Kzy"
+                    alt="Chief Guest"
+                  />
+                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg glass" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, color: '#38bdf8' }}>
+                    KEYNOTE GUEST
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 flex-1">
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                    Distinguished Chief Guest
+                  </span>
+                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+                    Dr. Vikramaditya Sen
+                  </h3>
+                  <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: '#38bdf8' }}>
+                    VP & Global AI Research Director · Ex-DeepMind Pioneer
+                  </p>
+                  <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#94a3b8', lineHeight: 1.7 }}>
+                    Leading international frontiers in decentralized autonomy and embodied machine agents. Dr. Sen will conduct live architectural evaluations during the final round.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 pt-1">
+                    {[
+                      { icon: 'verified', text: 'In-Person Judging', c: '#38bdf8' },
+                      { icon: 'rocket_launch', text: 'Fast-Track Incubation', c: '#34d399' }
+                    ].map(b => (
+                      <div key={b.text} className="flex items-center gap-1.5" style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#e2e8f0' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 17, color: b.c }}>{b.icon}</span>
+                        {b.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Cash Prizes */}
+              <div className="flex flex-col gap-8">
+                <div className="flex flex-col items-center text-center gap-2">
+                  <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                    Bounties & Recognition
+                  </motion.span>
+                  <motion.h3 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+                    ₹1,50,000 Prize Pool
+                  </motion.h3>
+                  <motion.p variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                    Disbursed via instant direct bank transfer
+                  </motion.p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {/* Champion */}
+                  <motion.div
+                    variants={fadeItem}
+                    className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 relative overflow-hidden order-1 md:order-2"
+                    style={{ boxShadow: '0 0 60px rgba(56,189,248,0.08), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+                  >
+                    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-cyan-400/10 blur-2xl" />
+                    <div className="relative z-10 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8' }}>1ST · CHAMPION</span>
+                        <span className="material-symbols-outlined" style={{ fontSize: 26, color: '#38bdf8' }}>trophy</span>
+                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 42, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹75,000</div>
+                      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
+                        Direct cash + V-TBI incubation interview + Rolling Championship Trophy.
+                      </p>
+                    </div>
+                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#34d399' }}>
+                      <span>+ ₹1,00,000 AWS GPU Credits</span>
+                      <span>+ Official DSW Citation</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Runner up */}
+                  <motion.div variants={fadeItem} className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 order-2 md:order-1">
+                    <div className="flex items-center justify-between">
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#cbd5e1' }}>2ND · RUNNER UP</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#cbd5e1' }}>military_tech</span>
+                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹45,000</div>
+                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
+                      Direct cash + GPU Cloud Credits + Team Commendation Medal.
+                    </p>
+                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
+                      <span>+ ₹50,000 Cloud Infrastructure</span>
+                      <span>+ Priority Internship Screening</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Third */}
+                  <motion.div variants={fadeItem} className="glass-card rounded-2xl p-6 sm:p-7 flex flex-col gap-4 order-3">
+                    <div className="flex items-center justify-between">
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#fbbf24' }}>3RD · THIRD PLACE</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: 22, color: '#fbbf24' }}>workspace_premium</span>
+                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 34, color: '#f1f5f9', letterSpacing: '-0.04em' }}>₹30,000</div>
+                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
+                      Direct cash + Edge Vision Hardware Dev Kits for each team member.
+                    </p>
+                    <div className="glass rounded-xl p-3 flex flex-col gap-1 mt-auto" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
+                      <span>+ Jetson / ESP32 Hardware Bundle</span>
+                      <span>+ Developer Guild Commendation</span>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Certification Guarantee */}
+                <motion.div
+                  variants={fadeItem}
+                  className="glass-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+                  style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 4px 20px rgba(0,0,0,0.2)' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#38bdf8' }}>verified_user</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 14, color: '#f1f5f9' }}>
+                        Digital Certificates for All Finalists
+                      </span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569' }}>
+                        Verifiable credentials dispatched directly to @vitstudent.ac.in emails
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399', letterSpacing: '0.1em', flexShrink: 0 }}>
+                    100% ISSUANCE
+                  </span>
+                </motion.div>
+              </div>
+            </div>
+          </motion.section>
+
+        </div>
+      </main>
+
+      {/* ── FOOTER ── */}
+      <footer className="w-full" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center"
+                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 12, color: '#030712' }}
+              >
+                S
+              </div>
+              <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: 13, color: '#64748b' }}>
+                Solve-a-thon 2026-27 · VIT Chennai
+              </span>
+            </div>
+            <div className="flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399' }}>
+              <span className="w-[5px] h-[5px] rounded-full bg-emerald-400" />
+              SYSTEMS OPERATIONAL
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <div className="flex flex-col gap-1">
+              <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#94a3b8' }}>
+                Organized by Solve-a-thon Technical Committee & Student Guild
               </p>
-</div>
-<div className="pt-space-md border-t-0 bg-surface-container-lowest/40 p-space-sm rounded-lg flex flex-col gap-1 font-label-sm text-[11px] text-tertiary">
-<span>+ ₹1,00,000 AWS GPU Cloud Compute Credits</span>
-<span>+ Official Citation from Director of Student Welfare</span>
-</div>
-</div>
-
-<div className="bg-surface-container-low p-space-xl rounded-xl flex flex-col justify-between gap-space-lg shadow-md order-2 md:order-1">
-<div className="flex flex-col gap-space-sm">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-secondary font-bold">2ND RANK • RUNNER UP</span>
-<span className="material-symbols-outlined text-secondary text-[24px]">military_tech</span>
-</div>
-<div className="font-headline-xl text-[44px] font-bold text-on-surface tracking-tight">₹45,000</div>
-<p className="font-body-md text-body-md text-on-surface-variant">
-                Direct cash bounty + High-performance GPU Cloud Credits + Commendation Medal for entire team.
+              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569' }}>
+                Direct Enquiries: operations@solvathon.org
               </p>
-</div>
-<div className="pt-space-md bg-surface-container-lowest/40 p-space-sm rounded-lg flex flex-col gap-1 font-label-sm text-[11px] text-outline">
-<span>+ ₹50,000 Cloud GPU Infrastructure</span>
-<span>+ Priority Internship Screening at Partner Labs</span>
-</div>
-</div>
-
-<div className="bg-surface-container-low p-space-xl rounded-xl flex flex-col justify-between gap-space-lg shadow-md order-3">
-<div className="flex flex-col gap-space-sm">
-<div className="flex items-center justify-between">
-<span className="font-label-sm text-label-sm text-tertiary font-bold">3RD RANK • THIRD PLACE</span>
-<span className="material-symbols-outlined text-tertiary text-[24px]">workspace_premium</span>
-</div>
-<div className="font-headline-xl text-[44px] font-bold text-on-surface tracking-tight">₹30,000</div>
-<p className="font-body-md text-body-md text-on-surface-variant">
-                Direct cash reward + Micro-controller &amp; Edge Vision Hardware Dev Kits distributed to each team member.
-              </p>
-</div>
-<div className="pt-space-md bg-surface-container-lowest/40 p-space-sm rounded-lg flex flex-col gap-1 font-label-sm text-[11px] text-outline">
-<span>+ Complete Jetson / ESP32 Hardware Bundle</span>
-<span>+ Developer Guild Commendation</span>
-</div>
-</div>
-</div>
-
-<div className="bg-surface-container p-space-md rounded-lg flex flex-col sm:flex-row items-center justify-between gap-space-md">
-<div className="flex items-center gap-space-md">
-<span className="material-symbols-outlined text-primary text-[28px]">verified_user</span>
-<div className="flex flex-col">
-<span className="font-headline-sm text-body-md font-semibold text-on-surface">Digital Certificates of Excellence for All Hostellite Finalists</span>
-<span className="font-body-sm text-body-sm text-outline">Cryptographically verifiable credentials issued directly to registered @vitstudent.ac.in emails.</span>
-</div>
-</div>
-<span className="font-label-sm text-label-sm text-tertiary shrink-0">100% ISSUANCE UPON CODE SUBMISSION</span>
-</div>
-</div>
-</div>
-</section>
-
-
-
-<aside className="sticky bottom-4 z-40 px-gutter-mobile lg:px-gutter w-full pointer-events-none">
-<div className="max-w-[1440px] mx-auto pointer-events-auto">
-<div className="bg-surface-container-highest/90 backdrop-blur-2xl px-space-lg py-space-sm rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center justify-between gap-space-md">
-<div className="flex items-center gap-space-md">
-<div className="hidden sm:flex items-center gap-space-xs">
-<span className="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse"></span>
-<span className="font-label-sm text-label-sm text-on-surface font-semibold">148 HOSTEL BUILDERS VERIFIED</span>
-</div>
-<span className="hidden md:inline font-label-sm text-label-sm text-outline">• 52 SLOTS REMAINING</span>
-</div>
-<div className="flex items-center gap-space-md">
-<div className="hidden sm:flex items-center gap-space-xs text-outline font-label-sm text-label-sm">
-<span>TIMER:</span>
-<span className="text-primary font-bold">36:00:00</span>
-</div>
-<a className="px-space-lg py-2 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm font-bold hover:bg-secondary-container hover:text-on-secondary transition-all shadow-[0_0_16px_rgba(56,189,248,0.3)]" href="/rules">
-            Quick Register
-          </a>
-</div>
-</div>
-</div>
-</aside>
-
-</div></main><footer className="w-full bg-surface-container-lowest"><div className="max-w-[1440px] mx-auto px-gutter-mobile lg:px-gutter py-space-xl flex flex-col gap-space-lg"><div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md"><div className="flex items-center gap-space-md"><img alt="CYFT Hackathon Logo" className="h-6 w-auto object-contain opacity-80" src="https://lh3.googleusercontent.com/aida/AEtjO1UUEiCGnn5c_bL-wgu_f9haQuNvG0PPpo-bxmRNghgv5oV9BPGKdOeWF5tHDOfYPrtxRlGQi5nl8Is3SKJkRdCs_CcoAx0fv2GMcozlJYRvLfDPbhCltT8Jlinez_oxmOKJOKCb9887ptoUHuymDVPsogBFq079iIewYsQUdPxgV5SEfhMP2CVDcevbSk2iSJv9Fp9TnFOZPs4Mk2dHyrBT3K7KSBZQVqoE9mgo1DDlg784vtZVlvouJNI"/><span className="font-label-md text-label-md text-on-surface-variant">CYFT // ARCHITECTURE • GLOBAL HACKATHON PROTOCOL</span></div><div className="flex items-center gap-space-md"><span className="font-label-sm text-label-sm text-tertiary flex items-center gap-space-xs"><span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>SYSTEMS OPERATIONAL</span><span className="font-label-sm text-label-sm text-outline">NODE LATENCY: 14MS</span></div></div><div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md text-on-surface-variant pt-space-md"><div className="flex flex-col gap-1"><p className="font-body-sm text-body-sm text-on-surface">Organized by CYFT Technical Committee &amp; Student Guild</p><p className="font-body-sm text-body-sm text-outline">Direct Enquiries: operations@cyfthack.org • Telegram: @CYFT_DISPATCH</p></div><p className="font-label-sm text-label-sm text-outline">© 2025 CYFT HACK. ALL ENCRYPTED RIGHTS RESERVED.</p></div></div></footer>
-</>
+            </div>
+            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#334155' }}>
+              © 2026 SOLVE-A-THON. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }

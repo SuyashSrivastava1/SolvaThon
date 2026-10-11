@@ -6,19 +6,40 @@ export const eventDetails = {
 
 export const problemStatements = [
   {
-    id: 1,
-    title: "Smart Mess Management",
-    description: "Build an automated system to predict daily food requirements, reduce waste, and manage caterer feedback efficiently."
+    id: "PS-01",
+    track: "Power Systems",
+    title: "Autonomous Hostel Energy Grid Balancing",
+    description: "Design a low-latency micro-inverter and sensor telemetry agent that redistributes peak electrical loads across hostel wings during generator failover periods without shedding critical room loads.",
+    tags: ["IoT / ESP32", "Reinforcement Learning", "Edge Telemetry"],
+    mentor: "Dr. Ramanathan",
+    difficulty: "Level 4/5"
   },
   {
-    id: 2,
-    title: "Hostel Entry & Exit Automation",
-    description: "Design a secure, seamless biometric or QR-based system for students leaving and entering the hostel blocks."
+    id: "PS-02",
+    track: "Smart Dining",
+    title: "Real-time Mess Queue & Waste Analytics",
+    description: "Build an edge-deployed computer vision pipeline that estimates tray depletion rates, predicts queue wait times across dining halls, and triggers automated surplus notifications for hostel staff.",
+    tags: ["YOLOv8 Edge", "WebSockets API", "Vision AI"],
+    mentor: "Prof. Narayanan",
+    difficulty: "Level 3/5"
   },
   {
-    id: 3,
-    title: "Room Maintenance Ticketing",
-    description: "A centralized platform for logging, tracking, and resolving plumbing, electrical, and carpentry issues in student rooms."
+    id: "PS-03",
+    track: "Disaster Comms",
+    title: "Localized Mesh Network for Disaster Comms",
+    description: "Implement zero-infrastructure packet forwarding over LoRa and peer-to-peer Wi-Fi Direct between Block A through Block G for emergency notifications when centralized ISP routing drops.",
+    tags: ["LoRaWAN", "Cryptographic Gossip", "Hardware Mesh"],
+    mentor: "Dr. Priya Nair",
+    difficulty: "Level 5/5"
+  },
+  {
+    id: "PS-04",
+    track: "Residential Access",
+    title: "Attendance Verification via Edge Vision",
+    description: "Build an anti-spoofing night-vision facial verification engine that integrates with local hostel warden portals, logging 4,000 students under 20 minutes without queue stalling or remote server lag.",
+    tags: ["TensorRT", "Local SQLite Cache", "Edge AI"],
+    mentor: "Cyber Lead Guild",
+    difficulty: "Level 4/5"
   }
 ];
 

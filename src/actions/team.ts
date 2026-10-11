@@ -81,9 +81,15 @@ export async function getTeamDetails(firebaseUid: string) {
       success: true, 
       hasTeam: true, 
       team: {
+        id: participant.team.id,
         name: participant.team.name,
         teamCode: participant.team.teamCode,
-        members: participant.team.participants.map(p => ({
+        problemStatement: participant.team.problemStatement,
+        pptUrl: participant.team.pptUrl,
+        understanding: participant.team.understanding,
+        solutionSummary: participant.team.solutionSummary,
+        submittedAt: participant.team.submittedAt,
+        members: participant.team.participants.map((p: any) => ({
           name: p.fullName,
           ticketId: p.ticketId
         }))
@@ -95,3 +101,62 @@ export async function getTeamDetails(firebaseUid: string) {
     return { success: false, error: "Failed to fetch team details." };
   }
 }
+
+export async function selectProblemStatement(firebaseUid: string, problemStatement: string) {
+  try {
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "You must be in a team to choose a problem statement." };
+    }
+
+    await prisma.team.update({
+      where: { id: participant.teamId },
+      data: { problemStatement },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Select problem statement error:", error);
+    return { success: false, error: "Failed to update problem statement." };
+  }
+}
+
+export async function submitProject(
+  firebaseUid: string,
+  data: { pptUrl: string; understanding: string; solutionSummary: string }
+) {
+  try {
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "You must be in a team to submit." };
+    }
+
+    if (!data.pptUrl || (!data.pptUrl.startsWith("http://") && !data.pptUrl.startsWith("https://"))) {
+      return { success: false, error: "Please provide a valid PPT / Presentation link (e.g. Google Slides, Canva, Drive)." };
+    }
+
+    if (!data.understanding || data.understanding.trim().length < 10) {
+      return { success: false, error: "Please provide a detailed explanation of your understanding of the problem statement." };
+    }
+
+    if (!data.solutionSummary || data.solutionSummary.trim().length < 10) {
+      return { success: false, error: "Please provide a brief description of your problem statement and proposed solution." };
+    }
+
+    await prisma.team.update({
+      where: { id: participant.teamId },
+      data: {
+        pptUrl: data.pptUrl.trim(),
+        understanding: data.understanding.trim(),
+        solutionSummary: data.solutionSummary.trim(),
+        submittedAt: new Date(),
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Submit project error:", error);
+    return { success: false, error: "Failed to submit presentation." };
+  }
+}
+

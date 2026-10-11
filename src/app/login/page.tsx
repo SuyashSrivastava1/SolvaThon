@@ -36,9 +36,9 @@ export default function LoginPage() {
       const isRegistered = await checkIsRegistered(result.user.uid);
       
       if (isRegistered) {
-        router.push("/profile");
+        router.replace("/profile");
       } else {
-        router.push("/rules");
+        router.replace("/register");
       }
     } catch (error: any) {
       console.error(error);
