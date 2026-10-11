@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
 import { auth } from "@/lib/firebase/config";
+import { clearParticipantSession } from "@/lib/authSession";
 import * as XLSX from "xlsx";
 
 export default function AdminPortalPage() {
@@ -127,6 +128,7 @@ export default function AdminPortalPage() {
 
   const handleFullSignOut = async () => {
     try {
+      clearParticipantSession();
       await auth.signOut();
     } catch (e) {
       console.error("Sign out error:", e);
@@ -176,6 +178,7 @@ export default function AdminPortalPage() {
           isPaused: typeof isPaused === "boolean" ? isPaused : prev.systemSettings?.isPaused,
         },
       }));
+      setCustomTimerDate(toDatetimeLocal(newDateISO));
       setTimerMsg(`✓ Live hackathon countdown updated! New target: ${new Date(newDateISO).toLocaleString()}`);
     } else {
       setTimerMsg(res.error || "Failed to update countdown timer.");
@@ -184,7 +187,16 @@ export default function AdminPortalPage() {
   };
 
   const handleTimerPreset = (hoursToAdd: number) => {
-    const target = new Date(Date.now() + hoursToAdd * 60 * 60 * 1000);
+    // Increment existing countdown target date instead of restarting from Date.now()
+    const currentTargetStr = data?.systemSettings?.targetDate || customTimerDate;
+    let baseTime = Date.now();
+    if (currentTargetStr) {
+      const parsed = new Date(currentTargetStr).getTime();
+      if (!isNaN(parsed) && parsed > Date.now()) {
+        baseTime = parsed;
+      }
+    }
+    const target = new Date(baseTime + hoursToAdd * 60 * 60 * 1000);
     setCustomTimerDate(toDatetimeLocal(target.toISOString()));
     handleUpdateTimer(target.toISOString());
   };
@@ -192,9 +204,9 @@ export default function AdminPortalPage() {
   // Save Team Evaluation
   const handleSaveEvaluation = async (teamId: string) => {
     const form = evalForms[teamId] || { innovation: 0, understanding: 0, progress: 0, notes: "" };
-    const inn = Math.max(0, Math.min(100, Number(form.innovation) || 0));
-    const und = Math.max(0, Math.min(100, Number(form.understanding) || 0));
-    const pro = Math.max(0, Math.min(100, Number(form.progress) || 0));
+    const inn = Number((Math.max(0, Math.min(10, parseFloat(String(form.innovation)) || 0))).toFixed(2));
+    const und = Number((Math.max(0, Math.min(10, parseFloat(String(form.understanding)) || 0))).toFixed(2));
+    const pro = Number((Math.max(0, Math.min(10, parseFloat(String(form.progress)) || 0))).toFixed(2));
 
     setSavingEvalId(teamId);
     setEvalSuccessMap((prev) => ({ ...prev, [teamId]: "" }));
@@ -227,7 +239,7 @@ export default function AdminPortalPage() {
       }));
       setEvalSuccessMap((prev) => ({
         ...prev,
-        [teamId]: `✓ Marks saved! Total: ${total}/300`,
+        [teamId]: `✓ Marks saved! Total: ${total}/30`,
       }));
     } else {
       alert(res.error || "Failed to save evaluation.");
@@ -262,10 +274,10 @@ export default function AdminPortalPage() {
         "Stage 2 Live Demo / Pitch URL": t.finalDemoUrl || "N/A",
         "Stage 2 Technical Summary & Progress": t.finalSummary || "N/A",
         "Stage 2 Final Submitted At": t.finalSubmittedAt ? new Date(t.finalSubmittedAt).toLocaleString() : "Pending",
-        "Criterion 1: Innovation (0-100)": t.scoreInnovation !== null && t.scoreInnovation !== undefined ? t.scoreInnovation : "",
-        "Criterion 2: Understanding (0-100)": t.scoreUnderstanding !== null && t.scoreUnderstanding !== undefined ? t.scoreUnderstanding : "",
-        "Criterion 3: Progress (0-100)": t.scoreProgress !== null && t.scoreProgress !== undefined ? t.scoreProgress : "",
-        "Total Score (0-300)": isEvaluated ? t.scoreTotal : "Unscored",
+        "Criterion 1: Innovation (0-10)": t.scoreInnovation !== null && t.scoreInnovation !== undefined ? t.scoreInnovation : "",
+        "Criterion 2: Understanding (0-10)": t.scoreUnderstanding !== null && t.scoreUnderstanding !== undefined ? t.scoreUnderstanding : "",
+        "Criterion 3: Progress (0-10)": t.scoreProgress !== null && t.scoreProgress !== undefined ? t.scoreProgress : "",
+        "Total Score (0-30)": isEvaluated ? t.scoreTotal : "Unscored",
         "Evaluation Status": isEvaluated ? "EVALUATED" : "PENDING EVALUATION",
         "Evaluator Admin": t.evaluatedBy || "Pending",
         "Jury Notes / Remarks": t.evaluationNotes || "",
@@ -420,7 +432,7 @@ export default function AdminPortalPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-xl md:text-2xl font-black">Admin &amp; Evaluator Portal</h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-xs font-bold">
-                  LIVE SESSION
+                  PERMANENT SESSION
                 </span>
                 {isCurrentUserSuperAdmin ? (
                   <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-500/40 text-purple-300 font-mono text-xs font-bold">
@@ -837,10 +849,13 @@ export default function AdminPortalPage() {
                     progress: "",
                     notes: "",
                   };
-                  const currentTotal =
-                    (Number(form.innovation) || 0) +
-                    (Number(form.understanding) || 0) +
-                    (Number(form.progress) || 0);
+                  const currentTotal = Number(
+                    (
+                      (parseFloat(String(form.innovation)) || 0) +
+                      (parseFloat(String(form.understanding)) || 0) +
+                      (parseFloat(String(form.progress)) || 0)
+                    ).toFixed(2)
+                  );
 
                   const isSavedEvaluated = t.scoreTotal !== null && t.scoreTotal !== undefined;
 
@@ -886,7 +901,7 @@ export default function AdminPortalPage() {
 
                           {isSavedEvaluated ? (
                             <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-mono rounded-full font-bold">
-                              EVALUATED: {t.scoreTotal}/300
+                              EVALUATED: {t.scoreTotal}/30
                             </span>
                           ) : (
                             <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono rounded-full font-bold">
@@ -1057,23 +1072,24 @@ export default function AdminPortalPage() {
                               <label className="text-xs font-bold text-white uppercase tracking-wider">
                                 1. Innovation
                               </label>
-                              <span className="text-[10px] font-mono text-purple-300">0 - 100</span>
+                              <span className="text-[10px] font-mono text-purple-300">0 - 10</span>
                             </div>
                             <input
                               type="number"
                               min="0"
-                              max="100"
+                              max="10"
+                              step="any"
                               value={form.innovation}
                               onChange={(e) =>
                                 setEvalForms({
                                   ...evalForms,
                                   [t.id]: {
                                     ...form,
-                                    innovation: e.target.value === "" ? "" : Number(e.target.value),
+                                    innovation: e.target.value,
                                   },
                                 })
                               }
-                              placeholder="Score (0-100)"
+                              placeholder="Score (0-10)"
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500/50 outline-none"
                             />
                             <p className="text-[10px] text-white/40">Creativity, originality, and technical novelty</p>
@@ -1085,23 +1101,24 @@ export default function AdminPortalPage() {
                               <label className="text-xs font-bold text-white uppercase tracking-wider">
                                 2. Problem Understanding
                               </label>
-                              <span className="text-[10px] font-mono text-purple-300">0 - 100</span>
+                              <span className="text-[10px] font-mono text-purple-300">0 - 10</span>
                             </div>
                             <input
                               type="number"
                               min="0"
-                              max="100"
+                              max="10"
+                              step="any"
                               value={form.understanding}
                               onChange={(e) =>
                                 setEvalForms({
                                   ...evalForms,
                                   [t.id]: {
                                     ...form,
-                                    understanding: e.target.value === "" ? "" : Number(e.target.value),
+                                    understanding: e.target.value,
                                   },
                                 })
                               }
-                              placeholder="Score (0-100)"
+                              placeholder="Score (0-10)"
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500/50 outline-none"
                             />
                             <p className="text-[10px] text-white/40">Clarity of campus challenge and scope</p>
@@ -1113,23 +1130,24 @@ export default function AdminPortalPage() {
                               <label className="text-xs font-bold text-white uppercase tracking-wider">
                                 3. Progress
                               </label>
-                              <span className="text-[10px] font-mono text-purple-300">0 - 100</span>
+                              <span className="text-[10px] font-mono text-purple-300">0 - 10</span>
                             </div>
                             <input
                               type="number"
                               min="0"
-                              max="100"
+                              max="10"
+                              step="any"
                               value={form.progress}
                               onChange={(e) =>
                                 setEvalForms({
                                   ...evalForms,
                                   [t.id]: {
                                     ...form,
-                                    progress: e.target.value === "" ? "" : Number(e.target.value),
+                                    progress: e.target.value,
                                   },
                                 })
                               }
-                              placeholder="Score (0-100)"
+                              placeholder="Score (0-10)"
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-purple-500/50 outline-none"
                             />
                             <p className="text-[10px] text-white/40">Prototype quality, implementation &amp; demo</p>
@@ -1154,7 +1172,7 @@ export default function AdminPortalPage() {
                           <div className="flex items-center gap-3 shrink-0">
                             <div className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-xl font-mono text-center">
                               <span className="text-[9px] text-purple-300 uppercase block">TOTAL SCORE</span>
-                              <span className="text-base font-black text-white">{currentTotal}/300</span>
+                              <span className="text-base font-black text-white">{currentTotal}/30</span>
                             </div>
 
                             <button

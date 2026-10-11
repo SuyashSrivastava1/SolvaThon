@@ -226,9 +226,9 @@ export async function saveTeamEvaluation(
   }
 
   try {
-    const inn = Math.max(0, Math.min(100, Number(evaluation.scoreInnovation) || 0));
-    const und = Math.max(0, Math.min(100, Number(evaluation.scoreUnderstanding) || 0));
-    const pro = Math.max(0, Math.min(100, Number(evaluation.scoreProgress) || 0));
+    const inn = Number((Math.max(0, Math.min(10, parseFloat(String(evaluation.scoreInnovation)) || 0))).toFixed(2));
+    const und = Number((Math.max(0, Math.min(10, parseFloat(String(evaluation.scoreUnderstanding)) || 0))).toFixed(2));
+    const pro = Number((Math.max(0, Math.min(10, parseFloat(String(evaluation.scoreProgress)) || 0))).toFixed(2));
     const scoreTotal = Number((inn + und + pro).toFixed(2));
 
     const updated = await prisma.team.update({

@@ -103,12 +103,6 @@ export async function getTeamDetails(firebaseUid: string) {
         finalDemoUrl: participant.team.finalDemoUrl,
         finalSummary: participant.team.finalSummary,
         finalSubmittedAt: participant.team.finalSubmittedAt,
-        scoreInnovation: participant.team.scoreInnovation,
-        scoreUnderstanding: participant.team.scoreUnderstanding,
-        scoreProgress: participant.team.scoreProgress,
-        scoreTotal: participant.team.scoreTotal,
-        evaluationNotes: participant.team.evaluationNotes,
-        evaluatedAt: participant.team.evaluatedAt,
         members: participant.team.participants.map((p: any) => ({
           name: p.fullName,
           ticketId: p.ticketId

@@ -10,7 +10,7 @@ export const registrationSchema = z.object({
   fullName: z.string().min(2, "Name is too short"),
   mobileNumber: z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
   hostelBlock: z.string().min(1, "Block is required"),
-  roomNumber: z.string().min(1, "Room number is required"),
+  roomNumber: z.string().regex(/^\d{3,4}$/, "Enter a valid room number"),
   messCaterer: z.string().min(1, "Caterer is required"),
   messType: z.string().min(1, "Mess type is required"),
   consentAgreed: z.boolean().refine(val => val === true, "You must agree to the rules"),

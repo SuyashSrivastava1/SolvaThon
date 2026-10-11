@@ -8,6 +8,7 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import Link from "next/link";
 import { isAdminEmail, isValidAuthDomain } from "@/config/admin";
+import { saveParticipantSession, clearParticipantSession } from "@/lib/authSession";
 import blocksData from "@/data/blocks.json";
 import messTypesData from "@/data/messTypes.json";
 import caterersData from "@/data/caterers.json";
@@ -46,16 +47,22 @@ export default function RegisterPage() {
 
       if (!isValidAuthDomain(email)) {
         await auth.signOut();
+        clearParticipantSession();
         setAuthError("You must use your @vitstudent.ac.in email address to register.");
         setAuthLoading(false);
         return;
       }
 
-      // If user is an Admin in code, redirect to Admin Portal
+      // If user is an Admin, redirect to Admin Portal (permanent, no token)
       if (isAdmin) {
+        clearParticipantSession();
         router.replace("/admin");
         return;
       }
+
+      // Tokenize participant login (1 hour session)
+      const token = await result.user.getIdToken(true);
+      saveParticipantSession(result.user, token);
 
       const alreadyReg = await checkIsRegistered(result.user.uid);
       if (alreadyReg) {
@@ -183,6 +190,17 @@ export default function RegisterPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    if (name === "roomNumber") {
+      // Only numbers accepted, 3 to 4 digits
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 4);
+      setFormData((prev) => ({ ...prev, roomNumber: digitsOnly }));
+      return;
+    }
+    if (name === "mobileNumber") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({ ...prev, mobileNumber: digitsOnly }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
@@ -193,6 +211,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setStatus("loading");
     setErrorMessage("");
+
+    if (!/^\d{3,4}$/.test(formData.roomNumber.trim())) {
+      setStatus("error");
+      setErrorMessage("Enter a valid room number.");
+      return;
+    }
 
     const result = await registerParticipant({
       firebaseUid: user.uid,
@@ -213,7 +237,7 @@ export default function RegisterPage() {
     formData.fullName.trim().length >= 2 &&
     /^\d{10}$/.test(formData.mobileNumber.trim()) &&
     formData.hostelBlock !== "" &&
-    formData.roomNumber.trim().length > 0 &&
+    /^\d{3,4}$/.test(formData.roomNumber.trim()) &&
     formData.messCaterer !== "" &&
     formData.messType !== "" &&
     formData.consentAgreed;
@@ -227,30 +251,18 @@ export default function RegisterPage() {
       <div className="container mx-auto px-4 py-16 relative z-10 flex flex-col items-center">
         {/* Header */}
         <div className="text-center max-w-2xl mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            CYFT 2025 // RESIDENTIAL PROTOCOL
+            SOLVATHON 2026
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent">
-            Participant Registration
-          </h1>
-          <p className="text-white/60 text-base mb-4">
-            Verify your residential eligibility and get your official hackathon access pass.
-          </p>
-          <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white/80">
+          <div>
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight pb-3.5 mb-3 bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent leading-[1.3] inline-block">
+              Participant Registration
+            </h1>
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white/80">
+            <span className="material-symbols-outlined text-cyan-400 text-base">verified_user</span>
             <span>Signed in as <strong className="text-cyan-400 font-mono">{user.email}</strong></span>
-            <button
-              onClick={() => {
-                import("firebase/auth").then(({ signOut }) => {
-                  import("@/lib/firebase/config").then(({ auth }) => {
-                    signOut(auth);
-                  });
-                });
-              }}
-              className="text-xs text-red-400 hover:text-red-300 underline transition-colors"
-            >
-              Sign out
-            </button>
           </div>
         </div>
 
@@ -261,10 +273,9 @@ export default function RegisterPage() {
         >
           <div className="border-b border-white/10 pb-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-cyan-400 tracking-wider">SECTION 01</span>
+              <h2 className="text-lg font-bold text-white">Personal &amp; Hostel Details</h2>
               <span className="text-xs font-mono text-white/40">VIT HOSTELLITE VERIFICATION</span>
             </div>
-            <h2 className="text-lg font-bold text-white mt-1">Personal &amp; Hostel Details</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -334,12 +345,20 @@ export default function RegisterPage() {
               <input
                 type="text"
                 name="roomNumber"
+                inputMode="numeric"
+                pattern="[0-9]{3,4}"
+                maxLength={4}
                 required
                 value={formData.roomNumber}
                 onChange={handleInputChange}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all font-mono"
                 placeholder="e.g. 412"
               />
+              {formData.roomNumber.length > 0 && !/^\d{3,4}$/.test(formData.roomNumber) && (
+                <p className="text-[11px] text-amber-400 font-mono">
+                  Enter a valid room number
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -432,13 +451,10 @@ export default function RegisterPage() {
             {status === "loading" ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                <span>Generating Ticket &amp; Registering...</span>
+                <span>Registering...</span>
               </>
             ) : (
-              <>
-                <span>Complete Registration &amp; Issue Ticket</span>
-                <span className="material-symbols-outlined text-lg">arrow_forward</span>
-              </>
+              <span>Register</span>
             )}
           </button>
         </form>

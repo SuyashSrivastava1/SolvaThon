@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
 import { checkIsRegistered } from "@/actions/register";
 import { isAdminEmail, isValidAuthDomain } from "@/config/admin";
+import { saveParticipantSession, clearParticipantSession } from "@/lib/authSession";
 
 export default function LoginPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -26,16 +27,26 @@ export default function LoginPage() {
       // Allow @vitstudent.ac.in, @vit.ac.in, and admins
       if (!isValidAuthDomain(email)) {
         await auth.signOut();
+        clearParticipantSession();
         setStatus("error");
         setMessage("You must use your @vitstudent.ac.in or @vit.ac.in email address to participate.");
         return;
       }
 
-      // If admin, immediately redirect to Admin Portal
+      // ════════════════════════════════════════════════════════════════
+      // ADMIN: Permanent Session (No 1-hour token expiration)
+      // ════════════════════════════════════════════════════════════════
       if (isAdmin) {
+        clearParticipantSession();
         router.replace("/admin");
         return;
       }
+
+      // ════════════════════════════════════════════════════════════════
+      // PARTICIPANT: Tokenized Session (Expires after 1 hour)
+      // ════════════════════════════════════════════════════════════════
+      const token = await result.user.getIdToken(true);
+      saveParticipantSession(result.user, token);
 
       // Check if already registered in the database
       const isRegistered = await checkIsRegistered(result.user.uid);
@@ -50,7 +61,7 @@ export default function LoginPage() {
       setStatus("error");
       
       // Handle closed popup error gracefully
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (error.code === "auth/popup-closed-by-user") {
         setMessage("Sign in was cancelled.");
       } else {
         setMessage(error.message || "Failed to sign in with Google.");
@@ -71,10 +82,12 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-6">
+
+
           <button
             onClick={handleGoogleLogin}
             disabled={status === "loading"}
-            className="w-full bg-white hover:bg-gray-100 text-black font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-3 shadow-lg"
+            className="w-full bg-white hover:bg-gray-100 text-black font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-3 shadow-lg cursor-pointer"
           >
             {status === "loading" ? (
               <span className="material-symbols-outlined animate-spin">refresh</span>
@@ -90,6 +103,8 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+
 
           {status === "error" && (
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">

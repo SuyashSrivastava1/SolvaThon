@@ -178,7 +178,7 @@ export default function Home() {
   const [targetDate, setTargetDate] = useState(() => new Date('2026-12-01T23:59:59+05:30'));
   const timeLeft = useCountdown(targetDate);
 
-  const [rawCount, setRawCount] = useState(0);
+  const [rawCount, setRawCount] = useState(100);
   const participantCount = useAnimatedNumber(rawCount);
 
   const [scrolled, setScrolled] = useState(false);
@@ -202,11 +202,11 @@ export default function Home() {
     });
   }, []);
 
-  // Live participant count
+  // Live participant count (minimum 100 displayed)
   useEffect(() => {
     const fetch_ = async () => {
       const c = await getParticipantCount();
-      setRawCount(c);
+      setRawCount(c < 100 ? 100 : c);
     };
     fetch_();
     const id = setInterval(fetch_, 30000);
@@ -298,7 +298,7 @@ export default function Home() {
               >
                 <span className="relative w-[7px] h-[7px] rounded-full bg-emerald-400 live-dot" />
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#34d399', letterSpacing: '0.08em' }}>
-                  {participantCount} REGISTERED
+                  {Math.max(100, participantCount)} REGISTERED
                 </span>
               </div>
 
@@ -415,7 +415,7 @@ export default function Home() {
                 {/* Right Side: Bigger, More Prominent Stat Cards */}
                 <div className="lg:col-span-5 grid grid-cols-2 gap-4 w-full max-w-[480px] mx-auto lg:ml-auto lg:mr-0">
                   {[
-                    { icon: 'groups', val: `${participantCount}+`, label: 'Registered' },
+                    { icon: 'groups', val: `${Math.max(100, participantCount)}+`, label: 'Registered' },
                     { icon: 'timer', val: '24h', label: 'Hackathon' },
                     { icon: 'apartment', val: 'VIT', label: 'Chennai' },
                     { icon: 'payments', val: '₹1L', label: 'Prizes' },

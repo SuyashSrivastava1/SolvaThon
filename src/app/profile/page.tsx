@@ -16,6 +16,7 @@ import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { problemStatements } from "@/data";
 import { isAdminEmail } from "@/config/admin";
+import { clearParticipantSession } from "@/lib/authSession";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -28,16 +29,15 @@ export default function ProfilePage() {
   // Form states for Team creation/joining
   const [teamName, setTeamName] = useState("");
   const [teamCode, setTeamCode] = useState("");
-  const [actionStatus, setActionStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
-  const [message, setMessage] = useState("");
+  const [createStatus, setCreateStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [createMsg, setCreateMsg] = useState("");
+  const [joinStatus, setJoinStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [joinMsg, setJoinMsg] = useState("");
 
   // Track selection
   const [selectedTrack, setSelectedTrack] = useState("");
   const [trackStatus, setTrackStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
   const [trackMsg, setTrackMsg] = useState("");
-
-  // Phase view state: Defaults automatically to FINAL if super admin enabled final phase
-  const [activePhaseView, setActivePhaseView] = useState<"IDEA" | "FINAL">("IDEA");
 
   // Phase 1: Idea submission
   const [submission, setSubmission] = useState({
@@ -59,6 +59,16 @@ export default function ProfilePage() {
   const [submittingFinal, setSubmittingFinal] = useState(false);
   const [finalMsg, setFinalMsg] = useState("");
   const [finalError, setFinalError] = useState("");
+
+  const isIdeaComplete =
+    Boolean(submission.pptUrl?.trim()) &&
+    Boolean(submission.understanding?.trim()) &&
+    Boolean(submission.solutionSummary?.trim());
+
+  const isFinalComplete =
+    Boolean(finalSubmission.finalDocUrl?.trim()) &&
+    Boolean(finalSubmission.finalRepoUrl?.trim()) &&
+    Boolean(finalSubmission.finalSummary?.trim());
 
   useEffect(() => {
     if (!loading && !user) {
@@ -99,11 +109,6 @@ export default function ProfilePage() {
             finalDemoUrl: result.team.finalDemoUrl || "",
             finalSummary: result.team.finalSummary || ""
           });
-
-          // If super admin has switched the global phase to FINAL, auto-direct participant to final project page
-          if (result.submissionPhase === "FINAL") {
-            setActivePhaseView("FINAL");
-          }
         }
       } else {
         setFetchError(result.error || "Failed to load team data.");
@@ -118,31 +123,33 @@ export default function ProfilePage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setActionStatus("loading");
-    setMessage("");
+    setCreateStatus("loading");
+    setCreateMsg("");
+    setJoinMsg("");
     const result = await createTeam(user!.uid, teamName);
     if (result.success) {
-      setActionStatus("success");
-      setMessage("Team created successfully! Code: " + result.teamCode);
+      setCreateStatus("success");
+      setCreateMsg("Team created successfully! Code: " + result.teamCode);
       fetchTeam();
     } else {
-      setActionStatus("error");
-      setMessage(result.error || "Failed to create team.");
+      setCreateStatus("error");
+      setCreateMsg(result.error || "Failed to create team.");
     }
   };
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setActionStatus("loading");
-    setMessage("");
+    setJoinStatus("loading");
+    setJoinMsg("");
+    setCreateMsg("");
     const result = await joinTeam(user!.uid, teamCode);
     if (result.success) {
-      setActionStatus("success");
-      setMessage("Successfully joined the team!");
+      setJoinStatus("success");
+      setJoinMsg("Successfully joined the team!");
       fetchTeam();
     } else {
-      setActionStatus("error");
-      setMessage(result.error || "Failed to join team.");
+      setJoinStatus("error");
+      setJoinMsg(result.error || "Failed to join team.");
     }
   };
 
@@ -231,6 +238,15 @@ export default function ProfilePage() {
     );
   }
 
+  if (!teamData || !teamData.participant) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
+        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+        <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
+      </div>
+    );
+  }
+
   const { participant } = teamData;
   const isFinalActive = teamData.submissionPhase === "FINAL";
 
@@ -249,12 +265,10 @@ export default function ProfilePage() {
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back to Portal
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-white/50 hidden sm:inline">
-              UID: {user?.uid.slice(0, 8)}...
-            </span>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => {
+                clearParticipantSession();
                 signOut(auth);
                 router.replace("/");
               }}
@@ -268,24 +282,21 @@ export default function ProfilePage() {
 
         {/* Global Phase Notification Banner */}
         {isFinalActive && (
-          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border border-emerald-500/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/10 animate-pulse">
+          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border border-emerald-500/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/10">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
                 <span className="material-symbols-outlined text-2xl">rocket_launch</span>
               </div>
               <div>
-                <h4 className="font-bold text-sm text-white">Final Project Submission Phase is Live!</h4>
+                <h4 className="font-bold text-sm text-white">Stage 2: Final Project Submission Phase is Live!</h4>
                 <p className="text-xs text-white/70">
-                  Super Admin has unlocked Phase 2. Please submit your final documentation and repository code.
+                  Super Admin has activated Phase 2. Please submit your final documentation and repository code below.
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setActivePhaseView("FINAL")}
-              className="px-4 py-2 bg-emerald-400 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all hover:bg-emerald-300 shrink-0 cursor-pointer"
-            >
-              Go to Final Submission
-            </button>
+            <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-bold uppercase tracking-wider">
+              STAGE 2 ACTIVE
+            </span>
           </div>
         )}
 
@@ -366,110 +377,13 @@ export default function ProfilePage() {
                         <p className="text-[11px] font-mono text-white/40 truncate">{m.ticketId}</p>
                       </div>
                     </div>
-                    <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Evaluation Scorecard (If Evaluated by Admin) */}
-            {teamData.team.scoreTotal !== null && teamData.team.scoreTotal !== undefined && (
-              <div className="bg-gradient-to-br from-purple-950/30 via-indigo-950/20 to-slate-900/50 border border-purple-500/30 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-5 shadow-2xl">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
-                      <span className="material-symbols-outlined text-2xl">workspace_premium</span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-black text-white">Official Jury Evaluation</h3>
-                      <p className="text-xs text-purple-300/70 font-mono">
-                        Evaluated by Administrator on {teamData.team.evaluatedAt ? new Date(teamData.team.evaluatedAt).toLocaleDateString() : 'Recent'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-mono text-purple-300 uppercase block">Total Score</span>
-                    <span className="text-3xl font-black text-purple-300 font-mono">{teamData.team.scoreTotal} <span className="text-sm text-white/40">/ 300</span></span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-black/40 border border-white/10 p-4 rounded-2xl text-center space-y-1">
-                    <span className="text-xs text-white/50 font-mono uppercase block">Innovation</span>
-                    <span className="text-2xl font-black text-cyan-400 font-mono">{teamData.team.scoreInnovation ?? 0}</span>
-                    <span className="text-[10px] text-white/40 block">/ 100 Points</span>
-                  </div>
-                  <div className="bg-black/40 border border-white/10 p-4 rounded-2xl text-center space-y-1">
-                    <span className="text-xs text-white/50 font-mono uppercase block">Problem Understanding</span>
-                    <span className="text-2xl font-black text-blue-400 font-mono">{teamData.team.scoreUnderstanding ?? 0}</span>
-                    <span className="text-[10px] text-white/40 block">/ 100 Points</span>
-                  </div>
-                  <div className="bg-black/40 border border-white/10 p-4 rounded-2xl text-center space-y-1">
-                    <span className="text-xs text-white/50 font-mono uppercase block">Progress &amp; Execution</span>
-                    <span className="text-2xl font-black text-emerald-400 font-mono">{teamData.team.scoreProgress ?? 0}</span>
-                    <span className="text-[10px] text-white/40 block">/ 100 Points</span>
-                  </div>
-                </div>
-
-                {teamData.team.evaluationNotes && (
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-xs text-white/80 space-y-1">
-                    <span className="text-[10px] uppercase font-mono text-purple-400 font-bold block">Jury Remarks:</span>
-                    <p className="italic leading-relaxed">{teamData.team.evaluationNotes}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Submission Phase Tabs (Controlled by Super Admin with Participant Switcher) */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white/[0.03] border border-white/10 p-3.5 rounded-2xl backdrop-blur-xl">
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseView("IDEA")}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    activePhaseView === "IDEA"
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20"
-                      : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-base">slideshow</span>
-                  Phase 1: Idea Submission
-                  {teamData.team.submittedAt && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseView("FINAL")}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                    activePhaseView === "FINAL"
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-black shadow-lg shadow-emerald-500/20 font-extrabold"
-                      : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-base">rocket_launch</span>
-                  Phase 2: Final Project
-                  {teamData.team.finalSubmittedAt && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  )}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-white/40 uppercase">Current Official Stage:</span>
-                <span className={`text-xs font-mono font-bold px-3 py-1 rounded-full ${
-                  isFinalActive
-                    ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
-                    : "bg-cyan-500/20 border border-cyan-500/30 text-cyan-300"
-                }`}>
-                  {isFinalActive ? "⚡ Phase 2: Final Submission" : "💡 Phase 1: Idea Submission"}
-                </span>
-              </div>
-            </div>
-
             {/* ═════════ VIEW 1: PHASE 1 (IDEA SUBMISSION & TRACK SELECTION) ═════════ */}
-            {activePhaseView === "IDEA" && (
+            {!isFinalActive && (
               <div className="space-y-8 animate-fadeIn">
                 {/* Problem Statement Track Selection */}
                 <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
@@ -525,10 +439,7 @@ export default function ProfilePage() {
                       })}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-white/5">
-                      <p className="text-xs text-white/50 font-mono">
-                        Locking your track assigns your team to the domain mentors and rubrics.
-                      </p>
+                    <div className="flex items-center justify-end pt-3 border-t border-white/5">
                       <button
                         type="submit"
                         disabled={!selectedTrack || trackStatus === "loading"}
@@ -618,8 +529,12 @@ export default function ProfilePage() {
                     <div className="pt-2 flex justify-end">
                       <button
                         type="submit"
-                        disabled={submitting}
-                        className="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-cyan-500/20 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                        disabled={!isIdeaComplete || submitting}
+                        className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
+                          !isIdeaComplete || submitting
+                            ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                            : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 cursor-pointer"
+                        }`}
                       >
                         {submitting ? (
                           <>
@@ -651,7 +566,7 @@ export default function ProfilePage() {
             )}
 
             {/* ═════════ VIEW 2: PHASE 2 (FINAL PROJECT SUBMISSION PAGE) ═════════ */}
-            {activePhaseView === "FINAL" && (
+            {isFinalActive && (
               <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6 animate-fadeIn">
                 <div className="border-b border-white/10 pb-4 space-y-1">
                   <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
@@ -758,8 +673,12 @@ export default function ProfilePage() {
                   <div className="pt-2 flex justify-end">
                     <button
                       type="submit"
-                      disabled={submittingFinal}
-                      className="px-9 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                      disabled={!isFinalComplete || submittingFinal}
+                      className={`px-9 py-4 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
+                        !isFinalComplete || submittingFinal
+                          ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                          : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black shadow-xl shadow-emerald-500/20 cursor-pointer"
+                      }`}
                     >
                       {submittingFinal ? (
                         <>
@@ -768,7 +687,7 @@ export default function ProfilePage() {
                         </>
                       ) : (
                         <>
-                          <span className="material-symbols-outlined text-xl">check_circle</span>
+                          <span className="material-symbols-outlined text-xl">rocket_launch</span>
                           <span>{teamData.team.finalSubmittedAt ? "Update Final Project Submission" : "Submit Final Project"}</span>
                         </>
                       )}
@@ -815,17 +734,32 @@ export default function ProfilePage() {
                       placeholder="e.g. CyberVanguard"
                       required
                       value={teamName}
-                      onChange={(e) => setTeamName(e.target.value)}
+                      onChange={(e) => {
+                        setTeamName(e.target.value);
+                        if (createMsg) setCreateMsg("");
+                      }}
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 font-sans text-sm"
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={actionStatus === "loading"}
+                    disabled={createStatus === "loading"}
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
                   >
-                    {actionStatus === "loading" ? "Creating Team..." : "Create Team Cluster"}
+                    {createStatus === "loading" ? "Creating Team..." : "Create Team Cluster"}
                   </button>
+
+                  {createMsg && (
+                    <div
+                      className={`text-center p-3 rounded-xl border text-xs font-mono font-medium ${
+                        createStatus === "error"
+                          ? "bg-red-500/10 border-red-500/20 text-red-400"
+                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                      }`}
+                    >
+                      {createMsg}
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
@@ -854,32 +788,35 @@ export default function ProfilePage() {
                       required
                       maxLength={6}
                       value={teamCode}
-                      onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        setTeamCode(e.target.value.toUpperCase());
+                        if (joinMsg) setJoinMsg("");
+                      }}
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono tracking-widest text-lg uppercase text-center"
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={actionStatus === "loading"}
+                    disabled={joinStatus === "loading"}
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
                   >
-                    {actionStatus === "loading" ? "Joining Team..." : "Join Team"}
+                    {joinStatus === "loading" ? "Joining Team..." : "Join Team"}
                   </button>
+
+                  {joinMsg && (
+                    <div
+                      className={`text-center p-3 rounded-xl border text-xs font-mono font-medium ${
+                        joinStatus === "error"
+                          ? "bg-red-500/10 border-red-500/20 text-red-400"
+                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                      }`}
+                    >
+                      {joinMsg}
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
-
-            {message && (
-              <div
-                className={`col-span-1 md:col-span-2 text-center p-3.5 rounded-2xl border text-xs font-mono font-medium ${
-                  actionStatus === "error"
-                    ? "bg-red-500/10 border-red-500/20 text-red-400"
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                }`}
-              >
-                {message}
-              </div>
-            )}
           </div>
         )}
       </div>
