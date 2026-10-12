@@ -17,8 +17,8 @@
 	],
 	"vars": {
 		"ADMIN_ACCESS_KEY": "warden_cyft_2025",
-		"DATABASE_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require",
-		"DIRECT_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require",
+		"DATABASE_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true",
+		"DIRECT_URL": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:5432/postgres",
 		"ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com,suyash.srivastava2025@vitstudent.ac.in,triloknath.pandey@vit.ac.in,shashanka.shekhar2024@vitstudent.ac.in",
 		"SUPER_ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com",
 		"NEXT_PUBLIC_ADMIN_EMAILS": "atman.dash2025@vitstudent.ac.in,atmandash2007@gmail.com,suyash.srivastava2025@vitstudent.ac.in,triloknath.pandey@vit.ac.in,shashanka.shekhar2024@vitstudent.ac.in",

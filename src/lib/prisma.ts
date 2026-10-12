@@ -30,11 +30,9 @@ export function getDatabaseUrl(): string {
 
 function cleanDatabaseUrl(url: string): string {
   if (!url) return "";
-  if (!url.includes("sslmode=")) {
-    const separator = url.includes("?") ? "&" : "?";
-    return `${url}${separator}sslmode=require`;
-  }
-  return url;
+  // Strip any sslmode parameter so pg-connection-string does not force rejectUnauthorized: true.
+  // SSL is enforced via the Pool config with rejectUnauthorized: false.
+  return url.replace(/[?&]sslmode=[^&]+/g, "").replace(/\?$/, "");
 }
 
 function createPrismaClient(): PrismaClient {
@@ -48,9 +46,13 @@ function createPrismaClient(): PrismaClient {
   const pool = new Pool({
     connectionString: connectionString || undefined,
     ssl: { rejectUnauthorized: false },
-    max: 5,
+    max: 1,
     connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 10000,
+    idleTimeoutMillis: 1000,
+  });
+
+  pool.on('error', (err) => {
+    console.warn('Prisma pg pool client error:', err?.message || err);
   });
 
   const adapter = new PrismaPg(pool);
@@ -61,13 +63,11 @@ function createPrismaClient(): PrismaClient {
 }
 
 export function getPrismaClient(): PrismaClient {
-  if (process.env.NODE_ENV !== 'production' && globalThis.prismaGlobal) {
+  if (globalThis.prismaGlobal) {
     return globalThis.prismaGlobal;
   }
   const client = createPrismaClient();
-  if (process.env.NODE_ENV !== 'production') {
-    globalThis.prismaGlobal = client;
-  }
+  globalThis.prismaGlobal = client;
   return client;
 }
 
