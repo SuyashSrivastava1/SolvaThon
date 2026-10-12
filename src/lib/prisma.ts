@@ -7,12 +7,13 @@ declare global {
 }
 
 export function getDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  if (process.env.DIRECT_URL) return process.env.DIRECT_URL;
-
   try {
     const { getCloudflareContext } = require("@opennextjs/cloudflare");
     const cfCtx = getCloudflareContext();
+    if (cfCtx?.env?.HYPERDRIVE?.connectionString) {
+      console.log('✓ Using Cloudflare Hyperdrive connection');
+      return cfCtx.env.HYPERDRIVE.connectionString;
+    }
     if (cfCtx?.env?.DATABASE_URL) {
       process.env.DATABASE_URL = cfCtx.env.DATABASE_URL as string;
       return cfCtx.env.DATABASE_URL as string;
@@ -24,6 +25,9 @@ export function getDatabaseUrl(): string {
   } catch (e) {
     // getCloudflareContext is not available outside cloudflare worker request
   }
+
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (process.env.DIRECT_URL) return process.env.DIRECT_URL;
 
   return "";
 }
