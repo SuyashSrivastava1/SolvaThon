@@ -60,22 +60,36 @@ export default function AdminPortalPage() {
   const loadData = (email: string) => {
     setLoading(true);
     setErrorMsg("");
-    getAdminData(email).then((res) => {
-      if (res.success) {
-        setData(res);
-        initEvalForms(res.teams);
-        if (res.systemSettings?.targetDate) {
-          setCustomTimerDate(toDatetimeLocal(res.systemSettings.targetDate));
+
+    const timeoutPromise = new Promise<any>((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            success: false,
+            error: "Connection took longer than expected. Please check your connection and tap Retry Connection below.",
+          }),
+        15000
+      )
+    );
+
+    Promise.race([getAdminData(email), timeoutPromise])
+      .then((res) => {
+        if (res.success) {
+          setData(res);
+          initEvalForms(res.teams);
+          if (res.systemSettings?.targetDate) {
+            setCustomTimerDate(toDatetimeLocal(res.systemSettings.targetDate));
+          }
+        } else {
+          setErrorMsg(res.error || "Failed to load admin records from database.");
         }
-      } else {
-        setErrorMsg(res.error || "Failed to load admin records from database.");
-      }
-      setLoading(false);
-    }).catch((err) => {
-      console.error("Error loading admin data:", err);
-      setErrorMsg("Failed to connect to the database. Please verify your connection.");
-      setLoading(false);
-    });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error loading admin data:", err);
+        setErrorMsg("Failed to connect to the database. Please verify your connection.");
+        setLoading(false);
+      });
   };
 
   // Guard route: Only verified admin users are allowed
