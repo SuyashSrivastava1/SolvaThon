@@ -6,42 +6,53 @@ declare global {
   var prismaGlobal: PrismaClient | undefined;
 }
 
-export function getDatabaseUrl(): string {
+export function getDatabaseConfig(): { connectionString: string; isHyperdrive: boolean } {
   try {
     const { getCloudflareContext } = require("@opennextjs/cloudflare");
     const cfCtx = getCloudflareContext();
     if (cfCtx?.env?.HYPERDRIVE?.connectionString) {
-      console.log('✓ Using Cloudflare Hyperdrive connection');
-      return cfCtx.env.HYPERDRIVE.connectionString;
+      return {
+        connectionString: cleanDatabaseUrl(cfCtx.env.HYPERDRIVE.connectionString),
+        isHyperdrive: true,
+      };
     }
     if (cfCtx?.env?.DATABASE_URL) {
       process.env.DATABASE_URL = cfCtx.env.DATABASE_URL as string;
-      return cfCtx.env.DATABASE_URL as string;
+      return {
+        connectionString: cleanDatabaseUrl(cfCtx.env.DATABASE_URL as string),
+        isHyperdrive: false,
+      };
     }
     if (cfCtx?.env?.DIRECT_URL) {
       process.env.DIRECT_URL = cfCtx.env.DIRECT_URL as string;
-      return cfCtx.env.DIRECT_URL as string;
+      return {
+        connectionString: cleanDatabaseUrl(cfCtx.env.DIRECT_URL as string),
+        isHyperdrive: false,
+      };
     }
   } catch (e) {
     // getCloudflareContext is not available outside cloudflare worker request
   }
 
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  if (process.env.DIRECT_URL) return process.env.DIRECT_URL;
+  const fallback = process.env.DATABASE_URL || process.env.DIRECT_URL || "";
+  return {
+    connectionString: cleanDatabaseUrl(fallback),
+    isHyperdrive: false,
+  };
+}
 
-  return "";
+export function getDatabaseUrl(): string {
+  return getDatabaseConfig().connectionString;
 }
 
 function cleanDatabaseUrl(url: string): string {
   if (!url) return "";
   // Strip any sslmode parameter so pg-connection-string does not force rejectUnauthorized: true.
-  // SSL is enforced via the Pool config with rejectUnauthorized: false.
   return url.replace(/[?&]sslmode=[^&]+/g, "").replace(/\?$/, "");
 }
 
 function createPrismaClient(): PrismaClient {
-  const rawUrl = getDatabaseUrl();
-  const connectionString = cleanDatabaseUrl(rawUrl);
+  const { connectionString, isHyperdrive } = getDatabaseConfig();
 
   if (!connectionString) {
     console.error('DATABASE_URL or DIRECT_URL not found in runtime environment.');
@@ -49,7 +60,9 @@ function createPrismaClient(): PrismaClient {
 
   const pool = new Pool({
     connectionString: connectionString || undefined,
-    ssl: { rejectUnauthorized: false },
+    // Hyperdrive connects locally over Cloudflare internal network and terminates SSL itself.
+    // Setting ssl: false prevents pg from requesting SSL from Hyperdrive.
+    ssl: isHyperdrive ? false : { rejectUnauthorized: false },
     max: 1,
     connectionTimeoutMillis: 10000,
     idleTimeoutMillis: 1000,
