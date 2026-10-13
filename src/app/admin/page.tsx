@@ -68,7 +68,7 @@ export default function AdminPortalPage() {
             success: false,
             error: "Connection took longer than expected. Please check your connection and tap Retry Connection below.",
           }),
-        15000
+        35000
       )
     );
 
@@ -87,7 +87,7 @@ export default function AdminPortalPage() {
       })
       .catch((err) => {
         console.error("Error loading admin data:", err);
-        setErrorMsg("Failed to connect to the database. Please verify your connection.");
+        setErrorMsg(err?.message ? `Failed to connect to the database: ${err.message}` : "Failed to connect to the database. Please verify your connection.");
         setLoading(false);
       });
   };

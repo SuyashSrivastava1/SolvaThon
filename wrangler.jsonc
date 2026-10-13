@@ -19,7 +19,7 @@
 		{
 			"binding": "HYPERDRIVE",
 			"id": "eeacf874b2644d6ba4143e9084587427",
-			"localConnectionString": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+			"localConnectionString": "postgresql://postgres.ssfvzchtrsmmzpzoxakw:hessJhw-24%402...@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 		}
 	],
 	"vars": {

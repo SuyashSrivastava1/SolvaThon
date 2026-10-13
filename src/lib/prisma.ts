@@ -64,11 +64,9 @@ function createPrismaClientFor(connectionString: string, isHyperdrive: boolean):
     // Hyperdrive connects locally over Cloudflare internal network and terminates SSL itself.
     // Setting ssl: false prevents pg from requesting SSL from Hyperdrive.
     ssl: isHyperdrive ? false : { rejectUnauthorized: false },
-    // Cloudflare Hyperdrive maintains the global connection pool at the network edge.
-    // Inside the worker isolate, keep max: 1 to prevent stale, dead sockets across requests.
-    max: isHyperdrive ? 1 : 5,
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 5000,
+    max: 5,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 10000,
   });
 
   pool.on('error', (err) => {
