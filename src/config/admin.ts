@@ -6,13 +6,11 @@
  */
 
 const DEFAULT_SUPER_ADMIN_EMAILS = [
-  "atman.dash2025@vitstudent.ac.in",
-  "atmandash2007@gmail.com"
+  "atman.dash2025@vitstudent.ac.in"
 ];
 
 const DEFAULT_ADMIN_EMAILS = [
   "atman.dash2025@vitstudent.ac.in",
-  "atmandash2007@gmail.com",
   "suyash.srivastava2025@vitstudent.ac.in",
   "triloknath.pandey@vit.ac.in",
   "shashanka.shekhar2024@vitstudent.ac.in"
@@ -23,7 +21,7 @@ function parseEmailList(rawList?: string): string[] {
   return rawList
     .split(",")
     .map((e) => e.trim().toLowerCase())
-    .filter((e) => Boolean(e) && e.includes("@"));
+    .filter((e) => Boolean(e) && (e.endsWith("@vitstudent.ac.in") || e.endsWith("@vit.ac.in")));
 }
 
 /**
@@ -73,15 +71,10 @@ export function isAdminEmail(email?: string | null): boolean {
 
 /**
  * Validates domain allowance:
- * - Allows @vitstudent.ac.in
- * - Allows @vit.ac.in
- * - Allows Admin accounts configured in .env
+ * - Only @vitstudent.ac.in and @vit.ac.in are allowed.
  */
 export function isValidAuthDomain(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  if (normalized.endsWith("@vitstudent.ac.in") || normalized.endsWith("@vit.ac.in")) {
-    return true;
-  }
-  return isAdminEmail(email);
+  return normalized.endsWith("@vitstudent.ac.in") || normalized.endsWith("@vit.ac.in");
 }

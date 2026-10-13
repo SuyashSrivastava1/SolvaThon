@@ -47,8 +47,11 @@ export function getDatabaseUrl(): string {
 
 function cleanDatabaseUrl(url: string): string {
   if (!url) return "";
-  // Strip any sslmode parameter so pg-connection-string does not force rejectUnauthorized: true.
-  return url.replace(/[?&]sslmode=[^&]+/g, "").replace(/\?$/, "");
+  // Strip sslmode and pgbouncer parameters to prevent connection rejections and pooling conflicts
+  return url
+    .replace(/[?&](sslmode|pgbouncer)=[^&]+/g, "")
+    .replace(/\?&/, "?")
+    .replace(/[?&]$/, "");
 }
 
 function createPrismaClientFor(connectionString: string, isHyperdrive: boolean): PrismaClient {
@@ -61,9 +64,11 @@ function createPrismaClientFor(connectionString: string, isHyperdrive: boolean):
     // Hyperdrive connects locally over Cloudflare internal network and terminates SSL itself.
     // Setting ssl: false prevents pg from requesting SSL from Hyperdrive.
     ssl: isHyperdrive ? false : { rejectUnauthorized: false },
-    max: 10,
-    connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 10000,
+    // Cloudflare Hyperdrive maintains the global connection pool at the network edge.
+    // Inside the worker isolate, keep max: 1 to prevent stale, dead sockets across requests.
+    max: isHyperdrive ? 1 : 5,
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 5000,
   });
 
   pool.on('error', (err) => {

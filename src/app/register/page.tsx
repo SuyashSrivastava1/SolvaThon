@@ -48,7 +48,7 @@ export default function RegisterPage() {
       if (!isValidAuthDomain(email)) {
         await auth.signOut();
         clearParticipantSession();
-        setAuthError("You must use your @vitstudent.ac.in email address to register.");
+        setAuthError("You must use your @vitstudent.ac.in or @vit.ac.in email address to register.");
         setAuthLoading(false);
         return;
       }
@@ -89,7 +89,7 @@ export default function RegisterPage() {
 
       if (!isValidAuthDomain(user.email)) {
         auth.signOut();
-        setAuthError("You must use your @vitstudent.ac.in email address to register.");
+        setAuthError("You must use your @vitstudent.ac.in or @vit.ac.in email address to register.");
         setCheckingReg(false);
         return;
       }
