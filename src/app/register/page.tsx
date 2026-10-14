@@ -194,12 +194,37 @@ export default function RegisterPage() {
     );
   }
 
+const CATERERS_BY_BLOCK: Record<string, string[]> = {
+  "Men's Block A": ["CRCL", "Fusion", "Proodle", "Sri Rajalakshmi Food Products"],
+  "Men's Block D": ["CRCL", "Fusion", "Proodle", "Sri Rajalakshmi Food Products"],
+  "Men's Block E": ["CRCL", "Fusion", "Proodle", "Sri Rajalakshmi Food Products"],
+  "Men's Block F": ["SRRC", "J Sathya PR"],
+  "Ladies' Block B": ["Zenith", "Food Exo", "Sakti"],
+  "Ladies' Block C": ["Zenith", "Food Exo", "Sakti"],
+};
+
+const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
+  "CRCL": ["Veg", "Non-Veg", "Food Park"],
+  "Fusion": ["Veg", "Non-Veg", "Special"],
+  "Proodle": ["Veg", "Non-Veg", "Food Park"],
+  "Sri Rajalakshmi Food Products": ["Veg", "Non-Veg", "Special"],
+  "SRRC": ["Veg", "Non-Veg", "Special", "Food Park"],
+  "J Sathya PR": ["Veg", "Non-Veg", "Special", "Food Park"],
+  "Zenith": ["Veg", "Non-Veg", "Special", "Food Park"],
+  "Food Exo": ["Veg", "Non-Veg", "Special"],
+  "Sakti": ["Veg", "Non-Veg", "Special"],
+};
+
   const availableBlocks = formData.gender
     ? blocksData.filter((b: any) => b.gender === formData.gender)
     : [];
 
-  const availableCaterers = formData.gender
-    ? caterersData.filter((c: any) => c.gender === formData.gender)
+  const availableCaterers = formData.hostelBlock
+    ? (CATERERS_BY_BLOCK[formData.hostelBlock] || [])
+    : [];
+
+  const availableMessTypes = formData.messCaterer
+    ? (MESS_TYPES_BY_CATERER[formData.messCaterer] || [])
     : [];
 
   const handleGenderSelect = (selectedGender: "Male" | "Female") => {
@@ -207,15 +232,18 @@ export default function RegisterPage() {
       const validBlocks = blocksData
         .filter((b: any) => b.gender === selectedGender)
         .map((b: any) => b.label);
-      const validCaterers = caterersData
-        .filter((c: any) => c.gender === selectedGender)
-        .map((c: any) => c.label);
+      const newBlock = validBlocks.includes(prev.hostelBlock) ? prev.hostelBlock : "";
+      const validCaterers = newBlock ? (CATERERS_BY_BLOCK[newBlock] || []) : [];
+      const newCaterer = validCaterers.includes(prev.messCaterer) ? prev.messCaterer : "";
+      const validMessTypes = newCaterer ? (MESS_TYPES_BY_CATERER[newCaterer] || []) : [];
+      const newMessType = validMessTypes.includes(prev.messType) ? prev.messType : "";
 
       return {
         ...prev,
         gender: selectedGender,
-        hostelBlock: validBlocks.includes(prev.hostelBlock) ? prev.hostelBlock : "",
-        messCaterer: validCaterers.includes(prev.messCaterer) ? prev.messCaterer : "",
+        hostelBlock: newBlock,
+        messCaterer: newCaterer,
+        messType: newMessType,
       };
     });
   };
@@ -223,7 +251,6 @@ export default function RegisterPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (name === "roomNumber") {
-      // Only numbers accepted, 3 to 4 digits
       const digitsOnly = value.replace(/\D/g, "").slice(0, 4);
       setFormData((prev) => ({ ...prev, roomNumber: digitsOnly }));
       return;
@@ -231,6 +258,31 @@ export default function RegisterPage() {
     if (name === "mobileNumber") {
       const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
       setFormData((prev) => ({ ...prev, mobileNumber: digitsOnly }));
+      return;
+    }
+    if (name === "hostelBlock") {
+      const newBlock = value;
+      const validCaterers = CATERERS_BY_BLOCK[newBlock] || [];
+      const newCaterer = validCaterers.includes(formData.messCaterer) ? formData.messCaterer : "";
+      const validMessTypes = newCaterer ? (MESS_TYPES_BY_CATERER[newCaterer] || []) : [];
+      const newMessType = validMessTypes.includes(formData.messType) ? formData.messType : "";
+      setFormData((prev) => ({
+        ...prev,
+        hostelBlock: newBlock,
+        messCaterer: newCaterer,
+        messType: newMessType,
+      }));
+      return;
+    }
+    if (name === "messCaterer") {
+      const newCaterer = value;
+      const validMessTypes = MESS_TYPES_BY_CATERER[newCaterer] || [];
+      const newMessType = validMessTypes.includes(formData.messType) ? formData.messType : "";
+      setFormData((prev) => ({
+        ...prev,
+        messCaterer: newCaterer,
+        messType: newMessType,
+      }));
       return;
     }
     setFormData((prev) => ({
@@ -435,9 +487,9 @@ export default function RegisterPage() {
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
                 <span>Mess Caterer <span className="text-cyan-400">*</span></span>
-                {formData.gender && (
+                {formData.hostelBlock && (
                   <span className="text-[9px] font-mono text-cyan-400">
-                    {formData.gender === "Male" ? "Men's Caterers" : "Ladies' Caterers"}
+                    {formData.hostelBlock} Caterers
                   </span>
                 )}
               </label>
@@ -445,17 +497,21 @@ export default function RegisterPage() {
                 <select
                   name="messCaterer"
                   required
-                  disabled={!formData.gender}
+                  disabled={!formData.hostelBlock}
                   value={formData.messCaterer}
                   onChange={handleInputChange}
                   className="w-full bg-black/40 border border-white/10 rounded-lg pl-3 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
                   <option value="" disabled>
-                    {!formData.gender ? "Select Gender first" : "Select Caterer"}
+                    {!formData.gender
+                      ? "Select Gender first"
+                      : !formData.hostelBlock
+                      ? "Select Block first"
+                      : "Select Caterer"}
                   </option>
-                  {availableCaterers.map((c: any) => (
-                    <option key={c.id} value={c.label}>
-                      {c.label}
+                  {availableCaterers.map((c: string) => (
+                    <option key={c} value={c}>
+                      {c}
                     </option>
                   ))}
                 </select>
@@ -466,24 +522,33 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
-                Mess Type <span className="text-cyan-400">*</span>
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+                <span>Mess Type <span className="text-cyan-400">*</span></span>
+                {formData.messCaterer && (
+                  <span className="text-[9px] font-mono text-cyan-400">
+                    {formData.messCaterer} Plans
+                  </span>
+                )}
               </label>
               <div className="relative">
                 <select
                   name="messType"
                   required
-                  disabled={!formData.gender}
+                  disabled={!formData.messCaterer}
                   value={formData.messType}
                   onChange={handleInputChange}
                   className="w-full bg-black/40 border border-white/10 rounded-lg pl-3 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
                   <option value="" disabled>
-                    {!formData.gender ? "Select Gender first" : "Select Mess Type"}
+                    {!formData.gender
+                      ? "Select Gender first"
+                      : !formData.messCaterer
+                      ? "Select Caterer first"
+                      : "Select Mess Type"}
                   </option>
-                  {messTypesData.map((m: any) => (
-                    <option key={m.id} value={m.label}>
-                      {m.label}
+                  {availableMessTypes.map((m: string) => (
+                    <option key={m} value={m}>
+                      {m}
                     </option>
                   ))}
                 </select>

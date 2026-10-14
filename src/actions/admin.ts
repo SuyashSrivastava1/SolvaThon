@@ -3,7 +3,7 @@
 import prisma, { getDatabaseUrl } from "@/lib/prisma";
 import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
 
-const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY || "warden_cyft_2025";
+const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY || "warden_solvathon_2026";
 
 export async function checkIsAdmin(email?: string | null) {
   return isAdminEmail(email);

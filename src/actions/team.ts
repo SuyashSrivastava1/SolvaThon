@@ -129,6 +129,7 @@ export async function getTeamDetails(firebaseUid: string) {
           finalSummary: participant.team.finalSummary,
           finalSubmittedAt: participant.team.finalSubmittedAt,
           members: participant.team.participants.map((p: any) => ({
+            id: p.id,
             name: p.fullName,
             ticketId: p.ticketId,
             isLeader: !!leader && (p.id === leader.id || p.firebaseUid === leader.firebaseUid)
@@ -290,3 +291,126 @@ export async function getSystemSettings() {
     };
   }
 }
+
+export async function kickTeamMember(leaderFirebaseUid: string, targetParticipantId: string) {
+  try {
+    const leaderParticipant = await prisma.participant.findUnique({
+      where: { firebaseUid: leaderFirebaseUid },
+      include: {
+        team: {
+          include: {
+            participants: { orderBy: { registrationTime: "asc" } }
+          }
+        }
+      }
+    });
+
+    if (!leaderParticipant || !leaderParticipant.team) {
+      return { success: false, error: "You are not currently in a team." };
+    }
+
+    const leader = getTeamLeader(leaderParticipant.team);
+    const isLeader = !!leader && (leader.id === leaderParticipant.id || leader.firebaseUid === leaderParticipant.firebaseUid);
+
+    if (!isLeader) {
+      return { success: false, error: "Only the team leader can kick members out of the team." };
+    }
+
+    if (targetParticipantId === leaderParticipant.id) {
+      return { success: false, error: "The team leader cannot kick themselves. Use 'Leave Team' instead." };
+    }
+
+    const targetMember = leaderParticipant.team.participants.find((p: any) => p.id === targetParticipantId);
+    if (!targetMember) {
+      return { success: false, error: "Participant is not a member of your team." };
+    }
+
+    await prisma.participant.update({
+      where: { id: targetParticipantId },
+      data: { teamId: null }
+    });
+
+    return { success: true, message: `${targetMember.fullName} has been removed from the team.` };
+  } catch (error: any) {
+    console.error("kickTeamMember error:", error);
+    return { success: false, error: "Failed to remove team member." };
+  }
+}
+
+export async function leaveTeam(firebaseUid: string) {
+  try {
+    const participant = await prisma.participant.findUnique({
+      where: { firebaseUid },
+      include: {
+        team: {
+          include: {
+            participants: { orderBy: { registrationTime: "asc" } }
+          }
+        }
+      }
+    });
+
+    if (!participant || !participant.team) {
+      return { success: false, error: "You are not currently in a team." };
+    }
+
+    const team = participant.team;
+    const leader = getTeamLeader(team);
+    const isLeader = !!leader && (leader.id === participant.id || leader.firebaseUid === participant.firebaseUid);
+
+    const otherMembers = team.participants.filter((p: any) => p.id !== participant.id);
+
+    if (!isLeader) {
+      // Normal member leaving
+      await prisma.participant.update({
+        where: { id: participant.id },
+        data: { teamId: null }
+      });
+      return { success: true, message: `You have successfully left team ${team.name}.` };
+    }
+
+    // Leader is leaving
+    if (otherMembers.length > 0) {
+      // Randomly allocate a new team leader from remaining members
+      const randomIndex = Math.floor(Math.random() * otherMembers.length);
+      const newLeader = otherMembers[randomIndex];
+
+      await prisma.$transaction([
+        prisma.team.update({
+          where: { id: team.id },
+          data: { leaderId: newLeader.id }
+        }),
+        prisma.participant.update({
+          where: { id: participant.id },
+          data: { teamId: null }
+        })
+      ]);
+
+      return {
+        success: true,
+        message: `You have left the team. Leadership has been randomly assigned to ${newLeader.fullName}.`
+      };
+    } else {
+      // Leader is the sole member: unassign participant, delete evaluations and team
+      await prisma.participant.update({
+        where: { id: participant.id },
+        data: { teamId: null }
+      });
+      await prisma.teamEvaluation.deleteMany({
+        where: { teamId: team.id }
+      });
+      await prisma.team.delete({
+        where: { id: team.id }
+      });
+
+      return {
+        success: true,
+        message: `You were the sole member of ${team.name}. The team has been disbanded.`
+      };
+    }
+  } catch (error: any) {
+    console.error("leaveTeam error:", error);
+    return { success: false, error: "Failed to leave the team: " + (error?.message || "Unknown error") };
+  }
+}
+

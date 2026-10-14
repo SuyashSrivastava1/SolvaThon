@@ -9,7 +9,9 @@ import {
   joinTeam,
   selectProblemStatement,
   submitProject,
-  submitFinalProject
+  submitFinalProject,
+  kickTeamMember,
+  leaveTeam
 } from "@/actions/team";
 import { auth } from "@/lib/firebase/config";
 import { signOut } from "firebase/auth";
@@ -25,6 +27,13 @@ export default function ProfilePage() {
   const [teamData, setTeamData] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Kick and Leave Team states
+  const [kickModal, setKickModal] = useState<{ open: boolean; member: any | null }>({ open: false, member: null });
+  const [leaveModal, setLeaveModal] = useState(false);
+  const [teamActionLoading, setTeamActionLoading] = useState(false);
+  const [teamActionMsg, setTeamActionMsg] = useState("");
+  const [teamActionError, setTeamActionError] = useState("");
 
   // Form states for Team creation/joining
   const [teamName, setTeamName] = useState("");
@@ -213,6 +222,38 @@ export default function ProfilePage() {
     setSubmittingFinal(false);
   };
 
+  const handleKickMember = async () => {
+    if (!user || !kickModal.member) return;
+    setTeamActionLoading(true);
+    setTeamActionMsg("");
+    setTeamActionError("");
+    const res = await kickTeamMember(user.uid, kickModal.member.id);
+    setTeamActionLoading(false);
+    if (res.success) {
+      setTeamActionMsg(res.message || "Member removed successfully.");
+      setKickModal({ open: false, member: null });
+      fetchTeam();
+    } else {
+      setTeamActionError(res.error || "Failed to remove member.");
+    }
+  };
+
+  const handleLeaveTeam = async () => {
+    if (!user) return;
+    setTeamActionLoading(true);
+    setTeamActionMsg("");
+    setTeamActionError("");
+    const res = await leaveTeam(user.uid);
+    setTeamActionLoading(false);
+    if (res.success) {
+      setTeamActionMsg(res.message || "You have left the team.");
+      setLeaveModal(false);
+      fetchTeam();
+    } else {
+      setTeamActionError(res.error || "Failed to leave team.");
+    }
+  };
+
   if (loading || fetching) {
     return (
       <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
@@ -377,22 +418,51 @@ export default function ProfilePage() {
                   <h2 className="text-2xl md:text-3xl font-black text-white">{teamData.team.name}</h2>
                 </div>
 
-                <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-4 text-center min-w-[180px] shadow-lg">
-                  <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
-                  <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
-                    {teamData.team.teamCode}
-                  </p>
-                  <p className="text-[10px] text-white/40 font-mono">
-                    {teamData.team.members.length}/4 Members Joined
-                  </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-4 text-center min-w-[160px] shadow-lg">
+                    <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
+                    <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
+                      {teamData.team.teamCode}
+                    </p>
+                    <p className="text-[10px] text-white/40 font-mono">
+                      {teamData.team.members.length}/4 Members Joined
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTeamActionError("");
+                      setTeamActionMsg("");
+                      setLeaveModal(true);
+                    }}
+                    className="px-4 py-3.5 rounded-2xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-300 font-mono text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-lg shrink-0"
+                    title="Leave this team"
+                  >
+                    <span className="material-symbols-outlined text-base">logout</span>
+                    <span>Leave Team</span>
+                  </button>
                 </div>
               </div>
+
+              {/* Status messages for team actions */}
+              {teamActionMsg && (
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  <span>{teamActionMsg}</span>
+                </div>
+              )}
+              {teamActionError && (
+                <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-mono flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">error</span>
+                  <span>{teamActionError}</span>
+                </div>
+              )}
 
               {/* Roster Members */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 {teamData.team.members.map((m: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between bg-black/40 p-3.5 rounded-2xl border border-white/10">
-                    <div className="flex items-center gap-3">
+                  <div key={idx} className="flex items-center justify-between bg-black/40 p-3.5 rounded-2xl border border-white/10 group">
+                    <div className="flex items-center gap-3 overflow-hidden">
                       <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold shrink-0">
                         0{idx + 1}
                       </div>
@@ -408,6 +478,22 @@ export default function ProfilePage() {
                         <p className="text-[11px] font-mono text-white/40 truncate">{m.ticketId}</p>
                       </div>
                     </div>
+
+                    {/* Kick Button: Only visible to leader, on other members */}
+                    {teamData.isLeader && !m.isLeader && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTeamActionError("");
+                          setTeamActionMsg("");
+                          setKickModal({ open: true, member: m });
+                        }}
+                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 transition-all shrink-0 cursor-pointer ml-2"
+                        title={`Remove ${m.name} from team`}
+                      >
+                        <span className="material-symbols-outlined text-sm block">person_remove</span>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -421,7 +507,7 @@ export default function ProfilePage() {
                   <div className="border-b border-white/10 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
-                        PROTOCOL // TRACK ALLOCATION
+                        PROTOCOL: TRACK ALLOCATION
                       </div>
                       <h3 className="text-xl font-bold text-white">Select Your Problem Statement</h3>
                     </div>
@@ -494,7 +580,7 @@ export default function ProfilePage() {
                 <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
                   <div className="border-b border-white/10 pb-4 space-y-1">
                     <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
-                      STAGE 01 // IDEA &amp; ABSTRACT SUBMISSION
+                      STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                     </div>
                     <h3 className="text-xl font-bold text-white">Idea &amp; Presentation Submission</h3>
                     <p className="text-xs text-white/60">
@@ -601,7 +687,7 @@ export default function ProfilePage() {
               <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6 animate-fadeIn">
                 <div className="border-b border-white/10 pb-4 space-y-1">
                   <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
-                    STAGE 02 // FINAL PROJECT DELIVERABLE SUBMISSION
+                    STAGE 02: FINAL PROJECT DELIVERABLE SUBMISSION
                   </div>
                   <h3 className="text-2xl font-extrabold text-white">Final Project Submission Portal</h3>
                   <p className="text-xs text-white/60">
@@ -894,6 +980,142 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Kick Member Confirmation Modal */}
+      {kickModal.open && kickModal.member && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#0b0f19] border border-red-500/30 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5 animate-scaleIn">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                <span className="material-symbols-outlined text-2xl">person_remove</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Remove Team Member?</h3>
+                <p className="text-xs text-white/50 font-mono">CONFIRMATION REQUIRED</p>
+              </div>
+            </div>
+
+            <div className="bg-black/50 border border-white/10 rounded-2xl p-4 space-y-2">
+              <p className="text-sm text-white/90">
+                Are you sure you want to remove <strong className="text-red-300">{kickModal.member.name}</strong> ({kickModal.member.ticketId}) from the team?
+              </p>
+              <p className="text-xs text-white/50 leading-relaxed">
+                They will immediately be unlinked from this team cluster and can join or create another team.
+              </p>
+            </div>
+
+            {teamActionError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl font-mono">
+                {teamActionError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={teamActionLoading}
+                onClick={() => setKickModal({ open: false, member: null })}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={teamActionLoading}
+                onClick={handleKickMember}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-red-600/30 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {teamActionLoading ? (
+                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                ) : (
+                  <span className="material-symbols-outlined text-sm">person_remove</span>
+                )}
+                <span>Remove Member</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Team Confirmation Modal */}
+      {leaveModal && teamData?.team && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#0b0f19] border border-red-500/30 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-5 animate-scaleIn">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                <span className="material-symbols-outlined text-2xl">logout</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Leave Team?</h3>
+                <p className="text-xs text-white/50 font-mono">TEAM MEMBERSHIP ACTION</p>
+              </div>
+            </div>
+
+            <div className="bg-black/50 border border-white/10 rounded-2xl p-4 space-y-2">
+              {teamData.isLeader ? (
+                teamData.team.members.length > 1 ? (
+                  <>
+                    <p className="text-sm text-white/90">
+                      You are currently the <strong className="text-amber-300">Team Leader</strong> of <strong className="text-cyan-300">{teamData.team.name}</strong>.
+                    </p>
+                    <p className="text-xs text-amber-200/80 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl leading-relaxed">
+                      Notice: If you leave, team leadership will automatically be randomly allocated to one of your remaining teammates.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-white/90">
+                      You are the <strong className="text-amber-300">only member</strong> in <strong className="text-cyan-300">{teamData.team.name}</strong>.
+                    </p>
+                    <p className="text-xs text-red-200/80 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl leading-relaxed">
+                      Warning: Leaving will permanently disband and delete this team.
+                    </p>
+                  </>
+                )
+              ) : (
+                <>
+                  <p className="text-sm text-white/90">
+                    Are you sure you want to leave team <strong className="text-cyan-300">{teamData.team.name}</strong>?
+                  </p>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    You will be removed from this team and can join another team with an invite code or create a new team.
+                  </p>
+                </>
+              )}
+            </div>
+
+            {teamActionError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl font-mono">
+                {teamActionError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={teamActionLoading}
+                onClick={() => setLeaveModal(false)}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={teamActionLoading}
+                onClick={handleLeaveTeam}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-red-600/30 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {teamActionLoading ? (
+                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                ) : (
+                  <span className="material-symbols-outlined text-sm">logout</span>
+                )}
+                <span>Yes, Leave Team</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

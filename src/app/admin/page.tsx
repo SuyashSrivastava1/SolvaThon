@@ -545,7 +545,7 @@ export default function AdminPortalPage() {
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-black">Admin &amp; Evaluator Portal</h1>
+                <h1 className="text-xl md:text-2xl font-black">Evaluator Portal</h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-xs font-bold">
                   PERMANENT SESSION
                 </span>
@@ -559,9 +559,6 @@ export default function AdminPortalPage() {
                   </span>
                 )}
               </div>
-              <p className="text-white/50 text-xs font-mono">
-                CYFT Hostellite Solvathon 2026 // Participant Management &amp; Judging Console
-              </p>
             </div>
           </div>
 
@@ -587,13 +584,15 @@ export default function AdminPortalPage() {
               <span className="material-symbols-outlined text-sm">table_view</span>
               Download Excel (.xlsx)
             </button>
-            <button
-              onClick={exportParticipantsCSV}
-              className="px-3.5 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-sm">download</span>
-              Participants CSV
-            </button>
+            {isCurrentUserSuperAdmin && (
+              <button
+                onClick={exportParticipantsCSV}
+                className="px-3.5 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">download</span>
+                Participants CSV
+              </button>
+            )}
             <button
               onClick={handleFullSignOut}
               className="px-3.5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
@@ -650,7 +649,7 @@ export default function AdminPortalPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block font-bold">
-                    CONTROL 01 // PARTICIPANT SUBMISSION ROUTE
+                    CONTROL 01: PARTICIPANT SUBMISSION ROUTE
                   </span>
                   <h3 className="text-base font-bold text-white mt-0.5">
                     Toggle Submission Phase
@@ -717,7 +716,7 @@ export default function AdminPortalPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest block font-bold">
-                    CONTROL 02 // COUNTDOWN TIMER CONSOLE
+                    CONTROL 02: COUNTDOWN TIMER CONSOLE
                   </span>
                   <h3 className="text-base font-bold text-white mt-0.5">
                     Live Hackathon Countdown Timer
@@ -816,7 +815,7 @@ export default function AdminPortalPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block font-bold">
-                    CONTROL 03 // JURY REVIEW ROUND TOGGLE (3 STAGES)
+                    CONTROL 03: JURY REVIEW ROUND TOGGLE (3 STAGES)
                   </span>
                   <h3 className="text-base font-bold text-white mt-0.5">
                     Select Active Review Round
@@ -908,59 +907,55 @@ export default function AdminPortalPage() {
             <p className="text-[10px] text-white/50">Docs &amp; Repos Logged</p>
           </div>
 
-          <div
-            onClick={() => setActiveTab("teams")}
-            className="bg-white/[0.03] border border-white/10 hover:border-purple-500/50 rounded-2xl p-5 backdrop-blur-xl space-y-1 col-span-2 md:col-span-1 cursor-pointer transition-all hover:scale-[1.02] group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono text-purple-300 uppercase font-semibold">Evaluation Frame</span>
-              <span className="text-[10px] font-mono text-purple-400 opacity-70 group-hover:opacity-100 transition-opacity">Open Table ↗</span>
-            </div>
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 backdrop-blur-xl space-y-1 col-span-2 md:col-span-1">
+            <span className="text-[11px] font-mono text-white/40 uppercase">Evaluation Frame</span>
             <div className="text-3xl font-black text-purple-400 tracking-tight">
               {stats.evaluatedTeamsCount || 0} / {stats.totalTeams}
             </div>
-            <p className="text-[10px] text-white/50">Teams Graded • Click to view entries</p>
+            <p className="text-[10px] text-white/50">Teams Graded</p>
           </div>
         </div>
 
-        {/* Tab Controls */}
-        <div className="flex border-b border-white/10 gap-4">
-          <button
-            onClick={() => setActiveTab("teams")}
-            className={`pb-3 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === "teams"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-white/60 hover:text-white"
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">rate_review</span>
-            Evaluation Frame: Teams &amp; Leaders ({teams.length})
-          </button>
+        {/* Tab Controls: Visible ONLY to Super Admin */}
+        {isCurrentUserSuperAdmin && (
+          <div className="flex border-b border-white/10 gap-4">
+            <button
+              onClick={() => setActiveTab("teams")}
+              className={`pb-3 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+                activeTab === "teams"
+                  ? "border-cyan-400 text-cyan-400"
+                  : "border-transparent text-white/60 hover:text-white"
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">rate_review</span>
+              Evaluation Frame: Teams &amp; Leaders ({teams.length})
+            </button>
 
-          <button
-            onClick={() => setActiveTab("participants")}
-            className={`pb-3 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === "participants"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-white/60 hover:text-white"
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">badge</span>
-            Participants Directory ({participants.length})
-          </button>
+            <button
+              onClick={() => setActiveTab("participants")}
+              className={`pb-3 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+                activeTab === "participants"
+                  ? "border-cyan-400 text-cyan-400"
+                  : "border-transparent text-white/60 hover:text-white"
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">badge</span>
+              Participants Directory ({participants.length})
+            </button>
 
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`pb-3 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === "analytics"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-white/60 hover:text-white"
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">analytics</span>
-            Demographics &amp; Tracks Breakdown
-          </button>
-        </div>
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`pb-3 font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+                activeTab === "analytics"
+                  ? "border-cyan-400 text-cyan-400"
+                  : "border-transparent text-white/60 hover:text-white"
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">analytics</span>
+              Demographics &amp; Tracks Breakdown
+            </button>
+          </div>
+        )}
 
         {/* ═════════ TAB 1: TEAM ROSTERS & 3-CRITERIA EVALUATIONS ═════════ */}
         {activeTab === "teams" && (
@@ -1021,35 +1016,6 @@ export default function AdminPortalPage() {
                 >
                   Pending Eval ({teams.filter((t: any) => !isTeamEvaluatedInActiveRound(t)).length})
                 </button>
-              </div>
-            </div>
-
-            {/* Quick Evaluation Launcher */}
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-cyan-950/20 border border-purple-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
-                  <span className="material-symbols-outlined text-2xl">rate_review</span>
-                </div>
-                <div>
-                  <h3 className="text-white font-bold text-sm tracking-wide flex items-center gap-2">
-                    Official Evaluation Frame &amp; Directory
-                    <span className="text-[10px] font-mono uppercase bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
-                      Standalone Scoresheet
-                    </span>
-                  </h3>
-                  <p className="text-white/60 text-xs">
-                    Click any team below to open its dedicated evaluation page. Judges can toggle left or right between teams seamlessly.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <Link
-                  href="/admin/evaluate"
-                  className="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:via-indigo-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-base">arrow_forward</span>
-                  <span>Open Evaluation Workbench</span>
-                </Link>
               </div>
             </div>
 
@@ -1115,10 +1081,10 @@ export default function AdminPortalPage() {
                             <td className="py-4 px-5">
                               <div className="flex items-center gap-2.5">
                                 <div
-                                  className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 shadow-sm shadow-amber-500/10"
+                                  className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-mono text-xs font-bold shrink-0 shadow-sm shadow-cyan-500/10"
                                   title="Team Creator & Leader"
                                 >
-                                  <span className="text-sm">👑</span>
+                                  {leaderName.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                   <div className="font-semibold text-white flex items-center gap-1.5">

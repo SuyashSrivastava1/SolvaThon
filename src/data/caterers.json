@@ -1,7 +1,7 @@
 [
   {
-    "id": "Rassence",
-    "label": "Rassence",
+    "id": "CRCL",
+    "label": "CRCL",
     "gender": "Male"
   },
   {
@@ -10,13 +10,13 @@
     "gender": "Male"
   },
   {
-    "id": "Sri Rajalakshmi",
-    "label": "Sri Rajalakshmi",
+    "id": "Proodle",
+    "label": "Proodle",
     "gender": "Male"
   },
   {
-    "id": "Proodle",
-    "label": "Proodle",
+    "id": "Sri Rajalakshmi Food Products",
+    "label": "Sri Rajalakshmi Food Products",
     "gender": "Male"
   },
   {
@@ -35,13 +35,13 @@
     "gender": "Female"
   },
   {
-    "id": "Sakti",
-    "label": "Sakti",
+    "id": "Food Exo",
+    "label": "Food Exo",
     "gender": "Female"
   },
   {
-    "id": "Food Exo",
-    "label": "Food Exo",
+    "id": "Sakti",
+    "label": "Sakti",
     "gender": "Female"
   }
 ]

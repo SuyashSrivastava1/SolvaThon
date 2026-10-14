@@ -53,7 +53,7 @@ export default function RulesPage() {
       <header className="w-full border-b border-surface-container-low bg-surface-container-lowest/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-[1440px] mx-auto px-gutter-mobile lg:px-gutter h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-space-xs">
-            <span className="font-headline-sm text-body-lg font-bold text-on-surface tracking-tight">CYFT // <span className="text-primary">HACK 2025</span></span>
+            <span className="font-headline-sm text-body-lg font-bold text-on-surface tracking-tight">Solve-a-thon <span className="text-primary">2026</span></span>
           </Link>
           <nav className="hidden md:flex items-center gap-space-lg">
             <Link className="font-label-md text-label-md text-outline hover:text-on-surface transition-colors" href="/">Home</Link>

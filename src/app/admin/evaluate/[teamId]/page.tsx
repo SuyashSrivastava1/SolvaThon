@@ -479,7 +479,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 text-xs font-mono text-purple-400 uppercase tracking-widest font-bold">
                 <span className="material-symbols-outlined text-base">fact_check</span>
-                OFFICIAL JURY WORKBENCH // {roundInfo.title.toUpperCase()} ({roundInfo.subtitle.toUpperCase()})
+                OFFICIAL JURY WORKBENCH: {roundInfo.title.toUpperCase()} ({roundInfo.subtitle.toUpperCase()})
               </div>
               <h2 className="text-2xl font-black text-white">
                 {isCurrentUserSuperAdmin ? "Evaluation Oversight & Freeze Governance" : "Score Team via 5-Tier Rubrics (Out of 10)"}
@@ -724,7 +724,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="text-xs font-mono text-cyan-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">lightbulb</span>
-                  STAGE 01 // IDEA &amp; ABSTRACT SUBMISSION
+                  STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                 </span>
                 <span className="text-[11px] font-mono text-white/40">
                   {currentTeam.submittedAt ? new Date(currentTeam.submittedAt).toLocaleString() : "Not submitted"}
@@ -776,7 +776,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="text-xs font-mono text-emerald-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">rocket_launch</span>
-                  STAGE 02 // FINAL PROJECT DELIVERABLE
+                  STAGE 02: FINAL PROJECT DELIVERABLE
                 </span>
                 <span className="text-[11px] font-mono text-white/40">
                   {currentTeam.finalSubmittedAt ? new Date(currentTeam.finalSubmittedAt).toLocaleString() : "Not submitted"}
