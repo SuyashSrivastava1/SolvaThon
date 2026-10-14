@@ -393,11 +393,18 @@ export default function ProfilePage() {
                 {teamData.team.members.map((m: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between bg-black/40 p-3.5 rounded-2xl border border-white/10">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold">
+                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold shrink-0">
                         0{idx + 1}
                       </div>
                       <div className="overflow-hidden">
-                        <p className="font-bold text-sm text-white truncate">{m.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-bold text-sm text-white truncate">{m.name}</p>
+                          {m.isLeader && (
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                              LEADER
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] font-mono text-white/40 truncate">{m.ticketId}</p>
                       </div>
                     </div>
@@ -407,7 +414,7 @@ export default function ProfilePage() {
             </div>
 
             {/* ═════════ VIEW 1: PHASE 1 (IDEA SUBMISSION & TRACK SELECTION) ═════════ */}
-            {!isFinalActive && (
+            {teamData.isLeader && !isFinalActive && (
               <div className="space-y-8 animate-fadeIn">
                 {/* Problem Statement Track Selection */}
                 <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
@@ -590,7 +597,7 @@ export default function ProfilePage() {
             )}
 
             {/* ═════════ VIEW 2: PHASE 2 (FINAL PROJECT SUBMISSION PAGE) ═════════ */}
-            {isFinalActive && (
+            {teamData.isLeader && isFinalActive && (
               <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6 animate-fadeIn">
                 <div className="border-b border-white/10 pb-4 space-y-1">
                   <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
@@ -729,6 +736,49 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </form>
+              </div>
+            )}
+
+            {/* ═════════ VIEW 3: NON-LEADER MEMBER DASHBOARD VIEW ═════════ */}
+            {!teamData.isLeader && (
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-4 animate-fadeIn">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/10">
+                  <span className="material-symbols-outlined text-3xl">verified_user</span>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold text-white">Team Member Dashboard</h3>
+                  <p className="text-sm text-white/60 max-w-lg mx-auto">
+                    Submissions are managed exclusively by your team leader, <strong className="text-cyan-400">{teamData.leaderName || "Team Leader"}</strong>.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                  {teamData.team.problemStatement ? (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-semibold">
+                      <span className="material-symbols-outlined text-base">task_alt</span>
+                      Assigned Track: {teamData.team.problemStatement}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs font-semibold">
+                      <span className="material-symbols-outlined text-base">pending</span>
+                      Track Selection Pending by Team Leader
+                    </span>
+                  )}
+
+                  {teamData.team.submittedAt && (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-semibold">
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      Idea Submission Recorded
+                    </span>
+                  )}
+
+                  {teamData.team.finalSubmittedAt && (
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-semibold">
+                      <span className="material-symbols-outlined text-base">verified</span>
+                      Final Project Submitted
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>

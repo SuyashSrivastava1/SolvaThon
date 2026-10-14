@@ -152,7 +152,9 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         teamCode: p.team?.teamCode || "N/A"
       })),
       teams: teams.map((t: any) => {
-        const leader = t.participants && t.participants.length > 0 ? t.participants[0] : null;
+        const leader = t.participants && t.participants.length > 0
+          ? (t.participants.find((p: any) => p.id === t.leaderId || p.firebaseUid === t.leaderId) || t.participants[0])
+          : null;
         return {
           id: t.id,
           name: t.name,

@@ -2,6 +2,17 @@
 
 import prisma from "@/lib/prisma";
 
+function getTeamLeader(team: any) {
+  if (!team || !team.participants || team.participants.length === 0) return null;
+  if (team.leaderId) {
+    const found = team.participants.find(
+      (p: any) => p.id === team.leaderId || p.firebaseUid === team.leaderId
+    );
+    if (found) return found;
+  }
+  return team.participants[0];
+}
+
 export async function createTeam(firebaseUid: string, teamName: string) {
   try {
     const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
@@ -23,7 +34,7 @@ export async function createTeam(firebaseUid: string, teamName: string) {
     }
 
     const team = await prisma.team.create({
-      data: { name: teamName, teamCode: newTeamCode },
+      data: { name: teamName, teamCode: newTeamCode, leaderId: participant.id },
     });
 
     await prisma.participant.update({
@@ -68,7 +79,15 @@ export async function getTeamDetails(firebaseUid: string) {
     try {
       const participant = await prisma.participant.findUnique({
         where: { firebaseUid },
-        include: { team: { include: { participants: true } } }
+        include: {
+          team: {
+            include: {
+              participants: {
+                orderBy: { registrationTime: "asc" }
+              }
+            }
+          }
+        }
       });
       const phaseConfig = await prisma.systemConfig.findUnique({ where: { key: "submission_phase" } }).catch(() => null);
       
@@ -85,14 +104,20 @@ export async function getTeamDetails(firebaseUid: string) {
         };
       }
 
+      const leader = getTeamLeader(participant.team);
+      const isLeader = !!leader && (leader.id === participant.id || leader.firebaseUid === participant.firebaseUid);
+
       return { 
         success: true, 
         hasTeam: true, 
         submissionPhase,
+        isLeader,
+        leaderName: leader?.fullName || "Team Leader",
         team: {
           id: participant.team.id,
           name: participant.team.name,
           teamCode: participant.team.teamCode,
+          leaderId: participant.team.leaderId,
           problemStatement: participant.team.problemStatement,
           pptUrl: participant.team.pptUrl,
           understanding: participant.team.understanding,
@@ -105,7 +130,8 @@ export async function getTeamDetails(firebaseUid: string) {
           finalSubmittedAt: participant.team.finalSubmittedAt,
           members: participant.team.participants.map((p: any) => ({
             name: p.fullName,
-            ticketId: p.ticketId
+            ticketId: p.ticketId,
+            isLeader: !!leader && (p.id === leader.id || p.firebaseUid === leader.firebaseUid)
           }))
         },
         participant
@@ -123,13 +149,21 @@ export async function getTeamDetails(firebaseUid: string) {
 
 export async function selectProblemStatement(firebaseUid: string, problemStatement: string) {
   try {
-    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
-    if (!participant || !participant.teamId) {
+    const participant = await prisma.participant.findUnique({
+      where: { firebaseUid },
+      include: { team: { include: { participants: { orderBy: { registrationTime: "asc" } } } } }
+    });
+    if (!participant || !participant.team) {
       return { success: false, error: "You must be in a team to choose a problem statement." };
     }
 
+    const leader = getTeamLeader(participant.team);
+    if (leader && leader.id !== participant.id && leader.firebaseUid !== participant.firebaseUid) {
+      return { success: false, error: `Only the team leader (${leader.fullName}) can select the problem statement.` };
+    }
+
     await prisma.team.update({
-      where: { id: participant.teamId },
+      where: { id: participant.team.id },
       data: { problemStatement },
     });
 
@@ -145,9 +179,17 @@ export async function submitProject(
   data: { pptUrl: string; understanding: string; solutionSummary: string }
 ) {
   try {
-    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
-    if (!participant || !participant.teamId) {
+    const participant = await prisma.participant.findUnique({
+      where: { firebaseUid },
+      include: { team: { include: { participants: { orderBy: { registrationTime: "asc" } } } } }
+    });
+    if (!participant || !participant.team) {
       return { success: false, error: "You must be in a team to submit." };
+    }
+
+    const leader = getTeamLeader(participant.team);
+    if (leader && leader.id !== participant.id && leader.firebaseUid !== participant.firebaseUid) {
+      return { success: false, error: `Only the team leader (${leader.fullName}) can submit the presentation.` };
     }
 
     if (!data.pptUrl || (!data.pptUrl.startsWith("http://") && !data.pptUrl.startsWith("https://"))) {
@@ -163,7 +205,7 @@ export async function submitProject(
     }
 
     await prisma.team.update({
-      where: { id: participant.teamId },
+      where: { id: participant.team.id },
       data: {
         pptUrl: data.pptUrl.trim(),
         understanding: data.understanding.trim(),
@@ -189,9 +231,17 @@ export async function submitFinalProject(
   }
 ) {
   try {
-    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
-    if (!participant || !participant.teamId) {
+    const participant = await prisma.participant.findUnique({
+      where: { firebaseUid },
+      include: { team: { include: { participants: { orderBy: { registrationTime: "asc" } } } } }
+    });
+    if (!participant || !participant.team) {
       return { success: false, error: "You must be in a team to submit the final project." };
+    }
+
+    const leader = getTeamLeader(participant.team);
+    if (leader && leader.id !== participant.id && leader.firebaseUid !== participant.firebaseUid) {
+      return { success: false, error: `Only the team leader (${leader.fullName}) can submit the final project deliverable.` };
     }
 
     if (!data.finalDocUrl || (!data.finalDocUrl.startsWith("http://") && !data.finalDocUrl.startsWith("https://"))) {
@@ -199,7 +249,7 @@ export async function submitFinalProject(
     }
 
     await prisma.team.update({
-      where: { id: participant.teamId },
+      where: { id: participant.team.id },
       data: {
         finalDocUrl: data.finalDocUrl.trim(),
         finalRepoUrl: data.finalRepoUrl?.trim() || null,

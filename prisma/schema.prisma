@@ -14,6 +14,7 @@ model Team {
   id           String        @id @default(uuid())
   name         String        @unique
   teamCode     String        @unique @default(cuid())
+  leaderId     String?       // ID or Firebase UID of team creator
   createdAt    DateTime      @default(now())
   
   // Phase 1: Track selection & Idea submission
