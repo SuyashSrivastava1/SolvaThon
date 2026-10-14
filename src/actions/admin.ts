@@ -49,28 +49,50 @@ export async function getAdminData(tokenOrEmail?: string | null) {
   }
 
   try {
-    const participants = await prisma.participant.findMany({
-      include: {
-        team: {
-          select: { name: true, teamCode: true, problemStatement: true, submittedAt: true, finalSubmittedAt: true }
-        }
-      },
-      orderBy: { registrationTime: "desc" }
-    });
+    let participants: any[] = [];
+    let teams: any[] = [];
+    let configs: any[] = [];
 
-    const teams = await prisma.team.findMany({
-      include: {
-        participants: {
-          select: { fullName: true, emailId: true, mobileNumber: true, hostelBlock: true, roomNumber: true, ticketId: true, registrationTime: true },
-          orderBy: { registrationTime: "asc" }
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    });
+    let queryError: any = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        participants = await prisma.participant.findMany({
+          include: {
+            team: {
+              select: { name: true, teamCode: true, problemStatement: true, submittedAt: true, finalSubmittedAt: true }
+            }
+          },
+          orderBy: { registrationTime: "desc" }
+        });
 
-    const configs = await prisma.systemConfig.findMany({
-      where: { key: { in: ["submission_phase", "target_date", "timer_paused"] } }
-    }).catch(() => []);
+        teams = await prisma.team.findMany({
+          include: {
+            participants: {
+              select: { fullName: true, emailId: true, mobileNumber: true, hostelBlock: true, roomNumber: true, ticketId: true, registrationTime: true },
+              orderBy: { registrationTime: "asc" }
+            }
+          },
+          orderBy: { createdAt: "desc" }
+        });
+
+        configs = await prisma.systemConfig.findMany({
+          where: { key: { in: ["submission_phase", "target_date", "timer_paused"] } }
+        }).catch(() => []);
+
+        queryError = null;
+        break;
+      } catch (err: any) {
+        queryError = err;
+        console.warn(`Admin Data query attempt ${attempt + 1} failed:`, err?.message || err);
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 600));
+        }
+      }
+    }
+
+    if (queryError) {
+      throw queryError;
+    }
 
     const phaseConfig = configs.find((c: any) => c.key === "submission_phase");
     const timerConfig = configs.find((c: any) => c.key === "target_date");

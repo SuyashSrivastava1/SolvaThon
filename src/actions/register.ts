@@ -49,12 +49,17 @@ export async function registerParticipant(data: z.infer<typeof registrationSchem
 }
 
 export async function checkIsRegistered(firebaseUid: string) {
-  try {
-    const user = await prisma.participant.findUnique({ where: { firebaseUid } });
-    console.log("checkIsRegistered", firebaseUid, !!user);
-    return !!user;
-  } catch (error) {
-    console.error("Check Registration Error:", error);
-    return false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const user = await prisma.participant.findUnique({ where: { firebaseUid } });
+      console.log("checkIsRegistered", firebaseUid, !!user);
+      return !!user;
+    } catch (error) {
+      console.error(`Check Registration Error (attempt ${attempt + 1}):`, error);
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
   }
+  return false;
 }

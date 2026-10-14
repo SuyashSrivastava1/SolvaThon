@@ -56,7 +56,7 @@ export default function RegisterPage() {
       // If user is an Admin, redirect to Admin Portal (permanent, no token)
       if (isAdmin) {
         clearParticipantSession();
-        router.replace("/admin");
+        window.location.replace("/admin");
         return;
       }
 
@@ -67,7 +67,7 @@ export default function RegisterPage() {
       const alreadyReg = await checkIsRegistered(result.user.uid);
       if (alreadyReg) {
         setIsRegistered(true);
-        router.replace("/profile");
+        window.location.replace("/profile");
       } else {
         setCheckingReg(false);
         setAuthLoading(false);
@@ -96,18 +96,23 @@ export default function RegisterPage() {
 
       // If already logged in admin opens register page, redirect to admin console
       if (isAdmin) {
-        router.replace("/admin");
+        window.location.replace("/admin");
         return;
       }
 
-      checkIsRegistered(user.uid).then((alreadyReg) => {
-        if (alreadyReg) {
-          setIsRegistered(true);
-          router.replace("/profile");
-        } else {
+      checkIsRegistered(user.uid)
+        .then((alreadyReg) => {
+          if (alreadyReg) {
+            setIsRegistered(true);
+            window.location.replace("/profile");
+          } else {
+            setCheckingReg(false);
+          }
+        })
+        .catch((err) => {
+          console.error("checkIsRegistered Error:", err);
           setCheckingReg(false);
-        }
-      });
+        });
     } else if (!loading) {
       setCheckingReg(false);
     }

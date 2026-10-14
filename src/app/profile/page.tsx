@@ -86,39 +86,53 @@ export default function ProfilePage() {
     if (!user) return;
     setFetching(true);
     setFetchError(null);
-    try {
-      const result = await getTeamDetails(user.uid);
-      if (!result.success && result.error === "Participant not found.") {
-        router.push("/register");
-        return;
-      }
-      if (result.success) {
-        setTeamData(result);
-        if (result.team?.problemStatement) {
-          setSelectedTrack(result.team.problemStatement);
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const result = await getTeamDetails(user.uid);
+        if (!result.success && result.error === "Participant not found.") {
+          router.push("/register");
+          setFetching(false);
+          return;
         }
-        if (result.team) {
-          setSubmission({
-            pptUrl: result.team.pptUrl || "",
-            understanding: result.team.understanding || "",
-            solutionSummary: result.team.solutionSummary || ""
-          });
-          setFinalSubmission({
-            finalDocUrl: result.team.finalDocUrl || "",
-            finalRepoUrl: result.team.finalRepoUrl || "",
-            finalDemoUrl: result.team.finalDemoUrl || "",
-            finalSummary: result.team.finalSummary || ""
-          });
+        if (result.success) {
+          setTeamData(result);
+          if (result.team?.problemStatement) {
+            setSelectedTrack(result.team.problemStatement);
+          }
+          if (result.team) {
+            setSubmission({
+              pptUrl: result.team.pptUrl || "",
+              understanding: result.team.understanding || "",
+              solutionSummary: result.team.solutionSummary || ""
+            });
+            setFinalSubmission({
+              finalDocUrl: result.team.finalDocUrl || "",
+              finalRepoUrl: result.team.finalRepoUrl || "",
+              finalDemoUrl: result.team.finalDemoUrl || "",
+              finalSummary: result.team.finalSummary || ""
+            });
+          }
+          setFetching(false);
+          return;
         }
-      } else {
+
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+
         setFetchError(result.error || "Failed to load team data.");
+      } catch (err: any) {
+        console.error(`fetchTeam Error (attempt ${attempt + 1}):`, err);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+        setFetchError("Unable to retrieve participant details. Please check your connection.");
       }
-    } catch (err: any) {
-      console.error("fetchTeam Error:", err);
-      setFetchError("Unable to retrieve participant details. Please check your connection.");
-    } finally {
-      setFetching(false);
     }
+    setFetching(false);
   };
 
   const handleCreate = async (e: React.FormEvent) => {

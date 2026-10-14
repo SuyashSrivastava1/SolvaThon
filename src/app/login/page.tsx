@@ -38,7 +38,7 @@ export default function LoginPage() {
       // ════════════════════════════════════════════════════════════════
       if (isAdmin) {
         clearParticipantSession();
-        router.replace("/admin");
+        window.location.replace("/admin");
         return;
       }
 
@@ -52,9 +52,9 @@ export default function LoginPage() {
       const isRegistered = await checkIsRegistered(result.user.uid);
       
       if (isRegistered) {
-        router.replace("/profile");
+        window.location.replace("/profile");
       } else {
-        router.replace("/register");
+        window.location.replace("/register");
       }
     } catch (error: any) {
       console.error(error);

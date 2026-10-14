@@ -34,6 +34,46 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
   const adminIdentifier = user?.email || "unknown_admin";
 
+  const loadEvaluationData = async (userEmail: string) => {
+    setLoading(true);
+    setErrorMsg("");
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await getAdminData(userEmail);
+        if (res.success && res.teams) {
+          setTeams(res.teams);
+          const matched = res.teams.find((t: any) => t.id === currentTeamId);
+          if (matched) {
+            setCurrentTeam(matched);
+            loadTeamScores(matched);
+          } else if (res.teams.length > 0) {
+            router.replace(`/admin/evaluate/${res.teams[0].id}`);
+          } else {
+            setErrorMsg("No registered teams found in the database.");
+          }
+          setLoading(false);
+          return;
+        }
+
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+
+        setErrorMsg(res.error || "Failed to load team evaluation data.");
+      } catch (err: any) {
+        console.error(`Evaluation data load error (attempt ${attempt + 1}):`, err);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+        setErrorMsg("Failed to load evaluation data: " + (err?.message || "Connection timeout"));
+      }
+    }
+    setLoading(false);
+  };
+
   // Load Admin Telemetry & Teams
   useEffect(() => {
     if (authLoading) return;
@@ -43,24 +83,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
       return;
     }
 
-    setLoading(true);
-    getAdminData(user.email).then((res) => {
-      if (res.success && res.teams) {
-        setTeams(res.teams);
-        const matched = res.teams.find((t: any) => t.id === currentTeamId);
-        if (matched) {
-          setCurrentTeam(matched);
-          loadTeamScores(matched);
-        } else if (res.teams.length > 0) {
-          router.replace(`/admin/evaluate/${res.teams[0].id}`);
-        } else {
-          setErrorMsg("No registered teams found in the database.");
-        }
-      } else {
-        setErrorMsg(res.error || "Failed to load team evaluation data.");
-      }
-      setLoading(false);
-    });
+    loadEvaluationData(user.email);
   }, [user, authLoading, router, currentTeamId]);
 
   const loadTeamScores = (team: any) => {
@@ -183,13 +206,23 @@ export default function TeamEvaluationPage({ params }: PageProps) {
           <span className="material-symbols-outlined text-4xl text-red-400">error</span>
           <h2 className="text-xl font-bold">Evaluation Workbench Error</h2>
           <p className="text-xs text-white/70">{errorMsg || "Requested team could not be found."}</p>
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold"
-          >
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
-            Return to Admin Panel
-          </Link>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                if (user?.email) loadEvaluationData(user.email);
+              }}
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
+            >
+              Retry Connection
+            </button>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold"
+            >
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+              Return to Admin Panel
+            </Link>
+          </div>
         </div>
       </div>
     );

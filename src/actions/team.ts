@@ -63,57 +63,62 @@ export async function joinTeam(firebaseUid: string, teamCode: string) {
 }
 
 export async function getTeamDetails(firebaseUid: string) {
-  try {
-    const [participant, phaseConfig] = await Promise.all([
-      prisma.participant.findUnique({
+  let lastError: any = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const participant = await prisma.participant.findUnique({
         where: { firebaseUid },
         include: { team: { include: { participants: true } } }
-      }),
-      prisma.systemConfig.findUnique({ where: { key: "submission_phase" } })
-    ]);
-    
-    if (!participant) return { success: false, error: "Participant not found." };
-    
-    const submissionPhase = (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA";
+      });
+      const phaseConfig = await prisma.systemConfig.findUnique({ where: { key: "submission_phase" } }).catch(() => null);
+      
+      if (!participant) return { success: false, error: "Participant not found." };
+      
+      const submissionPhase = (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA";
 
-    if (!participant.team) {
+      if (!participant.team) {
+        return { 
+          success: true, 
+          hasTeam: false, 
+          participant,
+          submissionPhase
+        };
+      }
+
       return { 
         success: true, 
-        hasTeam: false, 
-        participant,
-        submissionPhase
+        hasTeam: true, 
+        submissionPhase,
+        team: {
+          id: participant.team.id,
+          name: participant.team.name,
+          teamCode: participant.team.teamCode,
+          problemStatement: participant.team.problemStatement,
+          pptUrl: participant.team.pptUrl,
+          understanding: participant.team.understanding,
+          solutionSummary: participant.team.solutionSummary,
+          submittedAt: participant.team.submittedAt,
+          finalDocUrl: participant.team.finalDocUrl,
+          finalRepoUrl: participant.team.finalRepoUrl,
+          finalDemoUrl: participant.team.finalDemoUrl,
+          finalSummary: participant.team.finalSummary,
+          finalSubmittedAt: participant.team.finalSubmittedAt,
+          members: participant.team.participants.map((p: any) => ({
+            name: p.fullName,
+            ticketId: p.ticketId
+          }))
+        },
+        participant
       };
+    } catch (error: any) {
+      lastError = error;
+      console.error(`getTeamDetails attempt ${attempt + 1} error:`, error);
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
     }
-
-    return { 
-      success: true, 
-      hasTeam: true, 
-      submissionPhase,
-      team: {
-        id: participant.team.id,
-        name: participant.team.name,
-        teamCode: participant.team.teamCode,
-        problemStatement: participant.team.problemStatement,
-        pptUrl: participant.team.pptUrl,
-        understanding: participant.team.understanding,
-        solutionSummary: participant.team.solutionSummary,
-        submittedAt: participant.team.submittedAt,
-        finalDocUrl: participant.team.finalDocUrl,
-        finalRepoUrl: participant.team.finalRepoUrl,
-        finalDemoUrl: participant.team.finalDemoUrl,
-        finalSummary: participant.team.finalSummary,
-        finalSubmittedAt: participant.team.finalSubmittedAt,
-        members: participant.team.participants.map((p: any) => ({
-          name: p.fullName,
-          ticketId: p.ticketId
-        }))
-      },
-      participant
-    };
-  } catch (error) {
-    console.error(error);
-    return { success: false, error: "Failed to fetch team details." };
   }
+  return { success: false, error: "Failed to fetch team details: " + (lastError?.message || "connection error") };
 }
 
 export async function selectProblemStatement(firebaseUid: string, problemStatement: string) {

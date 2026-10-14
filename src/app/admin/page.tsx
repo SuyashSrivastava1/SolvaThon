@@ -57,7 +57,7 @@ export default function AdminPortalPage() {
 
   const adminIdentifier = user?.email || "admin";
 
-  const loadData = (email: string) => {
+  const loadData = async (email: string) => {
     setLoading(true);
     setErrorMsg("");
 
@@ -72,24 +72,43 @@ export default function AdminPortalPage() {
       )
     );
 
-    Promise.race([getAdminData(email), timeoutPromise])
-      .then((res) => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await Promise.race([getAdminData(email), timeoutPromise]);
         if (res.success) {
           setData(res);
           initEvalForms(res.teams);
           if (res.systemSettings?.targetDate) {
             setCustomTimerDate(toDatetimeLocal(res.systemSettings.targetDate));
           }
-        } else {
-          setErrorMsg(res.error || "Failed to load admin records from database.");
+          setLoading(false);
+          return;
         }
+
+        if (res.error && res.error.includes("Unauthorized access")) {
+          setErrorMsg(res.error);
+          setLoading(false);
+          return;
+        }
+
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+
+        setErrorMsg(res.error || "Failed to load admin records from database.");
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error loading admin data:", err);
+        return;
+      } catch (err: any) {
+        console.error(`Error loading admin data (attempt ${attempt + 1}):`, err);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
         setErrorMsg(err?.message ? `Failed to connect to the database: ${err.message}` : "Failed to connect to the database. Please verify your connection.");
         setLoading(false);
-      });
+      }
+    }
   };
 
   // Guard route: Only verified admin users are allowed

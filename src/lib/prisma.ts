@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -64,9 +65,11 @@ function createPrismaClientFor(connectionString: string, isHyperdrive: boolean):
     // Hyperdrive connects locally over Cloudflare internal network and terminates SSL itself.
     // Setting ssl: false prevents pg from requesting SSL from Hyperdrive.
     ssl: isHyperdrive ? false : { rejectUnauthorized: false },
-    max: 5,
+    // With Hyperdrive, edge pooling is handled by Cloudflare. 1 connection per request
+    // prevents pooling stale, dead TCP sockets across worker requests.
+    max: 1,
     connectionTimeoutMillis: 10000,
-    idleTimeoutMillis: 10000,
+    idleTimeoutMillis: 5000,
   });
 
   pool.on('error', (err) => {
@@ -80,23 +83,12 @@ function createPrismaClientFor(connectionString: string, isHyperdrive: boolean):
   });
 }
 
-let cachedClient: PrismaClient | null = null;
-let cachedKey: string = '';
-
-export function getPrismaClient(): PrismaClient {
+// React cache() scopes the client per request in Server Components and Server Actions.
+// This prevents TCP socket reuse across different Cloudflare Worker requests.
+export const getPrismaClient = cache((): PrismaClient => {
   const { connectionString, isHyperdrive } = getDatabaseConfig();
-  const currentKey = `${isHyperdrive ? 'hd:' : 'direct:'}${connectionString}`;
-
-  if (cachedClient && cachedKey === currentKey) {
-    return cachedClient;
-  }
-
-  const client = createPrismaClientFor(connectionString, isHyperdrive);
-  cachedClient = client;
-  cachedKey = currentKey;
-  globalThis.prismaGlobal = client;
-  return client;
-}
+  return createPrismaClientFor(connectionString, isHyperdrive);
+});
 
 const prisma = new Proxy({} as PrismaClient, {
   get(_target, prop) {
@@ -107,3 +99,4 @@ const prisma = new Proxy({} as PrismaClient, {
 });
 
 export default prisma;
+
