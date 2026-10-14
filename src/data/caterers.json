@@ -1,38 +1,47 @@
 [
   {
     "id": "Rassence",
-    "label": "Rassence"
+    "label": "Rassence",
+    "gender": "Male"
   },
   {
     "id": "Fusion",
-    "label": "Fusion"
+    "label": "Fusion",
+    "gender": "Male"
   },
   {
     "id": "Sri Rajalakshmi",
-    "label": "Sri Rajalakshmi"
+    "label": "Sri Rajalakshmi",
+    "gender": "Male"
   },
   {
     "id": "Proodle",
-    "label": "Proodle"
+    "label": "Proodle",
+    "gender": "Male"
   },
   {
     "id": "SRRC",
-    "label": "SRRC"
+    "label": "SRRC",
+    "gender": "Male"
   },
   {
     "id": "J Sathya PR",
-    "label": "J Sathya PR"
+    "label": "J Sathya PR",
+    "gender": "Male"
   },
   {
     "id": "Zenith",
-    "label": "Zenith"
+    "label": "Zenith",
+    "gender": "Female"
   },
   {
     "id": "Sakti",
-    "label": "Sakti"
+    "label": "Sakti",
+    "gender": "Female"
   },
   {
     "id": "Food Exo",
-    "label": "Food Exo"
+    "label": "Food Exo",
+    "gender": "Female"
   }
 ]

@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     fullName: "",
     mobileNumber: "",
+    gender: "",
     hostelBlock: "",
     roomNumber: "",
     messCaterer: "",
@@ -193,6 +194,32 @@ export default function RegisterPage() {
     );
   }
 
+  const availableBlocks = formData.gender
+    ? blocksData.filter((b: any) => b.gender === formData.gender)
+    : [];
+
+  const availableCaterers = formData.gender
+    ? caterersData.filter((c: any) => c.gender === formData.gender)
+    : [];
+
+  const handleGenderSelect = (selectedGender: "Male" | "Female") => {
+    setFormData((prev) => {
+      const validBlocks = blocksData
+        .filter((b: any) => b.gender === selectedGender)
+        .map((b: any) => b.label);
+      const validCaterers = caterersData
+        .filter((c: any) => c.gender === selectedGender)
+        .map((c: any) => c.label);
+
+      return {
+        ...prev,
+        gender: selectedGender,
+        hostelBlock: validBlocks.includes(prev.hostelBlock) ? prev.hostelBlock : "",
+        messCaterer: validCaterers.includes(prev.messCaterer) ? prev.messCaterer : "",
+      };
+    });
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (name === "roomNumber") {
@@ -217,6 +244,12 @@ export default function RegisterPage() {
     setStatus("loading");
     setErrorMessage("");
 
+    if (!formData.gender) {
+      setStatus("error");
+      setErrorMessage("Please select your gender.");
+      return;
+    }
+
     if (!/^\d{3,4}$/.test(formData.roomNumber.trim())) {
       setStatus("error");
       setErrorMessage("Enter a valid room number.");
@@ -227,6 +260,7 @@ export default function RegisterPage() {
       firebaseUid: user.uid,
       emailId: user.email!,
       ...formData,
+      gender: formData.gender as "Male" | "Female",
     });
 
     if (result.success) {
@@ -241,6 +275,7 @@ export default function RegisterPage() {
   const isFormValid =
     formData.fullName.trim().length >= 2 &&
     /^\d{10}$/.test(formData.mobileNumber.trim()) &&
+    (formData.gender === "Male" || formData.gender === "Female") &&
     formData.hostelBlock !== "" &&
     /^\d{3,4}$/.test(formData.roomNumber.trim()) &&
     formData.messCaterer !== "" &&
@@ -319,19 +354,60 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                Hostel Block <span className="text-cyan-400">*</span>
+              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+                <span>Gender <span className="text-cyan-400">*</span></span>
+                <span className="text-[10px] font-mono text-white/40">Only Male or Female</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3 h-[49px]">
+                <button
+                  type="button"
+                  onClick={() => handleGenderSelect("Male")}
+                  className={`rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    formData.gender === "Male"
+                      ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-md shadow-cyan-500/20"
+                      : "bg-black/40 border-white/10 text-white/70 hover:border-white/20 hover:text-white"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-lg">male</span>
+                  <span>Male</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGenderSelect("Female")}
+                  className={`rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    formData.gender === "Female"
+                      ? "bg-pink-500/20 border-pink-400 text-pink-300 shadow-md shadow-pink-500/20"
+                      : "bg-black/40 border-white/10 text-white/70 hover:border-white/20 hover:text-white"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-lg">female</span>
+                  <span>Female</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+                <span>Hostel Block <span className="text-cyan-400">*</span></span>
+                {formData.gender && (
+                  <span className="text-[10px] font-mono text-cyan-400">
+                    {formData.gender === "Male" ? "Men's Blocks" : "Ladies' Blocks (B, C)"}
+                  </span>
+                )}
               </label>
               <div className="relative">
                 <select
                   name="hostelBlock"
                   required
+                  disabled={!formData.gender}
                   value={formData.hostelBlock}
                   onChange={handleInputChange}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer [&>option]:bg-[#050B14]"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
-                  <option value="" disabled>Select assigned block</option>
-                  {blocksData.map((b: any) => (
+                  <option value="" disabled>
+                    {!formData.gender ? "Select Gender first" : "Select assigned block"}
+                  </option>
+                  {availableBlocks.map((b: any) => (
                     <option key={b.id} value={b.label}>
                       {b.label}
                     </option>
@@ -367,19 +443,27 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                Mess Caterer <span className="text-cyan-400">*</span>
+              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+                <span>Mess Caterer <span className="text-cyan-400">*</span></span>
+                {formData.gender && (
+                  <span className="text-[10px] font-mono text-cyan-400">
+                    {formData.gender === "Male" ? "Men's Caterers" : "Ladies' Caterers"}
+                  </span>
+                )}
               </label>
               <div className="relative">
                 <select
                   name="messCaterer"
                   required
+                  disabled={!formData.gender}
                   value={formData.messCaterer}
                   onChange={handleInputChange}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer [&>option]:bg-[#050B14]"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
-                  <option value="" disabled>Select Caterer</option>
-                  {caterersData.map((c: any) => (
+                  <option value="" disabled>
+                    {!formData.gender ? "Select Gender first" : "Select Caterer"}
+                  </option>
+                  {availableCaterers.map((c: any) => (
                     <option key={c.id} value={c.label}>
                       {c.label}
                     </option>
@@ -391,7 +475,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
                 Mess Diet Type <span className="text-cyan-400">*</span>
               </label>

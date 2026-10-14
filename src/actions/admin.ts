@@ -68,7 +68,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         teams = await prisma.team.findMany({
           include: {
             participants: {
-              select: { fullName: true, emailId: true, mobileNumber: true, hostelBlock: true, roomNumber: true, ticketId: true, registrationTime: true },
+              select: { fullName: true, emailId: true, mobileNumber: true, gender: true, hostelBlock: true, roomNumber: true, ticketId: true, registrationTime: true },
               orderBy: { registrationTime: "asc" }
             }
           },
@@ -141,6 +141,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         fullName: p.fullName,
         emailId: p.emailId,
         mobileNumber: p.mobileNumber,
+        gender: p.gender || "N/A",
         hostelBlock: p.hostelBlock,
         roomNumber: p.roomNumber,
         messCaterer: p.messCaterer,
@@ -185,6 +186,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
             fullName: m.fullName,
             emailId: m.emailId,
             mobileNumber: m.mobileNumber,
+            gender: m.gender || "N/A",
             hostelBlock: m.hostelBlock,
             roomNumber: m.roomNumber,
             ticketId: m.ticketId

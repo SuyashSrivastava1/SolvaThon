@@ -321,7 +321,18 @@ export default function ProfilePage() {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-4">
                 <div>
                   <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
-                  <h1 className="text-2xl md:text-3xl font-black text-white mt-0.5">{participant.fullName}</h1>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <h1 className="text-2xl md:text-3xl font-black text-white">{participant.fullName}</h1>
+                    {participant.gender && (
+                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
+                        participant.gender === "Female"
+                          ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
+                          : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                      }`}>
+                        {participant.gender}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs font-mono text-white/50">{participant.emailId}</p>
                 </div>
                 <div className="bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 rounded-2xl text-right">

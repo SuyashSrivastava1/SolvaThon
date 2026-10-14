@@ -370,6 +370,7 @@ export default function AdminPortalPage() {
       "Full Name",
       "Email ID",
       "Mobile Number",
+      "Gender",
       "Hostel Block",
       "Room Number",
       "Mess Caterer",
@@ -384,6 +385,7 @@ export default function AdminPortalPage() {
       `"${p.fullName}"`,
       `"${p.emailId}"`,
       `"${p.mobileNumber}"`,
+      `"${p.gender || "N/A"}"`,
       `"${p.hostelBlock}"`,
       `"${p.roomNumber}"`,
       `"${p.messCaterer}"`,
@@ -1169,9 +1171,20 @@ export default function AdminPortalPage() {
                           <div className="text-xs text-white/50 font-mono">{p.emailId}</div>
                         </td>
                         <td className="p-4">
-                          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs">
-                            {p.hostelBlock} • Rm {p.roomNumber}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {p.gender && p.gender !== "N/A" && (
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-bold border ${
+                                p.gender === "Female"
+                                  ? "bg-pink-500/10 text-pink-300 border-pink-500/30"
+                                  : "bg-blue-500/10 text-blue-300 border-blue-500/30"
+                              }`}>
+                                {p.gender}
+                              </span>
+                            )}
+                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs">
+                              {p.hostelBlock} • Rm {p.roomNumber}
+                            </span>
+                          </div>
                         </td>
                         <td className="p-4 text-xs">
                           <div className="text-white/80">{p.messCaterer}</div>

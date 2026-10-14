@@ -1,26 +1,32 @@
 [
   {
     "id": "block-a",
-    "label": "Men's Block A"
+    "label": "Men's Block A",
+    "gender": "Male"
   },
   {
     "id": "block-b",
-    "label": "Ladies' Block B"
+    "label": "Ladies' Block B",
+    "gender": "Female"
   },
   {
     "id": "block-c",
-    "label": "Ladies' Block C"
+    "label": "Ladies' Block C",
+    "gender": "Female"
   },
   {
     "id": "block-d",
-    "label": "Men's Block D"
+    "label": "Men's Block D",
+    "gender": "Male"
   },
   {
     "id": "block-e",
-    "label": "Men's Block E"
+    "label": "Men's Block E",
+    "gender": "Male"
   },
   {
     "id": "block-f",
-    "label": "Men's Block F"
+    "label": "Men's Block F",
+    "gender": "Male"
   }
 ]

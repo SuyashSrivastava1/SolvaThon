@@ -9,6 +9,9 @@ export const registrationSchema = z.object({
   ),
   fullName: z.string().min(2, "Name is too short"),
   mobileNumber: z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
+  gender: z.enum(["Male", "Female"], {
+    message: "Please select Male or Female",
+  }),
   hostelBlock: z.string().min(1, "Block is required"),
   roomNumber: z.string().regex(/^\d{3,4}$/, "Enter a valid room number"),
   messCaterer: z.string().min(1, "Caterer is required"),

@@ -52,6 +52,7 @@ model Participant {
   // Registration Form Data
   fullName         String
   mobileNumber     String   @unique
+  gender           String?  // e.g. "Male", "Female"
   hostelBlock      String   // e.g., "Men's Block A"
   roomNumber       String   // e.g., "412"
   messCaterer      String   // e.g., "PR Food"
