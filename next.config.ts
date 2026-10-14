@@ -13,4 +13,6 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+import('@opennextjs/cloudflare')
+  .then(m => m.initOpenNextCloudflareForDev())
+  .catch(err => console.warn('OpenNext dev binding skipped:', err?.message || err));
