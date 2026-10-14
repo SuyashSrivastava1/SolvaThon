@@ -6,11 +6,14 @@ import {
   toggleSubmissionPhase,
   updateHackathonTimer,
   saveTeamEvaluation,
+  setActiveReviewRound,
+  toggleTeamFreezeStatus,
 } from "@/actions/admin";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
+import { REVIEW_ROUNDS, getRoundInfo } from "@/config/rubrics";
 import { auth } from "@/lib/firebase/config";
 import { clearParticipantSession } from "@/lib/authSession";
 import * as XLSX from "xlsx";
@@ -34,6 +37,9 @@ export default function AdminPortalPage() {
   const [timerUpdating, setTimerUpdating] = useState(false);
   const [timerMsg, setTimerMsg] = useState("");
   const [customTimerDate, setCustomTimerDate] = useState("");
+  const [roundUpdating, setRoundUpdating] = useState(false);
+  const [roundMsg, setRoundMsg] = useState("");
+  const [togglingFreezeId, setTogglingFreezeId] = useState<string | null>(null);
 
   // Evaluator Marks State (by teamId)
   const [evalForms, setEvalForms] = useState<
@@ -243,124 +249,150 @@ export default function AdminPortalPage() {
     handleUpdateTimer(target.toISOString());
   };
 
-  // Save Team Evaluation
-  const handleSaveEvaluation = async (teamId: string) => {
-    const form = evalForms[teamId] || { innovation: 0, understanding: 0, progress: 0, notes: "" };
-    const inn = Number((Math.max(0, Math.min(10, parseFloat(String(form.innovation)) || 0))).toFixed(2));
-    const und = Number((Math.max(0, Math.min(10, parseFloat(String(form.understanding)) || 0))).toFixed(2));
-    const pro = Number((Math.max(0, Math.min(10, parseFloat(String(form.progress)) || 0))).toFixed(2));
-
-    setSavingEvalId(teamId);
-    setEvalSuccessMap((prev) => ({ ...prev, [teamId]: "" }));
-
-    const res = await saveTeamEvaluation(adminIdentifier, teamId, {
-      scoreInnovation: inn,
-      scoreUnderstanding: und,
-      scoreProgress: pro,
-      evaluationNotes: form.notes,
-    });
-
+  // Super Admin: Switch the active review round
+  const handleSetActiveRound = async (roundNum: number) => {
+    if (!isCurrentUserSuperAdmin) {
+      setRoundMsg("Access Denied: Super Admin permissions required to switch the active review round.");
+      return;
+    }
+    setRoundUpdating(true);
+    setRoundMsg("");
+    const res = await setActiveReviewRound(adminIdentifier, roundNum);
     if (res.success) {
-      const total = Number((inn + und + pro).toFixed(2));
       setData((prev: any) => ({
         ...prev,
-        teams: prev.teams.map((t: any) =>
-          t.id === teamId
-            ? {
-                ...t,
-                scoreInnovation: inn,
-                scoreUnderstanding: und,
-                scoreProgress: pro,
-                scoreTotal: total,
-                evaluatedBy: adminIdentifier,
-                evaluationNotes: form.notes,
-                evaluatedAt: new Date().toISOString(),
-              }
-            : t
-        ),
+        systemSettings: {
+          ...prev.systemSettings,
+          activeReviewRound: roundNum,
+        },
       }));
-      setEvalSuccessMap((prev) => ({
+      setRoundMsg(`✓ Active Review Round updated to Review ${roundNum} (${getRoundInfo(roundNum).subtitle}). Evaluators are now constrained to Review ${roundNum}!`);
+    } else {
+      setRoundMsg(res.error || "Failed to switch active review round.");
+    }
+    setRoundUpdating(false);
+  };
+
+  // Super Admin: Toggle Team Freeze Status for the active round
+  const handleToggleTeamFreeze = async (teamId: string, targetFrozen: boolean) => {
+    if (!isCurrentUserSuperAdmin) return;
+    const currentRound = data?.systemSettings?.activeReviewRound || 1;
+    setTogglingFreezeId(teamId);
+
+    const res = await toggleTeamFreezeStatus(adminIdentifier, teamId, currentRound, targetFrozen);
+    if (res.success) {
+      setData((prev: any) => ({
         ...prev,
-        [teamId]: `✓ Marks saved! Total: ${total}/30`,
+        teams: prev.teams.map((t: any) => {
+          if (t.id !== teamId) return t;
+          const evals = t.evaluations || [];
+          const exists = evals.find((e: any) => e.round === currentRound);
+          let updatedEvals: any[];
+          if (exists) {
+            updatedEvals = evals.map((e: any) => (e.round === currentRound ? { ...e, isFrozen: targetFrozen } : e));
+          } else {
+            updatedEvals = evals.concat({ round: currentRound, isFrozen: targetFrozen });
+          }
+          return {
+            ...t,
+            evaluations: updatedEvals,
+            isFrozen: targetFrozen,
+          };
+        }),
       }));
     } else {
-      alert(res.error || "Failed to save evaluation.");
+      alert(res.error || "Failed to toggle freeze state.");
     }
-    setSavingEvalId(null);
+    setTogglingFreezeId(null);
   };
 
   // Export full evaluation report in native Excel (.xlsx)
+  // Strictly contains: Team Name, Team Leader Name, Review 1 Rubrics & Total, Review 2 Rubrics & Total, Review 3 Rubrics & Total, Rubric Averages, and Total Average Marks
   const exportEvaluationsExcel = () => {
     if (!data?.teams) return;
 
-    const rows = data.teams.map((t: any, idx: number) => {
-      const roster = t.members
-        .map((m: any) => `${m.fullName} [${m.emailId}, ${m.mobileNumber}, ${m.hostelBlock}-${m.roomNumber}, ${m.ticketId}]`)
-        .join("; ");
+    const rows = data.teams.map((t: any) => {
+      const leaderName = t.leaderName || "N/A";
 
-      const isEvaluated = t.scoreTotal !== null && t.scoreTotal !== undefined;
+      const evals = t.evaluations || [];
+      const r1 = evals.find((e: any) => e.round === 1) || (t.scoreTotal !== null && t.scoreTotal !== undefined ? {
+        scoreInnovation: t.scoreInnovation,
+        scoreUnderstanding: t.scoreUnderstanding,
+        scoreProgress: t.scoreProgress,
+        scoreTotal: t.scoreTotal,
+      } : null);
+      const r2 = evals.find((e: any) => e.round === 2) || null;
+      const r3 = evals.find((e: any) => e.round === 3) || null;
+
+      const scoredRounds = [r1, r2, r3].filter((r) => r && r.scoreTotal !== null && r.scoreTotal !== undefined);
+      const count = scoredRounds.length;
+
+      const avgInnovation = count > 0
+        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreInnovation) || 0), 0) / count).toFixed(2))
+        : "N/A";
+
+      const avgUnderstanding = count > 0
+        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreUnderstanding) || 0), 0) / count).toFixed(2))
+        : "N/A";
+
+      const avgProgress = count > 0
+        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreProgress) || 0), 0) / count).toFixed(2))
+        : "N/A";
+
+      const avgTotal = count > 0
+        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreTotal) || 0), 0) / count).toFixed(2))
+        : "N/A";
 
       return {
-        "Rank / S.No": idx + 1,
         "Team Name": t.name,
-        "Team Code": t.teamCode,
-        "Track / Problem Statement": t.problemStatement || "Not Selected",
-        "Member Count": t.memberCount,
-        "Team Roster": roster,
-        "Stage 1 Idea PPT Link": t.pptUrl || "N/A",
-        "Stage 1 Problem Understanding": t.understanding || "N/A",
-        "Stage 1 Solution Architecture": t.solutionSummary || "N/A",
-        "Stage 1 Submitted At": t.submittedAt ? new Date(t.submittedAt).toLocaleString() : "Pending",
-        "Stage 2 Final Project Document Link": t.finalDocUrl || "N/A",
-        "Stage 2 GitHub Repository": t.finalRepoUrl || "N/A",
-        "Stage 2 Live Demo / Pitch URL": t.finalDemoUrl || "N/A",
-        "Stage 2 Technical Summary & Progress": t.finalSummary || "N/A",
-        "Stage 2 Final Submitted At": t.finalSubmittedAt ? new Date(t.finalSubmittedAt).toLocaleString() : "Pending",
-        "Criterion 1: Innovation (0-10)": t.scoreInnovation !== null && t.scoreInnovation !== undefined ? t.scoreInnovation : "",
-        "Criterion 2: Understanding (0-10)": t.scoreUnderstanding !== null && t.scoreUnderstanding !== undefined ? t.scoreUnderstanding : "",
-        "Criterion 3: Progress (0-10)": t.scoreProgress !== null && t.scoreProgress !== undefined ? t.scoreProgress : "",
-        "Total Score (0-30)": isEvaluated ? t.scoreTotal : "Unscored",
-        "Evaluation Status": isEvaluated ? "EVALUATED" : "PENDING EVALUATION",
-        "Evaluator Admin": t.evaluatedBy || "Pending",
-        "Jury Notes / Remarks": t.evaluationNotes || "",
-        "Evaluated At": t.evaluatedAt ? new Date(t.evaluatedAt).toLocaleString() : "Pending",
+        "Team Leader Name": leaderName,
+        "Review 1 - Innovation": r1 && r1.scoreInnovation !== null && r1.scoreInnovation !== undefined ? r1.scoreInnovation : "Pending",
+        "Review 1 - Problem Understanding": r1 && r1.scoreUnderstanding !== null && r1.scoreUnderstanding !== undefined ? r1.scoreUnderstanding : "Pending",
+        "Review 1 - Progress & Execution": r1 && r1.scoreProgress !== null && r1.scoreProgress !== undefined ? r1.scoreProgress : "Pending",
+        "Review 1 - Total Marks": r1 && r1.scoreTotal !== null && r1.scoreTotal !== undefined ? r1.scoreTotal : "Pending",
+        "Review 2 - Innovation": r2 && r2.scoreInnovation !== null && r2.scoreInnovation !== undefined ? r2.scoreInnovation : "Pending",
+        "Review 2 - Problem Understanding": r2 && r2.scoreUnderstanding !== null && r2.scoreUnderstanding !== undefined ? r2.scoreUnderstanding : "Pending",
+        "Review 2 - Progress & Execution": r2 && r2.scoreProgress !== null && r2.scoreProgress !== undefined ? r2.scoreProgress : "Pending",
+        "Review 2 - Total Marks": r2 && r2.scoreTotal !== null && r2.scoreTotal !== undefined ? r2.scoreTotal : "Pending",
+        "Review 3 - Innovation": r3 && r3.scoreInnovation !== null && r3.scoreInnovation !== undefined ? r3.scoreInnovation : "Pending",
+        "Review 3 - Problem Understanding": r3 && r3.scoreUnderstanding !== null && r3.scoreUnderstanding !== undefined ? r3.scoreUnderstanding : "Pending",
+        "Review 3 - Progress & Execution": r3 && r3.scoreProgress !== null && r3.scoreProgress !== undefined ? r3.scoreProgress : "Pending",
+        "Review 3 - Total Marks": r3 && r3.scoreTotal !== null && r3.scoreTotal !== undefined ? r3.scoreTotal : "Pending",
+        "Average - Innovation": avgInnovation,
+        "Average - Problem Understanding": avgUnderstanding,
+        "Average - Progress & Execution": avgProgress,
+        "Total Average Marks": avgTotal,
       };
     });
 
     const ws = XLSX.utils.json_to_sheet(rows);
 
-    // Styling column widths
     ws["!cols"] = [
-      { wch: 10 }, // S.No
-      { wch: 22 }, // Team Name
-      { wch: 12 }, // Team Code
-      { wch: 28 }, // Track
-      { wch: 12 }, // Count
-      { wch: 45 }, // Roster
-      { wch: 35 }, // Stage 1 PPT
-      { wch: 35 }, // Stage 1 Und
-      { wch: 35 }, // Stage 1 Sol
-      { wch: 20 }, // Stage 1 At
-      { wch: 35 }, // Stage 2 Doc
-      { wch: 35 }, // Stage 2 Repo
-      { wch: 35 }, // Stage 2 Demo
-      { wch: 40 }, // Stage 2 Summary
-      { wch: 20 }, // Stage 2 At
-      { wch: 25 }, // Innovation
-      { wch: 28 }, // Understanding
-      { wch: 24 }, // Progress
-      { wch: 20 }, // Total
-      { wch: 20 }, // Status
-      { wch: 32 }, // Evaluator
-      { wch: 35 }, // Notes
-      { wch: 22 }, // Evaluated At
+      { wch: 25 }, // Team Name
+      { wch: 25 }, // Team Leader Name
+      { wch: 24 }, // Review 1 - Innovation
+      { wch: 32 }, // Review 1 - Problem Understanding
+      { wch: 30 }, // Review 1 - Progress & Execution
+      { wch: 22 }, // Review 1 - Total Marks
+      { wch: 24 }, // Review 2 - Innovation
+      { wch: 32 }, // Review 2 - Problem Understanding
+      { wch: 30 }, // Review 2 - Progress & Execution
+      { wch: 22 }, // Review 2 - Total Marks
+      { wch: 24 }, // Review 3 - Innovation
+      { wch: 32 }, // Review 3 - Problem Understanding
+      { wch: 30 }, // Review 3 - Progress & Execution
+      { wch: 22 }, // Review 3 - Total Marks
+      { wch: 24 }, // Average - Innovation
+      { wch: 32 }, // Average - Problem Understanding
+      { wch: 30 }, // Average - Progress & Execution
+      { wch: 22 }, // Total Average Marks
     ];
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Solvathon Final Evaluations");
+    XLSX.utils.book_append_sheet(wb, ws, "Review Evaluations & Averages");
     XLSX.writeFile(
       wb,
-      `Hostel_Solvathon_Final_Evaluations_${new Date().toISOString().slice(0, 10)}.xlsx`
+      `Hostel_Solvathon_Evaluations_Summary_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 
@@ -458,6 +490,13 @@ export default function AdminPortalPage() {
 
   const { stats, participants, teams, systemSettings } = data;
   const currentPhase: "IDEA" | "FINAL" = systemSettings?.submissionPhase || "IDEA";
+  const activeReviewRound: number = systemSettings?.activeReviewRound || 1;
+
+  const isTeamEvaluatedInActiveRound = (t: any) => {
+    const ev = (t.evaluations || []).find((e: any) => e.round === activeReviewRound);
+    if (ev) return ev.scoreTotal !== null && ev.scoreTotal !== undefined;
+    return activeReviewRound === 1 && t.scoreTotal !== null && t.scoreTotal !== undefined;
+  };
 
   // Filtered teams based on search & state
   const filteredTeams = teams.filter((t: any) => {
@@ -470,8 +509,8 @@ export default function AdminPortalPage() {
     if (!matchesSearch) return false;
 
     if (teamFilter === "FINAL_SUBMITTED") return !!t.finalDocUrl;
-    if (teamFilter === "EVALUATED") return t.scoreTotal !== null && t.scoreTotal !== undefined;
-    if (teamFilter === "PENDING_EVAL") return t.scoreTotal === null || t.scoreTotal === undefined;
+    if (teamFilter === "EVALUATED") return isTeamEvaluatedInActiveRound(t);
+    if (teamFilter === "PENDING_EVAL") return !isTeamEvaluatedInActiveRound(t);
     return true;
   });
 
@@ -771,6 +810,74 @@ export default function AdminPortalPage() {
                 </div>
               )}
             </div>
+
+            {/* Feature 3: Active Review Round Selector */}
+            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4 lg:col-span-2">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block font-bold">
+                    CONTROL 03 // JURY REVIEW ROUND TOGGLE (3 STAGES)
+                  </span>
+                  <h3 className="text-base font-bold text-white mt-0.5">
+                    Select Active Review Round
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                    Toggle which review round is currently active. When you switch rounds (e.g. to Review 1, Review 2, or Review 3), evaluators in the admin dashboard will strictly be restricted to submitting marks for that selected round.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-mono text-white/40 block">CURRENTLY ACTIVE</span>
+                  <span className="text-xs font-mono font-bold text-amber-300">
+                    Review {activeReviewRound}: {getRoundInfo(activeReviewRound).subtitle}
+                  </span>
+                </div>
+              </div>
+
+              {/* Review Round Selection Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {REVIEW_ROUNDS.map((r) => {
+                  const isActive = activeReviewRound === r.round;
+                  return (
+                    <button
+                      key={r.round}
+                      type="button"
+                      onClick={() => handleSetActiveRound(r.round)}
+                      disabled={roundUpdating || !isCurrentUserSuperAdmin}
+                      className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-amber-500/20 border-amber-500/50 text-white shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30"
+                          : "bg-black/40 border-white/10 text-white/60 hover:text-white hover:border-white/20"
+                      } disabled:opacity-50`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-mono text-xs font-bold uppercase text-amber-300">{r.title}</span>
+                        {isActive && (
+                          <span className="px-2 py-0.5 rounded bg-amber-500/30 text-amber-300 text-[10px] font-mono font-bold">
+                            ACTIVE
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-white">{r.subtitle}</p>
+                      <p className="text-[11px] text-white/40 font-mono mt-1">
+                        {r.round <= 2 ? "Internal Faculty / Mentor Judging" : "External Industry Jury Judging"}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {roundMsg && (
+                <div
+                  className={`p-3 rounded-xl text-xs font-mono border ${
+                    roundMsg.startsWith("✓")
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                      : "bg-red-500/10 border-red-500/30 text-red-300"
+                  }`}
+                >
+                  {roundMsg}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -901,7 +1008,7 @@ export default function AdminPortalPage() {
                       : "bg-white/5 text-white/60 hover:text-white"
                   }`}
                 >
-                  Evaluated ({teams.filter((t: any) => t.scoreTotal !== null && t.scoreTotal !== undefined).length})
+                  Evaluated ({teams.filter(isTeamEvaluatedInActiveRound).length})
                 </button>
                 <button
                   type="button"
@@ -912,7 +1019,7 @@ export default function AdminPortalPage() {
                       : "bg-white/5 text-white/60 hover:text-white"
                   }`}
                 >
-                  Pending Eval ({teams.filter((t: any) => t.scoreTotal === null || t.scoreTotal === undefined).length})
+                  Pending Eval ({teams.filter((t: any) => !isTeamEvaluatedInActiveRound(t)).length})
                 </button>
               </div>
             </div>
@@ -971,7 +1078,10 @@ export default function AdminPortalPage() {
                       </tr>
                     ) : (
                       filteredTeams.map((t: any, idx: number) => {
-                        const isEvaluated = t.scoreTotal !== null && t.scoreTotal !== undefined;
+                        const roundEval = (t.evaluations || []).find((e: any) => e.round === activeReviewRound);
+                        const score = roundEval ? roundEval.scoreTotal : (activeReviewRound === 1 ? t.scoreTotal : null);
+                        const isRoundEvaluated = score !== null && score !== undefined;
+                        const isTeamFrozen = roundEval ? roundEval.isFrozen : false;
                         const leader = t.members && t.members.length > 0 ? t.members[0] : null;
                         const leaderName = t.leaderName || leader?.fullName || "N/A";
                         const leaderEmail = t.leaderEmail || leader?.emailId || "";
@@ -1069,36 +1179,69 @@ export default function AdminPortalPage() {
 
                             {/* Evaluation Status & Score */}
                             <td className="py-4 px-5">
-                              {isEvaluated ? (
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono font-bold text-xs w-fit">
-                                    <span className="material-symbols-outlined text-xs">verified</span>
-                                    {t.scoreTotal} / 30
-                                  </span>
-                                  {t.evaluatedBy && (
+                              {isRoundEvaluated ? (
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono font-bold text-xs w-fit">
+                                      <span className="material-symbols-outlined text-xs">verified</span>
+                                      {score} / 30
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                                      isTeamFrozen
+                                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                        : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                                    }`}>
+                                      {isTeamFrozen ? "🧊 Frozen" : "🔓 Unfrozen"}
+                                    </span>
+                                  </div>
+                                  {(roundEval?.evaluatedBy || t.evaluatedBy) && (
                                     <span className="text-[10px] text-white/40 font-mono truncate max-w-[150px]">
-                                      by {t.evaluatedBy}
+                                      by {roundEval?.evaluatedBy || t.evaluatedBy}
                                     </span>
                                   )}
                                 </div>
                               ) : (
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[11px] w-fit">
                                   <span className="material-symbols-outlined text-xs">schedule</span>
-                                  Pending Eval
+                                  Pending R{activeReviewRound}
                                 </span>
                               )}
                             </td>
 
-                            {/* Action Button */}
+                            {/* Action Button & Super Admin Freeze Toggle */}
                             <td className="py-4 px-5 text-right">
-                              <Link
-                                href={`/admin/evaluate/${t.id}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 hover:border-transparent rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm"
-                              >
-                                <span>{isEvaluated ? "Review" : "Evaluate"}</span>
-                                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                              </Link>
+                              <div className="flex items-center justify-end gap-2">
+                                {isCurrentUserSuperAdmin && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleTeamFreeze(t.id, !isTeamFrozen);
+                                    }}
+                                    disabled={togglingFreezeId === t.id}
+                                    title={isTeamFrozen ? "Click to unfreeze marks for evaluators" : "Click to freeze marks"}
+                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                                      isTeamFrozen
+                                        ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-sm shadow-amber-500/10"
+                                        : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30 shadow-sm shadow-cyan-500/10"
+                                    } disabled:opacity-50`}
+                                  >
+                                    <span className="material-symbols-outlined text-xs">
+                                      {isTeamFrozen ? "lock_open" : "lock"}
+                                    </span>
+                                    <span>{togglingFreezeId === t.id ? "..." : (isTeamFrozen ? "Unfreeze" : "Freeze")}</span>
+                                  </button>
+                                )}
+
+                                <Link
+                                  href={`/admin/evaluate/${t.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 hover:border-transparent rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm"
+                                >
+                                  <span>{isCurrentUserSuperAdmin ? "Inspect" : (isRoundEvaluated ? "Review" : "Evaluate")}</span>
+                                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         );

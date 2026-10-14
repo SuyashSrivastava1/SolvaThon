@@ -3,8 +3,9 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { getAdminData, saveTeamEvaluation } from "@/actions/admin";
-import { isAdminEmail } from "@/config/admin";
+import { getAdminData, saveTeamEvaluation, toggleTeamFreezeStatus } from "@/actions/admin";
+import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
+import { RUBRICS, getRoundInfo } from "@/config/rubrics";
 import Link from "next/link";
 
 interface PageProps {
@@ -22,8 +23,9 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const [errorMsg, setErrorMsg] = useState("");
   const [teams, setTeams] = useState<any[]>([]);
   const [currentTeam, setCurrentTeam] = useState<any>(null);
+  const [activeReviewRound, setActiveReviewRound] = useState<number>(1);
 
-  // Evaluation Form State
+  // Evaluation Form State (weights out of 10 for each rubric)
   const [scoreInnovation, setScoreInnovation] = useState<string>("");
   const [scoreUnderstanding, setScoreUnderstanding] = useState<string>("");
   const [scoreProgress, setScoreProgress] = useState<string>("");
@@ -31,8 +33,11 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
   const [saving, setSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
+  const [togglingFreeze, setTogglingFreeze] = useState(false);
+  const [freezeMsg, setFreezeMsg] = useState("");
 
   const adminIdentifier = user?.email || "unknown_admin";
+  const isCurrentUserSuperAdmin = Boolean(user?.email && isSuperAdminEmail(user.email));
 
   const loadEvaluationData = async (userEmail: string) => {
     setLoading(true);
@@ -42,11 +47,14 @@ export default function TeamEvaluationPage({ params }: PageProps) {
       try {
         const res = await getAdminData(userEmail);
         if (res.success && res.teams) {
+          const currentRound = res.systemSettings?.activeReviewRound || 1;
+          setActiveReviewRound(currentRound);
           setTeams(res.teams);
+
           const matched = res.teams.find((t: any) => t.id === currentTeamId);
           if (matched) {
             setCurrentTeam(matched);
-            loadTeamScores(matched);
+            loadTeamScores(matched, currentRound);
           } else if (res.teams.length > 0) {
             router.replace(`/admin/evaluate/${res.teams[0].id}`);
           } else {
@@ -86,24 +94,29 @@ export default function TeamEvaluationPage({ params }: PageProps) {
     loadEvaluationData(user.email);
   }, [user, authLoading, router, currentTeamId]);
 
-  const loadTeamScores = (team: any) => {
-    setScoreInnovation(
-      team.scoreInnovation !== null && team.scoreInnovation !== undefined
-        ? String(team.scoreInnovation)
-        : ""
-    );
-    setScoreUnderstanding(
-      team.scoreUnderstanding !== null && team.scoreUnderstanding !== undefined
-        ? String(team.scoreUnderstanding)
-        : ""
-    );
-    setScoreProgress(
-      team.scoreProgress !== null && team.scoreProgress !== undefined
-        ? String(team.scoreProgress)
-        : ""
-    );
-    setEvaluationNotes(team.evaluationNotes || "");
+  const loadTeamScores = (team: any, roundNum: number) => {
+    const roundEval = (team.evaluations || []).find((e: any) => e.round === roundNum);
+    if (roundEval) {
+      setScoreInnovation(roundEval.scoreInnovation !== null && roundEval.scoreInnovation !== undefined ? String(roundEval.scoreInnovation) : "");
+      setScoreUnderstanding(roundEval.scoreUnderstanding !== null && roundEval.scoreUnderstanding !== undefined ? String(roundEval.scoreUnderstanding) : "");
+      setScoreProgress(roundEval.scoreProgress !== null && roundEval.scoreProgress !== undefined ? String(roundEval.scoreProgress) : "");
+      setEvaluationNotes(roundEval.evaluationNotes || "");
+    } else {
+      // Fallback for round 1 if only legacy fields exist
+      if (roundNum === 1 && team.scoreInnovation !== null && team.scoreInnovation !== undefined) {
+        setScoreInnovation(String(team.scoreInnovation));
+        setScoreUnderstanding(team.scoreUnderstanding !== null && team.scoreUnderstanding !== undefined ? String(team.scoreUnderstanding) : "");
+        setScoreProgress(team.scoreProgress !== null && team.scoreProgress !== undefined ? String(team.scoreProgress) : "");
+        setEvaluationNotes(team.evaluationNotes || "");
+      } else {
+        setScoreInnovation("");
+        setScoreUnderstanding("");
+        setScoreProgress("");
+        setEvaluationNotes("");
+      }
+    }
     setSaveSuccessMsg("");
+    setFreezeMsg("");
   };
 
   // Find index in teams array for Left/Right navigation
@@ -114,9 +127,8 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   // Keyboard navigation: Left Arrow -> Previous, Right Arrow -> Next
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input or textarea
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT") {
         return;
       }
 
@@ -131,44 +143,69 @@ export default function TeamEvaluationPage({ params }: PageProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [prevTeam, nextTeam, router]);
 
-  // Live total calculation with decimals
-  const currentTotal = Number(
-    (
-      (parseFloat(scoreInnovation) || 0) +
-      (parseFloat(scoreUnderstanding) || 0) +
-      (parseFloat(scoreProgress) || 0)
-    ).toFixed(2)
+  // Live total score calculation (0 - 30)
+  const innVal = parseFloat(scoreInnovation) || 0;
+  const undVal = parseFloat(scoreUnderstanding) || 0;
+  const proVal = parseFloat(scoreProgress) || 0;
+  const currentTotal = Number((innVal + undVal + proVal).toFixed(2));
+
+  // Determine current team evaluation state for active round
+  const currentRoundEval = currentTeam?.evaluations?.find((e: any) => e.round === activeReviewRound);
+  const isEvaluated = Boolean(
+    (currentRoundEval && currentRoundEval.scoreTotal !== null && currentRoundEval.scoreTotal !== undefined) ||
+    (activeReviewRound === 1 && currentTeam?.scoreTotal !== null && currentTeam?.scoreTotal !== undefined)
   );
 
-  // Save Marks
-  const handleSaveMarks = async (goToNextAfterSave = false) => {
-    if (!currentTeam) return;
+  // Is frozen?
+  const isFrozen = currentRoundEval ? currentRoundEval.isFrozen : false;
 
-    const inn = Number((Math.max(0, Math.min(10, parseFloat(scoreInnovation) || 0))).toFixed(2));
-    const und = Number((Math.max(0, Math.min(10, parseFloat(scoreUnderstanding) || 0))).toFixed(2));
-    const pro = Number((Math.max(0, Math.min(10, parseFloat(scoreProgress) || 0))).toFixed(2));
-    const total = Number((inn + und + pro).toFixed(2));
+  // Evaluator: Submit & automatically freeze marks
+  const handleSaveMarks = async (goToNextAfterSave = false) => {
+    if (!currentTeam || isCurrentUserSuperAdmin) return;
+
+    if (!scoreInnovation || !scoreUnderstanding || !scoreProgress) {
+      alert("Please select a rating option for all 3 rubrics before submitting.");
+      return;
+    }
 
     setSaving(true);
     setSaveSuccessMsg("");
 
-    const res = await saveTeamEvaluation(adminIdentifier, currentTeam.id, {
-      scoreInnovation: inn,
-      scoreUnderstanding: und,
-      scoreProgress: pro,
+    const res = await saveTeamEvaluation(adminIdentifier, currentTeam.id, activeReviewRound, {
+      scoreInnovation: innVal,
+      scoreUnderstanding: undVal,
+      scoreProgress: proVal,
       evaluationNotes: evaluationNotes.trim(),
     });
 
     if (res.success) {
-      setSaveSuccessMsg(`✓ Marks successfully saved! Total Score: ${total}/30`);
+      setSaveSuccessMsg(`✓ Marks successfully submitted & frozen! Total Score: ${currentTotal}/30`);
 
       // Update local team state
+      const updatedEval = {
+        round: activeReviewRound,
+        scoreInnovation: innVal,
+        scoreUnderstanding: undVal,
+        scoreProgress: proVal,
+        scoreTotal: currentTotal,
+        evaluatedBy: adminIdentifier,
+        evaluationNotes: evaluationNotes.trim(),
+        evaluatedAt: new Date().toISOString(),
+        isFrozen: true,
+      };
+
+      const existingEvals = currentTeam.evaluations || [];
+      const updatedEvals = existingEvals.filter((e: any) => e.round !== activeReviewRound).concat(updatedEval);
+
       const updatedTeam = {
         ...currentTeam,
-        scoreInnovation: inn,
-        scoreUnderstanding: und,
-        scoreProgress: pro,
-        scoreTotal: total,
+        evaluations: updatedEvals,
+        activeRoundEval: updatedEval,
+        isFrozen: true,
+        scoreInnovation: innVal,
+        scoreUnderstanding: undVal,
+        scoreProgress: proVal,
+        scoreTotal: currentTotal,
         evaluatedBy: adminIdentifier,
         evaluationNotes: evaluationNotes.trim(),
         evaluatedAt: new Date().toISOString(),
@@ -186,6 +223,54 @@ export default function TeamEvaluationPage({ params }: PageProps) {
       alert(res.error || "Failed to save evaluation.");
     }
     setSaving(false);
+  };
+
+  // Super Admin Exclusive: Toggle Freeze Status
+  const handleToggleFreeze = async (targetFreeze: boolean) => {
+    if (!isCurrentUserSuperAdmin || !currentTeam) return;
+
+    setTogglingFreeze(true);
+    setFreezeMsg("");
+
+    const res = await toggleTeamFreezeStatus(adminIdentifier, currentTeam.id, activeReviewRound, targetFreeze);
+    if (res.success) {
+      setFreezeMsg(targetFreeze ? "✓ Marks are now FROZEN and locked." : "✓ Marks are now UNFROZEN. Evaluators may now modify and resubmit.");
+
+      // Update state locally
+      const existingEvals = currentTeam.evaluations || [];
+      const targetEval = existingEvals.find((e: any) => e.round === activeReviewRound);
+      let updatedEvals: any[];
+
+      if (targetEval) {
+        updatedEvals = existingEvals.map((e: any) =>
+          e.round === activeReviewRound ? { ...e, isFrozen: targetFreeze } : e
+        );
+      } else {
+        updatedEvals = existingEvals.concat({
+          round: activeReviewRound,
+          scoreInnovation: innVal || null,
+          scoreUnderstanding: undVal || null,
+          scoreProgress: proVal || null,
+          scoreTotal: isEvaluated ? currentTotal : null,
+          evaluatedBy: currentTeam.evaluatedBy || null,
+          evaluationNotes: evaluationNotes || "",
+          evaluatedAt: currentTeam.evaluatedAt || new Date().toISOString(),
+          isFrozen: targetFreeze,
+        });
+      }
+
+      const updatedTeam = {
+        ...currentTeam,
+        evaluations: updatedEvals,
+        isFrozen: targetFreeze,
+      };
+
+      setCurrentTeam(updatedTeam);
+      setTeams((prev) => prev.map((t) => (t.id === currentTeam.id ? updatedTeam : t)));
+    } else {
+      alert(res.error || "Failed to toggle freeze state.");
+    }
+    setTogglingFreeze(false);
   };
 
   if (loading || authLoading) {
@@ -228,7 +313,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
     );
   }
 
-  const isEvaluated = currentTeam.scoreTotal !== null && currentTeam.scoreTotal !== undefined;
+  const roundInfo = getRoundInfo(activeReviewRound);
 
   return (
     <div className="min-h-screen bg-[#030712] relative text-white font-sans selection:bg-purple-500/30 pb-20">
@@ -255,6 +340,12 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             <div className="inline-flex items-center px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
               TEAM {currentIndex + 1} OF {teams.length}
             </div>
+
+            {/* Active Round Indicator Badge */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold uppercase">
+              <span className="material-symbols-outlined text-sm">schedule</span>
+              <span>{roundInfo.title}: {roundInfo.subtitle}</span>
+            </div>
           </div>
 
           {/* Center: Quick Team Selector */}
@@ -265,11 +356,16 @@ export default function TeamEvaluationPage({ params }: PageProps) {
               onChange={(e) => router.push(`/admin/evaluate/${e.target.value}`)}
               className="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer [&>option]:bg-[#030712]"
             >
-              {teams.map((t, idx) => (
-                <option key={t.id} value={t.id}>
-                  {idx + 1}. {t.name} (Code: {t.teamCode}) {t.scoreTotal !== null ? `✓ ${t.scoreTotal}/30` : "• Pending"}
-                </option>
-              ))}
+              {teams.map((t, idx) => {
+                const teamRoundEval = (t.evaluations || []).find((e: any) => e.round === activeReviewRound);
+                const score = teamRoundEval ? teamRoundEval.scoreTotal : (activeReviewRound === 1 ? t.scoreTotal : null);
+                const isTeamFrozen = teamRoundEval ? teamRoundEval.isFrozen : false;
+                return (
+                  <option key={t.id} value={t.id}>
+                    {idx + 1}. {t.name} (Code: {t.teamCode}) {score !== null && score !== undefined ? `✓ ${score}/30 ${isTeamFrozen ? '[🧊]' : ''}` : "• Pending"}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -302,91 +398,73 @@ export default function TeamEvaluationPage({ params }: PageProps) {
         </div>
       </header>
 
-      {/* ═════════ MAIN CONTENT CONTAINER ═════════ */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-8 space-y-8 relative z-10">
-
-        {/* ─── TEAM SUMMARY HERO HEADER ─── */}
-        <div className="bg-gradient-to-br from-purple-950/40 via-slate-900/60 to-indigo-950/40 border border-purple-500/30 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-2xl space-y-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-white/10">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold tracking-wide">
-                  CODE: {currentTeam.teamCode}
+      {/* ═════════ MAIN WORKBENCH CONTENT ═════════ */}
+      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-8 space-y-8">
+        
+        {/* ─── TEAM SUMMARY CARD & ROSTER ─── */}
+        <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-xl relative overflow-hidden space-y-6">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider">
+                  TEAM CLUSTER: {currentTeam.teamCode}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs font-mono">
-                  {currentTeam.memberCount}/4 Members Joined
+                <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 font-mono text-xs">
+                  {currentTeam.memberCount} / 4 Members
                 </span>
-                {isEvaluated ? (
-                  <span className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-mono font-bold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">verified</span>
-                    EVALUATED: {currentTeam.scoreTotal}/30
-                  </span>
-                ) : (
-                  <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">hourglass_top</span>
-                    PENDING EVALUATION
+                {isEvaluated && (
+                  <span className={`px-3 py-1 rounded-full font-mono text-xs font-bold flex items-center gap-1 ${
+                    isFrozen
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  }`}>
+                    <span className="material-symbols-outlined text-xs">{isFrozen ? 'lock' : 'verified'}</span>
+                    {roundInfo.title}: {currentTotal}/30 {isFrozen ? '[FROZEN]' : '[UNFROZEN]'}
                   </span>
                 )}
               </div>
-
-              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight pt-1">
                 {currentTeam.name}
               </h1>
-
-              <div className="flex items-center gap-2 text-sm text-cyan-400 font-semibold font-mono">
-                <span className="material-symbols-outlined text-lg">deployed_code</span>
-                <span>Track: {currentTeam.problemStatement || "Not Selected"}</span>
-              </div>
+              <p className="text-xs text-white/60 font-mono flex items-center gap-2">
+                <span className="text-emerald-400">Team Leader:</span>
+                <span className="text-white font-bold">{currentTeam.leaderName}</span>
+                <span>({currentTeam.leaderEmail} • {currentTeam.leaderPhone})</span>
+              </p>
             </div>
 
-            {/* Quick Status / Total Score Widget */}
-            <div className="bg-black/60 border border-purple-500/30 rounded-2xl p-5 text-center min-w-[200px] shadow-xl">
-              <span className="text-[10px] font-mono uppercase text-purple-300/80 tracking-widest block mb-1">
-                CURRENT TOTAL MARKS
+            {/* Track Badge */}
+            <div className="bg-black/40 border border-white/10 rounded-2xl p-4 text-right min-w-[200px]">
+              <span className="text-[10px] font-mono uppercase text-white/40 block">PROBLEM STATEMENT TRACK</span>
+              <span className="text-sm font-bold text-cyan-300 block truncate max-w-[280px]">
+                {currentTeam.problemStatement || "Not Selected"}
               </span>
-              <div className="text-3xl md:text-4xl font-black text-white font-mono">
-                {currentTotal}
-                <span className="text-lg text-white/40 font-normal"> / 30</span>
-              </div>
-              <p className="text-[10px] text-white/40 font-mono mt-1">
-                {isEvaluated ? "Saved in Database" : "Unsaved Draft"}
-              </p>
             </div>
           </div>
 
-          {/* ─── TEAM LEADER & ROSTER CARDS ─── */}
-          <div className="space-y-3">
-            <span className="text-xs font-mono text-white/50 uppercase tracking-wider block font-semibold">
-              Team Roster &amp; Leadership
-            </span>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Members Grid */}
+          <div>
+            <h4 className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">
+              VERIFIED TEAM ROSTER ({currentTeam.members.length})
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {currentTeam.members.map((m: any, idx: number) => {
-                const isLeader = idx === 0 || m.fullName === currentTeam.leaderName;
+                const isLeader = m.fullName === currentTeam.leaderName || m.emailId === currentTeam.leaderEmail;
                 return (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      isLeader
-                        ? "bg-gradient-to-br from-amber-500/10 via-black/40 to-black/60 border-amber-500/40 ring-1 ring-amber-500/30 shadow-lg"
-                        : "bg-black/40 border-white/10"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white/5 text-cyan-400">
-                        0{idx + 1}
-                      </span>
-                      {isLeader && (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-black uppercase flex items-center gap-1">
-                          👑 TEAM LEADER
-                        </span>
-                      )}
+                  <div key={idx} className="bg-black/30 border border-white/5 rounded-xl p-3 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-mono text-xs text-purple-300 font-bold shrink-0">
+                      0{idx + 1}
                     </div>
-                    <h4 className="font-bold text-sm text-white truncate">{m.fullName}</h4>
-                    <p className="text-[11px] font-mono text-white/50 truncate mt-0.5">{m.emailId}</p>
-                    <div className="mt-2.5 pt-2 border-t border-white/5 text-[11px] font-mono text-cyan-300/80 flex items-center justify-between">
-                      <span>{m.hostelBlock} • {m.roomNumber}</span>
-                      <span className="text-white/40">{m.ticketId}</span>
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-white truncate">{m.fullName}</p>
+                        {isLeader && (
+                          <span className="text-[9px] font-mono px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            LEADER
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] font-mono text-white/40 truncate">{m.hostelBlock} • Rm {m.roomNumber}</p>
                     </div>
                   </div>
                 );
@@ -401,177 +479,229 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 text-xs font-mono text-purple-400 uppercase tracking-widest font-bold">
                 <span className="material-symbols-outlined text-base">fact_check</span>
-                OFFICIAL JURY EVALUATION CONSOLE
+                OFFICIAL JURY WORKBENCH // {roundInfo.title.toUpperCase()} ({roundInfo.subtitle.toUpperCase()})
               </div>
-              <h2 className="text-2xl font-black text-white">Score Team on 3 Core Criteria</h2>
+              <h2 className="text-2xl font-black text-white">
+                {isCurrentUserSuperAdmin ? "Evaluation Oversight & Freeze Governance" : "Score Team via 5-Tier Rubrics (Out of 10)"}
+              </h2>
               <p className="text-xs text-white/60">
-                Grades are scored from 0 to 10 points per criterion. Decimals are fully supported (e.g., 8.5).
+                {isCurrentUserSuperAdmin
+                  ? "Super Admin Governance Mode: Marking is conducted exclusively by evaluators. You may review submitted marks and toggle freeze state."
+                  : "Select an evaluation tier for each rubric. Total marks will compute automatically. Marks will be frozen upon submission."}
               </p>
             </div>
 
             {isEvaluated && (
               <div className="text-right">
                 <span className="text-xs font-mono text-purple-300 block">
-                  Last Graded by: <strong className="text-white">{currentTeam.evaluatedBy}</strong>
+                  Graded by: <strong className="text-white">{currentRoundEval?.evaluatedBy || currentTeam.evaluatedBy}</strong>
                 </span>
                 <span className="text-[10px] font-mono text-white/40">
-                  {new Date(currentTeam.evaluatedAt).toLocaleString()}
+                  {currentRoundEval?.evaluatedAt ? new Date(currentRoundEval.evaluatedAt).toLocaleString() : new Date(currentTeam.evaluatedAt).toLocaleString()}
                 </span>
               </div>
             )}
           </div>
 
-          {/* 3 Criteria Interactive Inputs */}
+          {/* ─── SUPER ADMIN GOVERNANCE CONTROLS ─── */}
+          {isCurrentUserSuperAdmin && (
+            <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-400 text-lg">admin_panel_settings</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-300">Super Admin Freeze Control</span>
+                  </div>
+                  <p className="text-xs text-white/70">
+                    {isFrozen
+                      ? "Marks for this team are currently FROZEN. Evaluators cannot edit or change their submission."
+                      : "Marks for this team are currently UNFROZEN. Evaluators can edit and resubmit marks."}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleFreeze(!isFrozen)}
+                  disabled={togglingFreeze}
+                  className={`px-5 py-3 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-lg ${
+                    isFrozen
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/20"
+                      : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-cyan-500/20"
+                  }`}
+                >
+                  {togglingFreeze ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                      <span>Updating Freeze State...</span>
+                    </>
+                  ) : isFrozen ? (
+                    <>
+                      <span className="material-symbols-outlined text-base">lock_open</span>
+                      <span>Unfreeze Marks for Evaluator Editing</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">lock</span>
+                      <span>Freeze Marks</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {freezeMsg && (
+                <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-mono text-center">
+                  {freezeMsg}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ─── FROZEN BANNER FOR EVALUATORS ─── */}
+          {!isCurrentUserSuperAdmin && isFrozen && (
+            <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+                  <span className="material-symbols-outlined text-2xl">lock</span>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-amber-300">Evaluation Locked &amp; Frozen</h4>
+                  <p className="text-xs text-white/70">
+                    Marks for this team in {roundInfo.title} have been submitted and automatically frozen. Only Super Admin has permissions to unfreeze marks.
+                  </p>
+                </div>
+              </div>
+              <span className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-mono font-bold uppercase shrink-0">
+                LOCKED BY SYSTEM
+              </span>
+            </div>
+          )}
+
+          {/* ─── 3 RUBRICS 5-TIER DROPDOWNS ─── */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Criterion 1: Innovation */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono text-purple-400 uppercase font-bold block">
-                    CRITERION 01
-                  </span>
-                  <label className="text-sm font-black text-white">Innovation</label>
+            {RUBRICS.map((rubric, rIdx) => {
+              const currentScore = rubric.id === "scoreInnovation" ? scoreInnovation : (rubric.id === "scoreUnderstanding" ? scoreUnderstanding : scoreProgress);
+              const setScore = rubric.id === "scoreInnovation" ? setScoreInnovation : (rubric.id === "scoreUnderstanding" ? setScoreUnderstanding : setScoreProgress);
+              const selectedTier = rubric.tiers.find((t) => String(t.weight) === String(currentScore));
+
+              const isDisabled = isCurrentUserSuperAdmin || (!isCurrentUserSuperAdmin && isFrozen);
+
+              return (
+                <div key={rubric.id} className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-purple-400 uppercase font-bold">
+                        RUBRIC 0{rIdx + 1}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
+                        {currentScore ? `${currentScore} / 10 Marks` : "0 - 10"}
+                      </span>
+                    </div>
+
+                    <label className="text-sm font-black text-white block">
+                      {rubric.criterionName}
+                    </label>
+                    <p className="text-[11px] text-white/50 leading-relaxed">
+                      {rubric.description}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-mono uppercase text-white/40 block">
+                      Select Rating Tier (Weight Denotes Marks):
+                    </label>
+                    <select
+                      value={currentScore}
+                      disabled={isDisabled}
+                      onChange={(e) => setScore(e.target.value)}
+                      className="w-full bg-black/60 border border-white/15 focus:border-purple-500 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl px-3.5 py-3 text-white text-xs font-medium outline-none focus:ring-2 focus:ring-purple-500/50 transition-all cursor-pointer [&>option]:bg-[#030712] [&>option]:text-white"
+                    >
+                      <option value="">-- Choose Rating (5 Options) --</option>
+                      {rubric.tiers.map((tier) => (
+                        <option key={tier.weight} value={tier.weight}>
+                          {tier.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedTier && (
+                      <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-200 leading-relaxed font-sans">
+                        <strong className="text-white block font-semibold mb-0.5">{selectedTier.label}</strong>
+                        {selectedTier.description}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
-                  0 - 10
-                </span>
-              </div>
-
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="any"
-                value={scoreInnovation}
-                onChange={(e) => setScoreInnovation(e.target.value)}
-                placeholder="Score (0-10)"
-                className="w-full bg-white/5 border border-white/10 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:ring-2 focus:ring-purple-500/50 outline-none transition-all placeholder-white/20"
-              />
-
-              <p className="text-xs text-white/50 leading-relaxed">
-                Creativity, novelty, uniqueness of concept, and technical originality.
-              </p>
-            </div>
-
-            {/* Criterion 2: Understanding of Problem Statement */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono text-purple-400 uppercase font-bold block">
-                    CRITERION 02
-                  </span>
-                  <label className="text-sm font-black text-white">Problem Understanding</label>
-                </div>
-                <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
-                  0 - 10
-                </span>
-              </div>
-
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="any"
-                value={scoreUnderstanding}
-                onChange={(e) => setScoreUnderstanding(e.target.value)}
-                placeholder="Score (0-10)"
-                className="w-full bg-white/5 border border-white/10 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:ring-2 focus:ring-purple-500/50 outline-none transition-all placeholder-white/20"
-              />
-
-              <p className="text-xs text-white/50 leading-relaxed">
-                Clarity of hostel campus challenges, edge cases, scope, and technical constraints.
-              </p>
-            </div>
-
-            {/* Criterion 3: Progress & Execution */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono text-purple-400 uppercase font-bold block">
-                    CRITERION 03
-                  </span>
-                  <label className="text-sm font-black text-white">Progress &amp; Execution</label>
-                </div>
-                <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
-                  0 - 10
-                </span>
-              </div>
-
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="any"
-                value={scoreProgress}
-                onChange={(e) => setScoreProgress(e.target.value)}
-                placeholder="Score (0-10)"
-                className="w-full bg-white/5 border border-white/10 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-mono text-lg font-bold focus:ring-2 focus:ring-purple-500/50 outline-none transition-all placeholder-white/20"
-              />
-
-              <p className="text-xs text-white/50 leading-relaxed">
-                Prototype quality, functional demo, GitHub source implementation, and delivery.
-              </p>
-            </div>
+              );
+            })}
           </div>
 
-          {/* Jury Notes / Feedback */}
+          {/* ─── REVIEW FEEDBACK / NOTES (OPTIONAL) ─── */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-white uppercase tracking-wider block">
-              Jury Remarks &amp; Feedback Notes (Optional)
+              Evaluator Review Remarks &amp; Feedback Notes (Optional)
             </label>
             <textarea
               rows={3}
               value={evaluationNotes}
+              disabled={isCurrentUserSuperAdmin || (!isCurrentUserSuperAdmin && isFrozen)}
               onChange={(e) => setEvaluationNotes(e.target.value)}
-              placeholder="Constructive feedback, notable strengths, architectural feedback for the team..."
-              className="w-full bg-black/40 border border-white/10 focus:border-purple-500 rounded-xl px-4 py-3 text-white font-mono text-xs outline-none focus:ring-2 focus:ring-purple-500/50 transition-all placeholder-white/30"
+              placeholder="Provide constructive feedback, architectural insights, or highlights for the team..."
+              className="w-full bg-black/40 border border-white/10 focus:border-purple-500 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl px-4 py-3 text-white font-mono text-xs outline-none focus:ring-2 focus:ring-purple-500/50 transition-all placeholder-white/30"
             />
           </div>
 
-          {/* Action Footer */}
+          {/* ─── ACTION FOOTER ─── */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t border-white/10">
             <div className="flex items-center gap-3">
-              <div className="px-4 py-2 bg-purple-500/20 border border-purple-500/40 rounded-xl font-mono text-center">
-                <span className="text-[10px] text-purple-300 uppercase block font-bold">TOTAL SCORE</span>
-                <span className="text-xl font-black text-white">{currentTotal} / 30</span>
+              <div className="px-5 py-2.5 bg-purple-500/20 border border-purple-500/40 rounded-xl font-mono text-center">
+                <span className="text-[10px] text-purple-300 uppercase block font-bold">TOTAL SCORE ({roundInfo.title})</span>
+                <span className="text-2xl font-black text-white">{currentTotal} / 30</span>
               </div>
               <span className="text-xs text-white/40 font-mono hidden md:inline">
                 (Tip: Use keyboard arrow keys ← and → to navigate teams)
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => handleSaveMarks(false)}
-                disabled={saving}
-                className="flex-1 sm:flex-none px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-purple-500/20 cursor-pointer flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                    <span>Saving Marks...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">save</span>
-                    <span>Save Marks</span>
-                  </>
-                )}
-              </button>
-
-              {nextTeam && (
+            {/* Evaluator Action Buttons */}
+            {!isCurrentUserSuperAdmin && (
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => handleSaveMarks(true)}
-                  disabled={saving}
-                  className="flex-1 sm:flex-none px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-50 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
+                  onClick={() => handleSaveMarks(false)}
+                  disabled={saving || isFrozen}
+                  className="flex-1 sm:flex-none px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-purple-500/20 cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <span>Save &amp; Next Team</span>
-                  <span className="material-symbols-outlined text-base">arrow_forward</span>
+                  {saving ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                      <span>Submitting Marks...</span>
+                    </>
+                  ) : isFrozen ? (
+                    <>
+                      <span className="material-symbols-outlined text-base">lock</span>
+                      <span>Marks Frozen</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-base">lock</span>
+                      <span>Submit &amp; Freeze Marks</span>
+                    </>
+                  )}
                 </button>
-              )}
-            </div>
+
+                {nextTeam && !isFrozen && (
+                  <button
+                    type="button"
+                    onClick={() => handleSaveMarks(true)}
+                    disabled={saving}
+                    className="flex-1 sm:flex-none px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>Submit &amp; Next Team</span>
+                    <span className="material-symbols-outlined text-base">arrow_forward</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {saveSuccessMsg && (

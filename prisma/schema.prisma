@@ -41,6 +41,27 @@ model Team {
   evaluatedAt         DateTime?
   
   participants Participant[] // Hard max limit of 4 enforced in logic
+  evaluations  TeamEvaluation[]
+}
+
+model TeamEvaluation {
+  id                 String    @id @default(uuid())
+  teamId             String
+  team               Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  round              Int       // 1: Internal Review 1, 2: Internal Review 2, 3: External Review
+  
+  scoreInnovation    Float?
+  scoreUnderstanding Float?
+  scoreProgress      Float?
+  scoreTotal         Float?
+  
+  evaluatedBy        String?
+  evaluationNotes    String?
+  evaluatedAt        DateTime  @default(now())
+  
+  isFrozen           Boolean   @default(true) // Automatically frozen on evaluator submission
+  
+  @@unique([teamId, round])
 }
 
 model Participant {
