@@ -283,25 +283,24 @@ export default function RegisterPage() {
     formData.consentAgreed;
 
   return (
-    <div className="min-h-screen bg-[#050B14] relative text-white font-sans selection:bg-cyan-500/30">
+    <div className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden bg-[#050B14] relative text-white font-sans selection:bg-cyan-500/30 flex flex-col justify-center items-center px-4 py-3 sm:py-5">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
 
-      <div className="container mx-auto px-4 py-16 relative z-10 flex flex-col items-center">
+      <div className="w-full max-w-2xl relative z-10 flex flex-col items-center my-auto">
         {/* Header */}
-        <div className="text-center max-w-2xl mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        <div className="text-center max-w-xl mb-2 sm:mb-2.5">
+          <div className="inline-flex items-center px-3 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[11px] font-mono uppercase tracking-widest mb-1.5">
             SOLVATHON 2026
           </div>
           <div>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight pb-3.5 mb-3 bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent leading-[1.3] inline-block">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight pb-1 mb-1 bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent leading-tight inline-block">
               Participant Registration
             </h1>
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white/80">
-            <span className="material-symbols-outlined text-cyan-400 text-base">verified_user</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-white/80">
+            <span className="material-symbols-outlined text-cyan-400 text-sm">verified_user</span>
             <span>Signed in as <strong className="text-cyan-400 font-mono">{user.email}</strong></span>
           </div>
         </div>
@@ -309,18 +308,18 @@ export default function RegisterPage() {
         {/* Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-2xl bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-2xl shadow-2xl space-y-6"
+          className="w-full bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-4 sm:p-5 md:p-6 rounded-2xl shadow-2xl space-y-3"
         >
-          <div className="border-b border-white/10 pb-4">
+          <div className="border-b border-white/10 pb-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">Personal &amp; Hostel Details</h2>
-              <span className="text-xs font-mono text-white/40">VIT HOSTELLITE VERIFICATION</span>
+              <h2 className="text-sm md:text-base font-bold text-white">Personal &amp; Hostel Details</h2>
+              <span className="text-[10px] font-mono text-white/40">VIT HOSTELLITE VERIFICATION</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
                 Full Name <span className="text-cyan-400">*</span>
               </label>
               <input
@@ -329,13 +328,13 @@ export default function RegisterPage() {
                 required
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
                 placeholder="e.g. Rahul Sharma"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
                 Mobile Number <span className="text-cyan-400">*</span>
               </label>
               <input
@@ -348,49 +347,39 @@ export default function RegisterPage() {
                 onInput={(e) => (e.target as HTMLInputElement).setCustomValidity("")}
                 value={formData.mobileNumber}
                 onChange={handleInputChange}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
                 placeholder="10-digit mobile number"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
                 <span>Gender <span className="text-cyan-400">*</span></span>
-                <span className="text-[10px] font-mono text-white/40">Only Male or Female</span>
+                <span className="text-[9px] font-mono text-white/40">Only Male or Female</span>
               </label>
-              <div className="grid grid-cols-2 gap-3 h-[49px]">
-                <button
-                  type="button"
-                  onClick={() => handleGenderSelect("Male")}
-                  className={`rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    formData.gender === "Male"
-                      ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-md shadow-cyan-500/20"
-                      : "bg-black/40 border-white/10 text-white/70 hover:border-white/20 hover:text-white"
-                  }`}
+              <div className="relative">
+                <select
+                  name="gender"
+                  required
+                  value={formData.gender}
+                  onChange={(e) => handleGenderSelect(e.target.value as "Male" | "Female")}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg pl-3 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer [&>option]:bg-[#050B14]"
                 >
-                  <span className="material-symbols-outlined text-lg">male</span>
-                  <span>Male</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleGenderSelect("Female")}
-                  className={`rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    formData.gender === "Female"
-                      ? "bg-pink-500/20 border-pink-400 text-pink-300 shadow-md shadow-pink-500/20"
-                      : "bg-black/40 border-white/10 text-white/70 hover:border-white/20 hover:text-white"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-lg">female</span>
-                  <span>Female</span>
-                </button>
+                  <option value="" disabled>Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-lg">
+                  expand_more
+                </span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
                 <span>Hostel Block <span className="text-cyan-400">*</span></span>
                 {formData.gender && (
-                  <span className="text-[10px] font-mono text-cyan-400">
+                  <span className="text-[9px] font-mono text-cyan-400">
                     {formData.gender === "Male" ? "Men's Blocks" : "Ladies' Blocks (B, C)"}
                   </span>
                 )}
@@ -402,7 +391,7 @@ export default function RegisterPage() {
                   disabled={!formData.gender}
                   value={formData.hostelBlock}
                   onChange={handleInputChange}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg pl-3 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
                   <option value="" disabled>
                     {!formData.gender ? "Select Gender first" : "Select assigned block"}
@@ -413,14 +402,14 @@ export default function RegisterPage() {
                     </option>
                   ))}
                 </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-xl">
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-lg">
                   expand_more
                 </span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
                 Room Number <span className="text-cyan-400">*</span>
               </label>
               <input
@@ -430,23 +419,24 @@ export default function RegisterPage() {
                 pattern="[0-9]{3,4}"
                 maxLength={4}
                 required
+                disabled={!formData.gender}
                 value={formData.roomNumber}
                 onChange={handleInputChange}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all font-mono"
-                placeholder="e.g. 412"
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all font-mono disabled:opacity-40 disabled:cursor-not-allowed"
+                placeholder={!formData.gender ? "Select Gender first" : "e.g. 412"}
               />
               {formData.roomNumber.length > 0 && !/^\d{3,4}$/.test(formData.roomNumber) && (
-                <p className="text-[11px] text-amber-400 font-mono">
+                <p className="text-[10px] text-amber-400 font-mono">
                   Enter a valid room number
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider flex items-center justify-between">
                 <span>Mess Caterer <span className="text-cyan-400">*</span></span>
                 {formData.gender && (
-                  <span className="text-[10px] font-mono text-cyan-400">
+                  <span className="text-[9px] font-mono text-cyan-400">
                     {formData.gender === "Male" ? "Men's Caterers" : "Ladies' Caterers"}
                   </span>
                 )}
@@ -458,7 +448,7 @@ export default function RegisterPage() {
                   disabled={!formData.gender}
                   value={formData.messCaterer}
                   onChange={handleInputChange}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg pl-3 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
                   <option value="" disabled>
                     {!formData.gender ? "Select Gender first" : "Select Caterer"}
@@ -469,39 +459,42 @@ export default function RegisterPage() {
                     </option>
                   ))}
                 </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-xl">
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-lg">
                   expand_more
                 </span>
               </div>
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                Mess Diet Type <span className="text-cyan-400">*</span>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">
+                Mess Type <span className="text-cyan-400">*</span>
               </label>
               <div className="relative">
                 <select
                   name="messType"
                   required
+                  disabled={!formData.gender}
                   value={formData.messType}
                   onChange={handleInputChange}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-11 py-3 text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer [&>option]:bg-[#050B14]"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg pl-3 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
                 >
-                  <option value="" disabled>Select Type</option>
+                  <option value="" disabled>
+                    {!formData.gender ? "Select Gender first" : "Select Mess Type"}
+                  </option>
                   {messTypesData.map((m: any) => (
                     <option key={m.id} value={m.label}>
                       {m.label}
                     </option>
                   ))}
                 </select>
-                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-xl">
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none text-lg">
                   expand_more
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+          <div className="flex items-start gap-2.5 p-2.5 px-3 bg-white/5 rounded-xl border border-white/10">
             <input
               type="checkbox"
               id="consentAgreed"
@@ -509,21 +502,21 @@ export default function RegisterPage() {
               required
               checked={formData.consentAgreed}
               onChange={handleInputChange}
-              className="mt-1 w-5 h-5 accent-cyan-500 rounded cursor-pointer"
+              className="mt-0.5 w-4 h-4 accent-cyan-500 rounded cursor-pointer shrink-0"
             />
-            <label htmlFor="consentAgreed" className="text-xs text-white/70 leading-relaxed cursor-pointer">
+            <label htmlFor="consentAgreed" className="text-[11px] text-white/70 leading-snug cursor-pointer">
               I verify that I am currently a residential student residing on the VIT campus. I agree to abide by all the hackathon guidelines, overnight attendance checks, and lab protocols.
             </label>
           </div>
 
           {status === "error" && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+            <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs text-center">
               {errorMessage}
             </div>
           )}
 
           {status === "success" && (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm text-center font-medium">
+            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs text-center font-medium">
               Registration successful! Redirecting to your team dashboard...
             </div>
           )}
@@ -531,7 +524,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={!isFormValid || status === "loading" || status === "success"}
-            className={`w-full font-bold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
+            className={`w-full font-bold py-2.5 md:py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
               !isFormValid || status === "loading" || status === "success"
                 ? "bg-slate-800/80 text-white/30 border border-white/5 cursor-not-allowed shadow-none"
                 : "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 cursor-pointer"
@@ -539,7 +532,7 @@ export default function RegisterPage() {
           >
             {status === "loading" ? (
               <>
-                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 <span>Registering...</span>
               </>
             ) : (

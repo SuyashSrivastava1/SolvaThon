@@ -371,8 +371,7 @@ export default function ProfilePage() {
             <div className="bg-gradient-to-br from-blue-950/30 via-cyan-950/10 to-slate-900/40 border border-cyan-500/30 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-2xl space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-white/10 gap-4">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
-                    <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                  <div className="inline-flex items-center text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
                     ACTIVE TEAM CLUSTER
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black text-white">{teamData.team.name}</h2>

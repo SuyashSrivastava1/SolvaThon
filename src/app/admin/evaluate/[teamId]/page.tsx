@@ -252,8 +252,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
             <span className="h-5 w-[1px] bg-white/10 hidden sm:block"></span>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+            <div className="inline-flex items-center px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
               TEAM {currentIndex + 1} OF {teams.length}
             </div>
           </div>

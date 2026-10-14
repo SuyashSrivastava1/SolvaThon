@@ -293,10 +293,9 @@ export default function Home() {
             <div className="flex items-center gap-3 shrink-0">
               {/* Live registration counter pill */}
               <div
-                className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full"
+                className="hidden sm:flex items-center px-3.5 py-1.5 rounded-full"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
               >
-                <span className="relative w-[7px] h-[7px] rounded-full bg-emerald-400 live-dot" />
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#34d399', letterSpacing: '0.08em' }}>
                   {Math.max(100, participantCount)} REGISTERED
                 </span>
@@ -355,8 +354,7 @@ export default function Home() {
                 {/* Left Side: Big Bold Text & CTAs shifted upwards */}
                 <div className="lg:col-span-7 flex flex-col items-start text-left gap-3.5 sm:gap-4">
                   {/* Pill badge */}
-                  <motion.div variants={fadeItem} className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full glass-card" style={{ boxShadow: 'none' }}>
-                    <span className="relative w-[6px] h-[6px] rounded-full bg-cyan-400 live-dot" />
+                  <motion.div variants={fadeItem} className="inline-flex items-center px-3.5 py-1 rounded-full glass-card" style={{ boxShadow: 'none' }}>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#67e8f9', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
                       VIT Chennai · Hostellite Hackathon
                     </span>
@@ -442,8 +440,7 @@ export default function Home() {
                 {/* Centered 'Registration Ends in' header with glowing cyan lines beside it */}
                 <div className="w-full flex items-center justify-center gap-3 sm:gap-5 pb-2 px-2">
                   <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-r from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
-                  <div className="flex items-center gap-2 shrink-0 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.15)]">
-                    <span className="relative w-2 h-2 rounded-full bg-cyan-400 live-dot" />
+                  <div className="flex items-center shrink-0 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.15)]">
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
                       Registration Ends in
                     </span>
@@ -975,8 +972,7 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
-                  <div className="shrink-0 relative z-10 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
-                    <span className="relative w-2 h-2 rounded-full bg-emerald-400 live-dot" />
+                  <div className="shrink-0 relative z-10 flex items-center px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                       {prizes.certificate.badge}
                     </span>
@@ -1004,8 +1000,7 @@ export default function Home() {
                 Solve-a-thon 2026-27 · VIT Chennai
               </span>
             </div>
-            <div className="flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399' }}>
-              <span className="w-[5px] h-[5px] rounded-full bg-emerald-400" />
+            <div className="flex items-center" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399' }}>
               SYSTEMS OPERATIONAL
             </div>
           </div>
