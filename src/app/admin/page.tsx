@@ -766,7 +766,7 @@ export default function AdminPortalPage() {
                   <button
                     type="button"
                     disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleUpdateTimer("2026-12-01T23:59:59+05:30")}
+                    onClick={() => handleUpdateTimer("2026-12-10T23:59:59+05:30")}
                     className="px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg text-xs font-mono text-purple-300 transition-colors cursor-pointer disabled:opacity-40"
                   >
                     Reset Default

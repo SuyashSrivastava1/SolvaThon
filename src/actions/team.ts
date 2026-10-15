@@ -278,7 +278,7 @@ export async function getSystemSettings() {
     return {
       success: true,
       submissionPhase: (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA",
-      targetDate: timerConfig?.value || "2026-12-01T23:59:59+05:30",
+      targetDate: timerConfig?.value || "2026-12-10T23:59:59+05:30",
       isPaused: pauseConfig?.value === "true",
     };
   } catch (error) {
@@ -286,7 +286,7 @@ export async function getSystemSettings() {
     return {
       success: true,
       submissionPhase: "IDEA" as const,
-      targetDate: "2026-12-01T23:59:59+05:30",
+      targetDate: "2026-12-10T23:59:59+05:30",
       isPaused: false,
     };
   }

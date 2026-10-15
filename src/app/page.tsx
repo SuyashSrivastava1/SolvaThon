@@ -175,7 +175,7 @@ function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minut
 export default function Home() {
   const { user } = useAuth();
   const isAdmin = isAdminEmail(user?.email);
-  const [targetDate, setTargetDate] = useState(() => new Date('2026-12-01T23:59:59+05:30'));
+  const [targetDate, setTargetDate] = useState(() => new Date('2026-12-10T23:59:59+05:30'));
   const timeLeft = useCountdown(targetDate);
 
   const [rawCount, setRawCount] = useState(100);
