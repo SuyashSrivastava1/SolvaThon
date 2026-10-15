@@ -52,7 +52,7 @@ export async function createTeam(firebaseUid: string, teamName: string) {
     const existingTeams = await prisma.team.findMany({ select: { id: true, name: true } });
     const duplicate = existingTeams.find((t: any) => normalizeTeamName(t.name) === normalizedInput);
     if (duplicate) {
-      return { success: false, error: `Team name "${trimmed}" is already taken (conflicts with "${duplicate.name}"). Please choose a unique name.` };
+      return { success: false, error: "Team name is already taken. Please choose a different name." };
     }
 
     let newTeamCode = "";

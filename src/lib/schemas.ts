@@ -13,7 +13,13 @@ export const registrationSchema = z.object({
     message: "Please select Male or Female",
   }),
   hostelBlock: z.string().min(1, "Block is required"),
-  roomNumber: z.string().regex(/^\d{3,4}$/, "Enter a valid room number"),
+  roomNumber: z.string().regex(/^\d{3,4}$/, "Enter a valid room number").refine(
+    (val) => {
+      const n = parseInt(val, 10);
+      return !isNaN(n) && n >= 100 && n <= 1800;
+    },
+    "Enter a valid room number"
+  ),
   messCaterer: z.string().min(1, "Caterer is required"),
   messType: z.string().min(1, "Mess type is required"),
   consentAgreed: z.boolean().refine(val => val === true, "You must agree to the rules"),

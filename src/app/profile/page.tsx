@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import {
@@ -23,6 +23,10 @@ import { clearParticipantSession } from "@/lib/authSession";
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  const isLoggingOut = useRef(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [leaveNotice, setLeaveNotice] = useState("");
 
   const [teamData, setTeamData] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
@@ -69,6 +73,17 @@ export default function ProfilePage() {
   const [finalMsg, setFinalMsg] = useState("");
   const [finalError, setFinalError] = useState("");
 
+  const handleSignOut = async () => {
+    isLoggingOut.current = true;
+    clearParticipantSession();
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Signout error:", err);
+    }
+    window.location.replace("/");
+  };
+
   const isIdeaComplete =
     Boolean(submission.pptUrl?.trim()) &&
     Boolean(submission.understanding?.trim()) &&
@@ -80,6 +95,7 @@ export default function ProfilePage() {
     Boolean(finalSubmission.finalSummary?.trim());
 
   useEffect(() => {
+    if (isLoggingOut.current) return;
     if (!loading && !user) {
       router.push("/login");
     } else if (user) {
@@ -111,6 +127,10 @@ export default function ProfilePage() {
             setJoinStatus("idle");
             setCreateMsg("");
             setCreateStatus("idle");
+          } else {
+            setTeamActionMsg("");
+            setTeamActionError("");
+            setLeaveNotice("");
           }
           if (result.team?.problemStatement) {
             setSelectedTrack(result.team.problemStatement);
@@ -155,6 +175,9 @@ export default function ProfilePage() {
     setCreateStatus("loading");
     setCreateMsg("");
     setJoinMsg("");
+    setTeamActionMsg("");
+    setTeamActionError("");
+    setLeaveNotice("");
     const result = await createTeam(user!.uid, teamName);
     if (result.success) {
       setCreateStatus("success");
@@ -171,6 +194,9 @@ export default function ProfilePage() {
     setJoinStatus("loading");
     setJoinMsg("");
     setCreateMsg("");
+    setTeamActionMsg("");
+    setTeamActionError("");
+    setLeaveNotice("");
     const result = await joinTeam(user!.uid, teamCode);
     if (result.success) {
       setJoinStatus("success");
@@ -252,7 +278,8 @@ export default function ProfilePage() {
     const res = await leaveTeam(user.uid);
     setTeamActionLoading(false);
     if (res.success) {
-      setTeamActionMsg(res.message || "You have left the team.");
+      setLeaveNotice(res.message || "You have left the team.");
+      setTeamActionMsg("");
       setLeaveModal(false);
       setJoinMsg("");
       setJoinStatus("idle");
@@ -332,11 +359,7 @@ export default function ProfilePage() {
           </Link>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                clearParticipantSession();
-                signOut(auth);
-                router.replace("/");
-              }}
+              onClick={handleSignOut}
               className="px-4 py-2 bg-white/10 hover:bg-red-500/20 hover:text-red-300 text-white/80 rounded-xl text-xs font-semibold transition-all border border-transparent hover:border-red-500/30 flex items-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-sm">logout</span>
@@ -369,27 +392,21 @@ export default function ProfilePage() {
         {participant && (
           <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-4 w-full">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-4">
-                <div>
-                  <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <h1 className="text-2xl md:text-3xl font-black text-white">{participant.fullName}</h1>
-                    {participant.gender && (
-                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
-                        participant.gender === "Female"
-                          ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
-                          : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
-                      }`}>
-                        {participant.gender}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs font-mono text-white/50">{participant.emailId}</p>
+              <div className="border-b border-white/10 pb-4">
+                <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <h1 className="text-2xl md:text-3xl font-black text-white">{participant.fullName}</h1>
+                  {participant.gender && (
+                    <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
+                      participant.gender === "Female"
+                        ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
+                        : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                    }`}>
+                      {participant.gender}
+                    </span>
+                  )}
                 </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-2xl text-right">
-                  <span className="text-[10px] uppercase font-mono text-emerald-400/80 block">REGISTRATION STATUS</span>
-                  <span className="text-sm font-mono font-black text-emerald-300 tracking-wider block">CONFIRMED</span>
-                </div>
+                <p className="text-xs font-mono text-white/50">{participant.emailId}</p>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
@@ -429,13 +446,35 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-4 text-center min-w-[160px] shadow-lg">
+                  <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
                     <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
-                    <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
-                      {teamData.team.teamCode}
-                    </p>
+                    <div className="flex items-center justify-center gap-2 my-0.5">
+                      <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
+                        {teamData.team.teamCode}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (teamData?.team?.teamCode) {
+                            navigator.clipboard.writeText(teamData.team.teamCode);
+                            setCopiedCode(true);
+                            setTimeout(() => setCopiedCode(false), 2000);
+                          }
+                        }}
+                        className="p-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-white/60 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer"
+                        title="Copy Team Code"
+                      >
+                        <span className="material-symbols-outlined text-sm block">
+                          {copiedCode ? "check" : "content_copy"}
+                        </span>
+                      </button>
+                    </div>
                     <p className="text-[10px] text-white/40 font-mono">
-                      {teamData.team.members.length}/4 Members Joined
+                      {copiedCode ? (
+                        <span className="text-cyan-400 font-bold">Code copied!</span>
+                      ) : (
+                        `${teamData.team.members.length}/4 Members Joined`
+                      )}
                     </p>
                   </div>
                   <button
@@ -837,7 +876,7 @@ export default function ProfilePage() {
 
             {/* ═════════ VIEW 3: NON-LEADER MEMBER DASHBOARD VIEW ═════════ */}
             {!teamData.isLeader && (
-              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-4 animate-fadeIn">
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-6 animate-fadeIn">
                 <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/10">
                   <span className="material-symbols-outlined text-3xl">verified_user</span>
                 </div>
@@ -846,6 +885,35 @@ export default function ProfilePage() {
                   <p className="text-sm text-white/60 max-w-lg mx-auto">
                     Submissions are managed exclusively by your team leader, <strong className="text-cyan-400">{teamData.leaderName || "Team Leader"}</strong>.
                   </p>
+                </div>
+
+                {/* Team Invite Code for Non-Leaders */}
+                <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                  <div>
+                    <p className="text-xs font-bold text-white">Team Invite Code</p>
+                    <p className="text-[11px] text-white/60">Share with peers to join your team ({teamData.team.members.length}/4 spots filled).</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono text-base font-black tracking-widest text-emerald-400 bg-black/60 px-3 py-1.5 rounded-xl border border-cyan-500/30 select-all">
+                      {teamData.team.teamCode}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (teamData?.team?.teamCode) {
+                          navigator.clipboard.writeText(teamData.team.teamCode);
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        {copiedCode ? "check" : "content_copy"}
+                      </span>
+                      <span>{copiedCode ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -881,6 +949,21 @@ export default function ProfilePage() {
         ) : (
           /* Not in a team yet: Create or Join */
           <div className="grid md:grid-cols-2 gap-8">
+            {leaveNotice && (
+              <div className="md:col-span-2 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">info</span>
+                  <span>{leaveNotice}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLeaveNotice("")}
+                  className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+            )}
             {/* Create Team */}
             <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">

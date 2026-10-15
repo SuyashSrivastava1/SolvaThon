@@ -181,7 +181,7 @@ export default function AdminPortalPage() {
     } catch (e) {
       console.error("Sign out error:", e);
     }
-    router.replace("/register");
+    window.location.replace("/");
   };
 
   // Super Admin: Toggle Submission Phase
@@ -464,7 +464,7 @@ export default function AdminPortalPage() {
               Retry Connection
             </button>
             <button
-              onClick={() => auth?.signOut()}
+              onClick={handleFullSignOut}
               className="px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-semibold cursor-pointer transition-all"
             >
               Sign Out
