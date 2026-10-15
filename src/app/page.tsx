@@ -77,6 +77,7 @@ function useAnimatedNumber(target: number, duration = 1200) {
    ═══════════════════════════════════════════ */
 const staggerContainer: Variants = {
   hidden: {
+    opacity: 0,
     transition: {
       duration: 0.35,
       ease: "easeInOut",
@@ -84,6 +85,7 @@ const staggerContainer: Variants = {
     },
   },
   visible: {
+    opacity: 1,
     transition: {
       duration: 0.4,
       staggerChildren: 0.1, // When entering viewport: fade in element by element!
@@ -414,16 +416,16 @@ export default function Home() {
         <div className="flex flex-col w-full">
 
           {/* ════════ HERO SECTION (FITS FULLY ON LAPTOP SCREEN, GDG FULL-WIDTH BOTTOM TIMER) ════════ */}
-          <section id="hero" className="relative w-full min-h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-4.5rem)] flex flex-col justify-between pt-2 sm:pt-4 pb-3 sm:pb-4 overflow-hidden">
+          <ScrollFadeSection 
+            id="hero" 
+            className="relative w-full min-h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-4.5rem)] flex flex-col justify-between pt-2 sm:pt-4 pb-3 sm:pb-4 overflow-hidden"
+          >
             {/* Ambient lighting orbs */}
             <div className="absolute top-[-100px] left-[20%] w-[550px] h-[350px] rounded-full bg-cyan-500/[0.08] blur-[160px] pointer-events-none ambient-orb" />
             <div className="absolute top-[35%] right-[-5%] w-[450px] h-[450px] rounded-full bg-indigo-500/[0.05] blur-[140px] pointer-events-none ambient-orb-delay" />
             <div className="absolute bottom-[-50px] left-[-10%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.04] blur-[120px] pointer-events-none ambient-orb" />
 
-            <ScrollFadeSection 
-              as="div"
-              className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-between h-full flex-1"
-            >
+            <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-between h-full flex-1">
               {/* Top Row: Left Side (Text & CTAs) and Right Side (Large Stat Cards) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2 sm:pt-4 my-auto">
                 {/* Left Side: Big Bold Text & CTAs shifted upwards */}
@@ -524,8 +526,8 @@ export default function Home() {
                 </div>
                 <GDGTimer timeLeft={timeLeft} />
               </motion.div>
-            </ScrollFadeSection>
-          </section>
+            </div>
+          </ScrollFadeSection>
 
           {/* ════════ PROBLEM STATEMENTS MARQUEE (SEAMLESS INFINITE ROLLER) ════════ */}
           <ScrollFadeSection 
