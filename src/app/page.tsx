@@ -135,6 +135,84 @@ const popCard: Variants = {
 };
 
 /* ═══════════════════════════════════════════
+   SCROLL-AWARE FADE SECTION
+   - Fades in smoothly as it enters from bottom
+   - Stays 100% visible when scrolled past the top (never fades out above!)
+   - Fades out below only when scrolling back up above it
+   - Prevents re-triggering fade-in on the top sections when scrolling back up
+   ═══════════════════════════════════════════ */
+function ScrollFadeSection({
+  as: Component = 'section',
+  children,
+  className,
+  id,
+  style,
+  thresholdPx = 50,
+  variants = staggerContainer,
+}: {
+  as?: 'section' | 'div';
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+  style?: React.CSSProperties;
+  thresholdPx?: number;
+  variants?: Variants;
+}) {
+  const ref = useRef<HTMLElement | null>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const check = () => {
+      const rect = el.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      // Stays visible if on screen or scrolled past above (rect.top <= 0).
+      // Only hidden if completely below the bottom edge (rect.top >= windowHeight - thresholdPx).
+      const shouldBeVisible = rect.top < windowHeight - thresholdPx;
+      setIsInView(shouldBeVisible);
+    };
+
+    check();
+
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          check();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [thresholdPx]);
+
+  const MotionComponent = Component === 'div' ? motion.div : motion.section;
+
+  return (
+    <MotionComponent
+      ref={ref as any}
+      variants={variants}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      className={className}
+      id={id}
+      style={style}
+    >
+      {children}
+    </MotionComponent>
+  );
+}
+
+/* ═══════════════════════════════════════════
    GDG-STYLE LAYERED OUTLINE TIMER COMPONENT
    ═══════════════════════════════════════════ */
 function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) {
@@ -342,11 +420,8 @@ export default function Home() {
             <div className="absolute top-[35%] right-[-5%] w-[450px] h-[450px] rounded-full bg-indigo-500/[0.05] blur-[140px] pointer-events-none ambient-orb-delay" />
             <div className="absolute bottom-[-50px] left-[-10%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.04] blur-[120px] pointer-events-none ambient-orb" />
 
-            <motion.div 
-              variants={staggerContainer}
-              initial="hidden" 
-              whileInView="visible" 
-              viewport={{ once: false, amount: 0.05 }} 
+            <ScrollFadeSection 
+              as="div"
               className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-between h-full flex-1"
             >
               {/* Top Row: Left Side (Text & CTAs) and Right Side (Large Stat Cards) */}
@@ -449,15 +524,11 @@ export default function Home() {
                 </div>
                 <GDGTimer timeLeft={timeLeft} />
               </motion.div>
-            </motion.div>
+            </ScrollFadeSection>
           </section>
 
           {/* ════════ PROBLEM STATEMENTS MARQUEE (SEAMLESS INFINITE ROLLER) ════════ */}
-          <motion.section 
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.05 }}
+          <ScrollFadeSection 
             className="w-full py-14 sm:py-20 overflow-hidden relative" 
             id="problems"
           >
@@ -575,14 +646,10 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
-          </motion.section>
+          </ScrollFadeSection>
 
           {/* ════════ 3D ROAD TIMELINE (GDG DEVFEST STYLE) ════════ */}
-          <motion.section
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.05 }}
+          <ScrollFadeSection
             className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative overflow-hidden"
             id="timeline"
           >
@@ -802,14 +869,10 @@ export default function Home() {
                 </div>
               </motion.div>
             </div>
-          </motion.section>
+          </ScrollFadeSection>
 
           {/* ════════ COMMITTEE & DIRECTORS ════════ */}
-          <motion.section
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.05 }}
+          <ScrollFadeSection
             className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
             id="committee"
           >
@@ -849,14 +912,10 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </motion.section>
+          </ScrollFadeSection>
 
           {/* ════════ CHIEF GUEST + PRIZES ════════ */}
-          <motion.section
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.05 }}
+          <ScrollFadeSection
             className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
             id="guests-prizes"
           >
@@ -980,7 +1039,7 @@ export default function Home() {
                 </motion.div>
               </div>
             </div>
-          </motion.section>
+          </ScrollFadeSection>
 
         </div>
       </main>
