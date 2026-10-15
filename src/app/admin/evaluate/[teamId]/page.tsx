@@ -4,7 +4,6 @@ import { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getAdminData, saveTeamEvaluation, toggleTeamFreezeStatus } from "@/actions/admin";
-import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
 import { RUBRICS, getRoundInfo } from "@/config/rubrics";
 import Link from "next/link";
 
@@ -16,7 +15,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const currentTeamId = resolvedParams.teamId;
 
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -24,6 +23,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const [teams, setTeams] = useState<any[]>([]);
   const [currentTeam, setCurrentTeam] = useState<any>(null);
   const [activeReviewRound, setActiveReviewRound] = useState<number>(1);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Evaluation Form State (weights out of 10 for each rubric)
   const [scoreInnovation, setScoreInnovation] = useState<string>("");
@@ -37,16 +37,24 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const [freezeMsg, setFreezeMsg] = useState("");
 
   const adminIdentifier = user?.email || "unknown_admin";
-  const isCurrentUserSuperAdmin = Boolean(user?.email && isSuperAdminEmail(user.email));
+  const isCurrentUserSuperAdmin = isSuperAdmin;
 
-  const loadEvaluationData = async (userEmail: string) => {
+  const loadEvaluationData = async () => {
     setLoading(true);
     setErrorMsg("");
 
+    let tokenOrEmail = user?.email || "";
+    try {
+      if (user) {
+        tokenOrEmail = (await user.getIdToken()) || user.email || "";
+      }
+    } catch {}
+
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const res = await getAdminData(userEmail);
+        const res = await getAdminData(tokenOrEmail);
         if (res.success && res.teams) {
+          setIsSuperAdmin(Boolean(res.isSuperAdmin));
           const currentRound = res.systemSettings?.activeReviewRound || 1;
           setActiveReviewRound(currentRound);
           setTeams(res.teams);
@@ -86,13 +94,13 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user || !user.email || !isAdminEmail(user.email)) {
+    if (!user || !isAdmin) {
       router.replace("/admin");
       return;
     }
 
-    loadEvaluationData(user.email);
-  }, [user, authLoading, router, currentTeamId]);
+    loadEvaluationData();
+  }, [user, authLoading, isAdmin, router, currentTeamId]);
 
   const loadTeamScores = (team: any, roundNum: number) => {
     const roundEval = (team.evaluations || []).find((e: any) => e.round === roundNum);
@@ -294,7 +302,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={() => {
-                if (user?.email) loadEvaluationData(user.email);
+                loadEvaluationData();
               }}
               className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
             >

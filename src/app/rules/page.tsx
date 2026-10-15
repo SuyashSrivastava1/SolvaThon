@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { isAdminEmail } from "@/config/admin";
 
 export default function RulesPage() {
-  const { user } = useAuth();
-  const isAdmin = isAdminEmail(user?.email);
+  const { user, isAdmin } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#050B14] relative text-white font-sans selection:bg-cyan-500/30 py-16 px-4">

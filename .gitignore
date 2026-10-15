@@ -48,3 +48,18 @@ next-env.d.ts
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# Stitch UI & documents (INFO-02)
+stitch_ui/
+*.zip
+*.docx
+
+# Dev scratch utility scripts (INFO-02)
+scripts/convert.js
+scripts/count-divs.js
+scripts/extract-section.js
+scripts/fix-jsx.js
+scripts/fix-structure.js
+scripts/swap-timer.js
+scripts/update-form.js
+scripts/update-timer.js

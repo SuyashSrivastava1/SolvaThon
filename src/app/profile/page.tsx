@@ -16,12 +16,11 @@ import {
 import { auth } from "@/lib/firebase/config";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
-import { problemStatements } from "@/data";
-import { isAdminEmail } from "@/config/admin";
+import problemStatements from "@/data/problemStatements.json";
 import { clearParticipantSession } from "@/lib/authSession";
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   const isLoggingOut = useRef(false);
@@ -99,7 +98,7 @@ export default function ProfilePage() {
     if (!loading && !user) {
       router.push("/login");
     } else if (user) {
-      if (isAdminEmail(user.email)) {
+      if (isAdmin) {
         router.replace("/admin");
         return;
       }

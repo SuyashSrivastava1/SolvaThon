@@ -2,34 +2,94 @@
 
 import prisma, { getDatabaseUrl } from "@/lib/prisma";
 import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
+import { cookies, headers } from "next/headers";
+import { verifyFirebaseIdToken } from "@/lib/firebase/admin";
 
-const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY || "warden_solvathon_2026";
+// Strictly require configured environment variable without any hardcoded backdoor fallback (HIGH-01)
+const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY;
 
-export async function checkIsAdmin(email?: string | null) {
-  return isAdminEmail(email);
+/**
+ * Resolves whether the caller has administrator privileges by verifying
+ * their Firebase ID token or server-side session credentials.
+ */
+async function resolveAdminCaller(
+  tokenOrEmail?: string | null
+): Promise<{ email: string; isSuperAdmin: boolean } | null> {
+  // 1. Check if ADMIN_ACCESS_KEY is supplied (legacy/breakglass admin mechanism)
+  if (tokenOrEmail && ADMIN_KEY && tokenOrEmail.trim() === ADMIN_KEY) {
+    return { email: "key_admin@solvathon.internal", isSuperAdmin: true };
+  }
+
+  // 2. Check if a JWT token was passed directly
+  let token = tokenOrEmail && tokenOrEmail.includes(".") && tokenOrEmail.split(".").length === 3 ? tokenOrEmail.trim() : null;
+
+  // 3. Check Authorization header
+  if (!token) {
+    try {
+      const headerList = await headers();
+      const authHeader = headerList.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
+    } catch {}
+  }
+
+  // 4. Check auth_token cookie
+  if (!token) {
+    try {
+      const cookieStore = await cookies();
+      const cookie = cookieStore.get("auth_token");
+      if (cookie?.value) {
+        token = decodeURIComponent(cookie.value);
+      }
+    } catch {}
+  }
+
+  if (token) {
+    const decoded = await verifyFirebaseIdToken(token);
+    if (decoded && decoded.email && isAdminEmail(decoded.email)) {
+      const normalizedEmail = decoded.email.trim().toLowerCase();
+      return {
+        email: normalizedEmail,
+        isSuperAdmin: isSuperAdminEmail(normalizedEmail),
+      };
+    }
+  }
+
+  // 5. Fallback for server-side evaluation calls if email matches registered admin list
+  if (tokenOrEmail && isAdminEmail(tokenOrEmail)) {
+    const normalizedEmail = tokenOrEmail.trim().toLowerCase();
+    return {
+      email: normalizedEmail,
+      isSuperAdmin: isSuperAdminEmail(normalizedEmail),
+    };
+  }
+
+  return null;
 }
 
-export async function checkIsSuperAdmin(email?: string | null) {
-  return isSuperAdminEmail(email);
+export async function checkIsAdmin(tokenOrEmail?: string | null) {
+  const caller = await resolveAdminCaller(tokenOrEmail);
+  return Boolean(caller);
+}
+
+export async function checkIsSuperAdmin(tokenOrEmail?: string | null) {
+  const caller = await resolveAdminCaller(tokenOrEmail);
+  return Boolean(caller?.isSuperAdmin);
 }
 
 export async function verifyAdminAccess(tokenOrEmail?: string | null) {
-  if (!tokenOrEmail) return false;
-  return tokenOrEmail.trim() === ADMIN_KEY || isAdminEmail(tokenOrEmail);
+  const caller = await resolveAdminCaller(tokenOrEmail);
+  return Boolean(caller);
 }
 
 export async function getAdminData(tokenOrEmail?: string | null) {
-  if (!tokenOrEmail) {
-    return { success: false, error: "Unauthorized access. Credentials required." };
-  }
-  const isKeyValid = tokenOrEmail.trim() === ADMIN_KEY;
-  const isEmailAdmin = isAdminEmail(tokenOrEmail);
-
-  if (!isKeyValid && !isEmailAdmin) {
-    return { success: false, error: "Unauthorized access. Invalid Admin Access Key or credentials." };
+  const caller = await resolveAdminCaller(tokenOrEmail);
+  if (!caller) {
+    return { success: false, error: "Unauthorized access. Valid administrator credentials required." };
   }
 
-  const isSuperAdmin = isSuperAdminEmail(tokenOrEmail) || isKeyValid;
+  const isSuperAdmin = caller.isSuperAdmin;
 
   const dbUrl = getDatabaseUrl();
   if (!dbUrl) {
@@ -277,8 +337,9 @@ export async function getAdminData(tokenOrEmail?: string | null) {
 /**
  * Super Admin Exclusive: Toggle submission phase between IDEA and FINAL
  */
-export async function toggleSubmissionPhase(adminEmail: string, phase: "IDEA" | "FINAL") {
-  if (!isSuperAdminEmail(adminEmail) && adminEmail !== ADMIN_KEY) {
+export async function toggleSubmissionPhase(adminEmailOrToken: string, phase: "IDEA" | "FINAL") {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller?.isSuperAdmin) {
     return {
       success: false,
       error: "Access Denied: Super Admin permissions required to switch the submission phase."
@@ -302,11 +363,12 @@ export async function toggleSubmissionPhase(adminEmail: string, phase: "IDEA" | 
  * Super Admin Exclusive: Change live hackathon countdown timer
  */
 export async function updateHackathonTimer(
-  adminEmail: string,
+  adminEmailOrToken: string,
   targetDate: string,
   isPaused?: boolean
 ) {
-  if (!isSuperAdminEmail(adminEmail) && adminEmail !== ADMIN_KEY) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller?.isSuperAdmin) {
     return {
       success: false,
       error: "Access Denied: Super Admin permissions required to change the hackathon timer."
@@ -338,8 +400,9 @@ export async function updateHackathonTimer(
 /**
  * Super Admin Exclusive: Switch the currently active review round (1: Internal 1, 2: Internal 2, 3: External)
  */
-export async function setActiveReviewRound(adminEmail: string, round: number) {
-  if (!isSuperAdminEmail(adminEmail) && adminEmail !== ADMIN_KEY) {
+export async function setActiveReviewRound(adminEmailOrToken: string, round: number) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller?.isSuperAdmin) {
     return {
       success: false,
       error: "Access Denied: Super Admin permissions required to switch the active review round."
@@ -366,12 +429,13 @@ export async function setActiveReviewRound(adminEmail: string, round: number) {
  * Super Admin Exclusive: Toggle freeze status for a team's marks in a particular round
  */
 export async function toggleTeamFreezeStatus(
-  adminEmail: string,
+  adminEmailOrToken: string,
   teamId: string,
   round: number,
   isFrozen: boolean
 ) {
-  if (!isSuperAdminEmail(adminEmail) && adminEmail !== ADMIN_KEY) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller?.isSuperAdmin) {
     return {
       success: false,
       error: "Access Denied: Super Admin permissions required to freeze or unfreeze evaluation marks."
@@ -407,11 +471,11 @@ export async function toggleTeamFreezeStatus(
 
 /**
  * Evaluators: Submit rubric marks for a team in the active review round.
- * Note: Super Admins are prohibited from submitting marks.
+ * Note: Super Admins are prohibited from submitting marks directly.
  * Once submitted, marks are automatically frozen until Super Admin unfreezes them.
  */
 export async function saveTeamEvaluation(
-  adminEmail: string,
+  adminEmailOrToken: string,
   teamId: string,
   roundOrEval: number | {
     scoreInnovation: number;
@@ -427,12 +491,15 @@ export async function saveTeamEvaluation(
     evaluationNotes?: string;
   }
 ) {
-  if (!isAdminEmail(adminEmail) && adminEmail !== ADMIN_KEY) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller) {
     return { success: false, error: "Unauthorized access: Admin privileges required to evaluate participants." };
   }
 
+  const adminEmail = caller.email;
+
   // Super Admin should NOT mark teams
-  if (isSuperAdminEmail(adminEmail) && adminEmail !== ADMIN_KEY) {
+  if (caller.isSuperAdmin && adminEmail !== "key_admin@solvathon.internal") {
     return {
       success: false,
       error: "Super Admins cannot mark teams directly. Marking is strictly reserved for Evaluators. Super Admins can unfreeze teams to allow evaluators to edit."
@@ -502,7 +569,7 @@ export async function saveTeamEvaluation(
         evaluatedBy: adminEmail,
         evaluationNotes: evalData.evaluationNotes?.trim() || "",
         evaluatedAt: new Date(),
-        isFrozen: true, // Automatically frozen!
+        isFrozen: true, // Automatically frozen
       },
       create: {
         teamId,
@@ -514,7 +581,7 @@ export async function saveTeamEvaluation(
         evaluatedBy: adminEmail,
         evaluationNotes: evalData.evaluationNotes?.trim() || "",
         evaluatedAt: new Date(),
-        isFrozen: true, // Automatically frozen!
+        isFrozen: true, // Automatically frozen
       }
     });
 

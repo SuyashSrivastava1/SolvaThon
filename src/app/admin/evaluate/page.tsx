@@ -4,22 +4,28 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getAdminData } from "@/actions/admin";
-import { isAdminEmail } from "@/config/admin";
 import Link from "next/link";
 
 export default function EvaluateIndexPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const loadWorkbench = async (userEmail: string) => {
+  const loadWorkbench = async () => {
     setLoading(true);
     setErrorMsg("");
 
+    let tokenOrEmail = user?.email || "";
+    try {
+      if (user) {
+        tokenOrEmail = (await user.getIdToken()) || user.email || "";
+      }
+    } catch {}
+
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const res = await getAdminData(userEmail);
+        const res = await getAdminData(tokenOrEmail);
         if (res.success && res.teams && res.teams.length > 0) {
           const pending = res.teams.find((t: any) => t.scoreTotal === null || t.scoreTotal === undefined);
           const targetId = pending ? pending.id : res.teams[0].id;
@@ -52,13 +58,13 @@ export default function EvaluateIndexPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user || !user.email || !isAdminEmail(user.email)) {
+    if (!user || !isAdmin) {
       router.replace("/admin");
       return;
     }
 
-    loadWorkbench(user.email);
-  }, [user, authLoading, router]);
+    loadWorkbench();
+  }, [user, authLoading, isAdmin, router]);
 
   return (
     <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
@@ -76,7 +82,7 @@ export default function EvaluateIndexPage() {
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={() => {
-                if (user?.email) loadWorkbench(user.email);
+                loadWorkbench();
               }}
               className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
             >

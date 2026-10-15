@@ -10,10 +10,11 @@ import {
 } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
-import { isAdminEmail } from "@/config/admin";
+import { checkIsAdmin } from "@/actions/admin";
 import {
   getParticipantSession,
   clearParticipantSession,
+  saveAdminSession,
   getRemainingSessionMs,
   ParticipantSession,
 } from "@/lib/authSession";
@@ -91,14 +92,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const isUserAdmin = isAdminEmail(firebaseUser.email);
+        // Server-Side Verification of Admin Role (CRIT-02: No client-side admin email exposure)
+        let isUserAdmin = false;
+        let idToken = "";
+        try {
+          idToken = await firebaseUser.getIdToken();
+          isUserAdmin = await checkIsAdmin(idToken);
+        } catch (err) {
+          console.warn("Admin verification check failed:", err);
+        }
+
         setIsAdmin(isUserAdmin);
 
         // ════════════════════════════════════════════════════════════════
-        // ADMIN: Permanent Session. No token, no 1-hour expiration timer.
+        // ADMIN: Permanent Session. Set admin cookie for middleware.
         // ════════════════════════════════════════════════════════════════
         if (isUserAdmin) {
-          clearParticipantSession();
+          saveAdminSession(idToken);
           setUser(firebaseUser);
           setSessionToken(null);
           setRemainingMs(Infinity);
@@ -172,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user || isAdmin) return;
 
     const interval = setInterval(() => {
-      const remaining = getRemainingSessionMs(user.email);
+      const remaining = getRemainingSessionMs(isAdmin);
       setRemainingMs(remaining);
 
       if (remaining <= 0) {

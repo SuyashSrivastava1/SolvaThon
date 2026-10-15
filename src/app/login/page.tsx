@@ -5,8 +5,9 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
 import { checkIsRegistered } from "@/actions/register";
-import { isAdminEmail, isValidAuthDomain } from "@/config/admin";
-import { saveParticipantSession, clearParticipantSession } from "@/lib/authSession";
+import { checkIsAdmin } from "@/actions/admin";
+import { isValidAuthDomain } from "@/config/admin";
+import { saveParticipantSession, saveAdminSession, clearParticipantSession } from "@/lib/authSession";
 
 export default function LoginPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -22,10 +23,11 @@ export default function LoginPage() {
 
       const result = await signInWithPopup(auth, provider);
       const email = result.user.email;
-      const isAdmin = isAdminEmail(email);
+      const token = await result.user.getIdToken(true);
+      const isAdmin = await checkIsAdmin(token);
       
       // Allow @vitstudent.ac.in, @vit.ac.in, and admins
-      if (!isValidAuthDomain(email)) {
+      if (!isAdmin && !isValidAuthDomain(email)) {
         await auth.signOut();
         clearParticipantSession();
         setStatus("error");
@@ -34,10 +36,10 @@ export default function LoginPage() {
       }
 
       // ════════════════════════════════════════════════════════════════
-      // ADMIN: Permanent Session (No 1-hour token expiration)
+      // ADMIN: Permanent Session (Sets admin cookie for middleware)
       // ════════════════════════════════════════════════════════════════
       if (isAdmin) {
-        clearParticipantSession();
+        saveAdminSession(token);
         window.location.replace("/admin");
         return;
       }
@@ -45,8 +47,7 @@ export default function LoginPage() {
       // ════════════════════════════════════════════════════════════════
       // PARTICIPANT: Tokenized Session (Expires after 1 hour)
       // ════════════════════════════════════════════════════════════════
-      const token = await result.user.getIdToken(true);
-      saveParticipantSession(result.user, token);
+      saveParticipantSession(result.user, token, false);
 
       // Check if already registered in the database
       const isRegistered = await checkIsRegistered(result.user.uid);

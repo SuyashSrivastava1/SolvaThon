@@ -12,15 +12,14 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
 import { REVIEW_ROUNDS, getRoundInfo } from "@/config/rubrics";
 import { auth } from "@/lib/firebase/config";
 import { clearParticipantSession } from "@/lib/authSession";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 export default function AdminPortalPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [data, setData] = useState<any>(null);
@@ -56,16 +55,21 @@ export default function AdminPortalPage() {
   const [savingEvalId, setSavingEvalId] = useState<string | null>(null);
   const [evalSuccessMap, setEvalSuccessMap] = useState<Record<string, string>>({});
 
-  // Determine Super Admin status strictly via environment configuration
-  const isCurrentUserSuperAdmin = Boolean(
-    user ? isSuperAdminEmail(user.email) : data?.isSuperAdmin
-  );
+  // Super Admin status is securely determined server-side
+  const isCurrentUserSuperAdmin = Boolean(data?.isSuperAdmin);
 
   const adminIdentifier = user?.email || "admin";
 
-  const loadData = async (email: string) => {
+  const loadData = async () => {
     setLoading(true);
     setErrorMsg("");
+
+    let tokenOrEmail = user?.email || "";
+    try {
+      if (user) {
+        tokenOrEmail = (await user.getIdToken()) || user.email || "";
+      }
+    } catch {}
 
     const timeoutPromise = new Promise<any>((resolve) =>
       setTimeout(
@@ -80,7 +84,7 @@ export default function AdminPortalPage() {
 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const res = await Promise.race([getAdminData(email), timeoutPromise]);
+        const res = await Promise.race([getAdminData(tokenOrEmail), timeoutPromise]);
         if (res.success) {
           setData(res);
           initEvalForms(res.teams);
@@ -126,15 +130,13 @@ export default function AdminPortalPage() {
       return;
     }
 
-    if (!isAdminEmail(user.email)) {
+    if (!isAdmin) {
       router.replace("/profile");
       return;
     }
 
-    if (user.email) {
-      loadData(user.email);
-    }
-  }, [user, authLoading, router]);
+    loadData();
+  }, [user, authLoading, isAdmin, router]);
 
   const initEvalForms = (teams?: any[]) => {
     if (!teams || !Array.isArray(teams)) return;
@@ -306,94 +308,113 @@ export default function AdminPortalPage() {
     setTogglingFreezeId(null);
   };
 
-  // Export full evaluation report in native Excel (.xlsx)
+  // Export full evaluation report in native Excel (.xlsx) using ExcelJS
   // Strictly contains: Team Name, Team Leader Name, Review 1 Rubrics & Total, Review 2 Rubrics & Total, Review 3 Rubrics & Total, Rubric Averages, and Total Average Marks
-  const exportEvaluationsExcel = () => {
+  const exportEvaluationsExcel = async () => {
     if (!data?.teams) return;
 
-    const rows = data.teams.map((t: any) => {
-      const leaderName = t.leaderName || "N/A";
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "Hostel Solvathon Evaluation System";
+      workbook.created = new Date();
 
-      const evals = t.evaluations || [];
-      const r1 = evals.find((e: any) => e.round === 1) || (t.scoreTotal !== null && t.scoreTotal !== undefined ? {
-        scoreInnovation: t.scoreInnovation,
-        scoreUnderstanding: t.scoreUnderstanding,
-        scoreProgress: t.scoreProgress,
-        scoreTotal: t.scoreTotal,
-      } : null);
-      const r2 = evals.find((e: any) => e.round === 2) || null;
-      const r3 = evals.find((e: any) => e.round === 3) || null;
+      const worksheet = workbook.addWorksheet("Review Evaluations & Averages");
 
-      const scoredRounds = [r1, r2, r3].filter((r) => r && r.scoreTotal !== null && r.scoreTotal !== undefined);
-      const count = scoredRounds.length;
+      worksheet.columns = [
+        { header: "Team Name", key: "teamName", width: 25 },
+        { header: "Team Leader Name", key: "leaderName", width: 25 },
+        { header: "Review 1 - Innovation", key: "r1Innovation", width: 24 },
+        { header: "Review 1 - Problem Understanding", key: "r1Understanding", width: 32 },
+        { header: "Review 1 - Progress & Execution", key: "r1Progress", width: 30 },
+        { header: "Review 1 - Total Marks", key: "r1Total", width: 22 },
+        { header: "Review 2 - Innovation", key: "r2Innovation", width: 24 },
+        { header: "Review 2 - Problem Understanding", key: "r2Understanding", width: 32 },
+        { header: "Review 2 - Progress & Execution", key: "r2Progress", width: 30 },
+        { header: "Review 2 - Total Marks", key: "r2Total", width: 22 },
+        { header: "Review 3 - Innovation", key: "r3Innovation", width: 24 },
+        { header: "Review 3 - Problem Understanding", key: "r3Understanding", width: 32 },
+        { header: "Review 3 - Progress & Execution", key: "r3Progress", width: 30 },
+        { header: "Review 3 - Total Marks", key: "r3Total", width: 22 },
+        { header: "Average - Innovation", key: "avgInnovation", width: 24 },
+        { header: "Average - Problem Understanding", key: "avgUnderstanding", width: 32 },
+        { header: "Average - Progress & Execution", key: "avgProgress", width: 30 },
+        { header: "Total Average Marks", key: "avgTotal", width: 22 },
+      ];
 
-      const avgInnovation = count > 0
-        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreInnovation) || 0), 0) / count).toFixed(2))
-        : "N/A";
+      // Format header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true };
+      headerRow.alignment = { vertical: "middle", horizontal: "center" };
 
-      const avgUnderstanding = count > 0
-        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreUnderstanding) || 0), 0) / count).toFixed(2))
-        : "N/A";
+      data.teams.forEach((t: any) => {
+        const leaderName = t.leaderName || "N/A";
 
-      const avgProgress = count > 0
-        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreProgress) || 0), 0) / count).toFixed(2))
-        : "N/A";
+        const evals = t.evaluations || [];
+        const r1 = evals.find((e: any) => e.round === 1) || (t.scoreTotal !== null && t.scoreTotal !== undefined ? {
+          scoreInnovation: t.scoreInnovation,
+          scoreUnderstanding: t.scoreUnderstanding,
+          scoreProgress: t.scoreProgress,
+          scoreTotal: t.scoreTotal,
+        } : null);
+        const r2 = evals.find((e: any) => e.round === 2) || null;
+        const r3 = evals.find((e: any) => e.round === 3) || null;
 
-      const avgTotal = count > 0
-        ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreTotal) || 0), 0) / count).toFixed(2))
-        : "N/A";
+        const scoredRounds = [r1, r2, r3].filter((r) => r && r.scoreTotal !== null && r.scoreTotal !== undefined);
+        const count = scoredRounds.length;
 
-      return {
-        "Team Name": t.name,
-        "Team Leader Name": leaderName,
-        "Review 1 - Innovation": r1 && r1.scoreInnovation !== null && r1.scoreInnovation !== undefined ? r1.scoreInnovation : "Pending",
-        "Review 1 - Problem Understanding": r1 && r1.scoreUnderstanding !== null && r1.scoreUnderstanding !== undefined ? r1.scoreUnderstanding : "Pending",
-        "Review 1 - Progress & Execution": r1 && r1.scoreProgress !== null && r1.scoreProgress !== undefined ? r1.scoreProgress : "Pending",
-        "Review 1 - Total Marks": r1 && r1.scoreTotal !== null && r1.scoreTotal !== undefined ? r1.scoreTotal : "Pending",
-        "Review 2 - Innovation": r2 && r2.scoreInnovation !== null && r2.scoreInnovation !== undefined ? r2.scoreInnovation : "Pending",
-        "Review 2 - Problem Understanding": r2 && r2.scoreUnderstanding !== null && r2.scoreUnderstanding !== undefined ? r2.scoreUnderstanding : "Pending",
-        "Review 2 - Progress & Execution": r2 && r2.scoreProgress !== null && r2.scoreProgress !== undefined ? r2.scoreProgress : "Pending",
-        "Review 2 - Total Marks": r2 && r2.scoreTotal !== null && r2.scoreTotal !== undefined ? r2.scoreTotal : "Pending",
-        "Review 3 - Innovation": r3 && r3.scoreInnovation !== null && r3.scoreInnovation !== undefined ? r3.scoreInnovation : "Pending",
-        "Review 3 - Problem Understanding": r3 && r3.scoreUnderstanding !== null && r3.scoreUnderstanding !== undefined ? r3.scoreUnderstanding : "Pending",
-        "Review 3 - Progress & Execution": r3 && r3.scoreProgress !== null && r3.scoreProgress !== undefined ? r3.scoreProgress : "Pending",
-        "Review 3 - Total Marks": r3 && r3.scoreTotal !== null && r3.scoreTotal !== undefined ? r3.scoreTotal : "Pending",
-        "Average - Innovation": avgInnovation,
-        "Average - Problem Understanding": avgUnderstanding,
-        "Average - Progress & Execution": avgProgress,
-        "Total Average Marks": avgTotal,
-      };
-    });
+        const avgInnovation = count > 0
+          ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreInnovation) || 0), 0) / count).toFixed(2))
+          : "N/A";
 
-    const ws = XLSX.utils.json_to_sheet(rows);
+        const avgUnderstanding = count > 0
+          ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreUnderstanding) || 0), 0) / count).toFixed(2))
+          : "N/A";
 
-    ws["!cols"] = [
-      { wch: 25 }, // Team Name
-      { wch: 25 }, // Team Leader Name
-      { wch: 24 }, // Review 1 - Innovation
-      { wch: 32 }, // Review 1 - Problem Understanding
-      { wch: 30 }, // Review 1 - Progress & Execution
-      { wch: 22 }, // Review 1 - Total Marks
-      { wch: 24 }, // Review 2 - Innovation
-      { wch: 32 }, // Review 2 - Problem Understanding
-      { wch: 30 }, // Review 2 - Progress & Execution
-      { wch: 22 }, // Review 2 - Total Marks
-      { wch: 24 }, // Review 3 - Innovation
-      { wch: 32 }, // Review 3 - Problem Understanding
-      { wch: 30 }, // Review 3 - Progress & Execution
-      { wch: 22 }, // Review 3 - Total Marks
-      { wch: 24 }, // Average - Innovation
-      { wch: 32 }, // Average - Problem Understanding
-      { wch: 30 }, // Average - Progress & Execution
-      { wch: 22 }, // Total Average Marks
-    ];
+        const avgProgress = count > 0
+          ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreProgress) || 0), 0) / count).toFixed(2))
+          : "N/A";
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Review Evaluations & Averages");
-    XLSX.writeFile(
-      wb,
-      `Hostel_Solvathon_Evaluations_Summary_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
+        const avgTotal = count > 0
+          ? Number((scoredRounds.reduce((acc, r) => acc + (parseFloat(r.scoreTotal) || 0), 0) / count).toFixed(2))
+          : "N/A";
+
+        worksheet.addRow({
+          teamName: t.name,
+          leaderName,
+          r1Innovation: r1 && r1.scoreInnovation !== null && r1.scoreInnovation !== undefined ? r1.scoreInnovation : "Pending",
+          r1Understanding: r1 && r1.scoreUnderstanding !== null && r1.scoreUnderstanding !== undefined ? r1.scoreUnderstanding : "Pending",
+          r1Progress: r1 && r1.scoreProgress !== null && r1.scoreProgress !== undefined ? r1.scoreProgress : "Pending",
+          r1Total: r1 && r1.scoreTotal !== null && r1.scoreTotal !== undefined ? r1.scoreTotal : "Pending",
+          r2Innovation: r2 && r2.scoreInnovation !== null && r2.scoreInnovation !== undefined ? r2.scoreInnovation : "Pending",
+          r2Understanding: r2 && r2.scoreUnderstanding !== null && r2.scoreUnderstanding !== undefined ? r2.scoreUnderstanding : "Pending",
+          r2Progress: r2 && r2.scoreProgress !== null && r2.scoreProgress !== undefined ? r2.scoreProgress : "Pending",
+          r2Total: r2 && r2.scoreTotal !== null && r2.scoreTotal !== undefined ? r2.scoreTotal : "Pending",
+          r3Innovation: r3 && r3.scoreInnovation !== null && r3.scoreInnovation !== undefined ? r3.scoreInnovation : "Pending",
+          r3Understanding: r3 && r3.scoreUnderstanding !== null && r3.scoreUnderstanding !== undefined ? r3.scoreUnderstanding : "Pending",
+          r3Progress: r3 && r3.scoreProgress !== null && r3.scoreProgress !== undefined ? r3.scoreProgress : "Pending",
+          r3Total: r3 && r3.scoreTotal !== null && r3.scoreTotal !== undefined ? r3.scoreTotal : "Pending",
+          avgInnovation,
+          avgUnderstanding,
+          avgProgress,
+          avgTotal,
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Hostel_Solvathon_Evaluations_Summary_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export Excel file:", err);
+    }
   };
 
   const exportParticipantsCSV = () => {
@@ -457,7 +478,7 @@ export default function AdminPortalPage() {
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={() => {
-                if (user?.email) loadData(user.email);
+                loadData();
               }}
               className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
             >

@@ -7,14 +7,15 @@ import { registerParticipant, checkIsRegistered } from "@/actions/register";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import Link from "next/link";
-import { isAdminEmail, isValidAuthDomain } from "@/config/admin";
-import { saveParticipantSession, clearParticipantSession } from "@/lib/authSession";
+import { checkIsAdmin } from "@/actions/admin";
+import { isValidAuthDomain } from "@/config/admin";
+import { saveParticipantSession, saveAdminSession, clearParticipantSession } from "@/lib/authSession";
 import blocksData from "@/data/blocks.json";
 import messTypesData from "@/data/messTypes.json";
 import caterersData from "@/data/caterers.json";
 
 export default function RegisterPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -44,9 +45,10 @@ export default function RegisterPage() {
 
       const result = await signInWithPopup(auth, provider);
       const email = result.user.email;
-      const isAdmin = isAdminEmail(email);
+      const token = await result.user.getIdToken(true);
+      const isUserAdmin = await checkIsAdmin(token);
 
-      if (!isValidAuthDomain(email)) {
+      if (!isUserAdmin && !isValidAuthDomain(email)) {
         await auth.signOut();
         clearParticipantSession();
         setAuthError("You must use your @vitstudent.ac.in email address to register.");
@@ -54,16 +56,15 @@ export default function RegisterPage() {
         return;
       }
 
-      // If user is an Admin, redirect to Admin Portal (permanent, no token)
-      if (isAdmin) {
-        clearParticipantSession();
+      // If user is an Admin, redirect to Admin Portal (permanent, sets cookie)
+      if (isUserAdmin) {
+        saveAdminSession(token);
         window.location.replace("/admin");
         return;
       }
 
       // Tokenize participant login (1 hour session)
-      const token = await result.user.getIdToken(true);
-      saveParticipantSession(result.user, token);
+      saveParticipantSession(result.user, token, false);
 
       const alreadyReg = await checkIsRegistered(result.user.uid);
       if (alreadyReg) {
@@ -86,9 +87,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (user) {
-      const isAdmin = isAdminEmail(user.email);
-
-      if (!isValidAuthDomain(user.email)) {
+      if (!isAdmin && !isValidAuthDomain(user.email)) {
         auth.signOut();
         setAuthError("You must use your @vitstudent.ac.in email address to register.");
         setCheckingReg(false);

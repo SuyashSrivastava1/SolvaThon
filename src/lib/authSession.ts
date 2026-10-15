@@ -1,5 +1,3 @@
-import { isAdminEmail } from "@/config/admin";
-
 export const SESSION_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 export const SESSION_MAX_AGE_SECONDS = 3600; // 1 hour in seconds
 export const SESSION_STORAGE_KEY = "solvathon_auth_token";
@@ -15,17 +13,17 @@ export interface ParticipantSession {
 
 /**
  * Saves a 1-hour tokenized session for a regular participant.
- * Admins are permanent and do not use expiring participant sessions.
  */
 export function saveParticipantSession(
   user: { uid: string; email?: string | null },
-  token: string
+  token: string,
+  isAdmin: boolean = false
 ): ParticipantSession | null {
   if (typeof window === "undefined") return null;
 
-  // Admin sessions are permanent - no expiring participant token
-  if (isAdminEmail(user.email)) {
-    clearParticipantSession();
+  // Admin sessions are permanent - no expiring participant token in localStorage
+  if (isAdmin) {
+    saveAdminSession(token);
     return null;
   }
 
@@ -52,6 +50,22 @@ export function saveParticipantSession(
 }
 
 /**
+ * Saves a permanent session cookie for administrators.
+ */
+export function saveAdminSession(token: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    // Admin cookie valid for 7 days (or session)
+    document.cookie = `${SESSION_COOKIE_NAME}=${encodeURIComponent(
+      token
+    )}; path=/; max-age=604800; SameSite=Lax`;
+  } catch (err) {
+    console.warn("Failed to persist admin session cookie:", err);
+  }
+}
+
+/**
  * Retrieves the stored participant session from localStorage.
  */
 export function getParticipantSession(): ParticipantSession | null {
@@ -71,9 +85,8 @@ export function getParticipantSession(): ParticipantSession | null {
 /**
  * Validates whether the participant session is still within its 1-hour validity window.
  */
-export function isParticipantSessionValid(userEmail?: string | null): boolean {
-  // Admin is permanent - always valid, no token required
-  if (isAdminEmail(userEmail)) {
+export function isParticipantSessionValid(isAdmin: boolean = false): boolean {
+  if (isAdmin) {
     return true;
   }
 
@@ -86,8 +99,8 @@ export function isParticipantSessionValid(userEmail?: string | null): boolean {
  * Calculates remaining session duration in milliseconds.
  * Returns Infinity for permanent admin users.
  */
-export function getRemainingSessionMs(userEmail?: string | null): number {
-  if (isAdminEmail(userEmail)) {
+export function getRemainingSessionMs(isAdmin: boolean = false): number {
+  if (isAdmin) {
     return Infinity;
   }
 

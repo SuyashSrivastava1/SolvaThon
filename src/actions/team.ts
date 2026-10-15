@@ -1,6 +1,20 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { randomBytes, randomInt } from "crypto";
+import { getAuthenticatedUser } from "@/lib/firebase/admin";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { validatePresentationUrl, validateDeliverableUrl } from "@/lib/urlValidator";
+
+function generateSecureTeamCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  const bytes = randomBytes(6);
+  for (let i = 0; i < 6; i++) {
+    code += chars[bytes[i] % chars.length];
+  }
+  return code;
+}
 
 function getTeamLeader(team: any) {
   if (!team || !team.participants || team.participants.length === 0) return null;
@@ -36,12 +50,27 @@ export async function cleanupEmptyTeams() {
 
 export async function createTeam(firebaseUid: string, teamName: string) {
   try {
-    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(firebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required. Please log in." };
+    }
+    const verifiedUid = authResult.user.uid;
+
+    // 2. Rate Limiting (MED-03)
+    const rateCheck = checkRateLimit(`team_create_${verifiedUid}`, 5, 60000);
+    if (!rateCheck.allowed) {
+      return { success: false, error: "Too many team creation attempts. Please wait a minute." };
+    }
+
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid: verifiedUid } });
     if (!participant) return { success: false, error: "Participant not found. Please register first." };
     if (participant.teamId) return { success: false, error: "You are already in a team." };
 
     const trimmed = (teamName || "").trim();
-    if (trimmed.length < 3) return { success: false, error: "Team name must be at least 3 characters." };
+    if (!trimmed || trimmed.length < 3 || trimmed.length > 50) {
+      return { success: false, error: "Team name must be between 3 and 50 characters." };
+    }
 
     const normalizedInput = normalizeTeamName(trimmed);
     if (normalizedInput.length < 2) {
@@ -55,11 +84,13 @@ export async function createTeam(firebaseUid: string, teamName: string) {
       return { success: false, error: "Team name is already taken. Please choose a different name." };
     }
 
+    // 3. Cryptographically Secure Random Team Code (MED-02)
     let newTeamCode = "";
     let isUnique = false;
-    while (!isUnique) {
-      newTeamCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      newTeamCode = newTeamCode.padEnd(6, 'X'); 
+    let attempts = 0;
+    while (!isUnique && attempts < 10) {
+      attempts++;
+      newTeamCode = generateSecureTeamCode();
       const existingCode = await prisma.team.findUnique({ where: { teamCode: newTeamCode } });
       if (!existingCode) isUnique = true;
     }
@@ -75,18 +106,36 @@ export async function createTeam(firebaseUid: string, teamName: string) {
 
     return { success: true, teamCode: team.teamCode };
   } catch (error) {
-    console.error(error);
+    console.error("createTeam error:", error);
     return { success: false, error: "Failed to create team." };
   }
 }
 
 export async function joinTeam(firebaseUid: string, teamCode: string) {
   try {
-    const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(firebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required. Please log in." };
+    }
+    const verifiedUid = authResult.user.uid;
+
+    // 2. Rate Limiting to prevent brute-forcing team codes (MED-03)
+    const rateCheck = checkRateLimit(`team_join_${verifiedUid}`, 8, 60000);
+    if (!rateCheck.allowed) {
+      return { success: false, error: "Too many team join attempts. Please wait a minute." };
+    }
+
+    const cleanCode = teamCode?.trim().toUpperCase();
+    if (!cleanCode || cleanCode.length < 5 || cleanCode.length > 8) {
+      return { success: false, error: "Invalid Team Code format." };
+    }
+
+    const participant = await prisma.participant.findUnique({ where: { firebaseUid: verifiedUid } });
     if (!participant) return { success: false, error: "Participant not found." };
     if (participant.teamId) return { success: false, error: "You are already in a team." };
 
-    const team = await prisma.team.findUnique({ where: { teamCode } });
+    const team = await prisma.team.findUnique({ where: { teamCode: cleanCode } });
     if (!team) return { success: false, error: "Invalid Team Code." };
 
     const memberCount = await prisma.participant.count({ where: { teamId: team.id } });
@@ -99,17 +148,24 @@ export async function joinTeam(firebaseUid: string, teamCode: string) {
 
     return { success: true, teamId: team.id };
   } catch (error) {
-    console.error(error);
+    console.error("joinTeam error:", error);
     return { success: false, error: "Failed to join team." };
   }
 }
 
 export async function getTeamDetails(firebaseUid: string) {
+  // 1. Server-Side Identity Verification (CRIT-01)
+  const authResult = await getAuthenticatedUser(firebaseUid);
+  if (!authResult.user) {
+    return { success: false, error: authResult.error || "Authentication required." };
+  }
+  const verifiedUid = authResult.user.uid;
+
   let lastError: any = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const participant = await prisma.participant.findUnique({
-        where: { firebaseUid },
+        where: { firebaseUid: verifiedUid },
         include: {
           team: {
             include: {
@@ -181,8 +237,15 @@ export async function getTeamDetails(firebaseUid: string) {
 
 export async function selectProblemStatement(firebaseUid: string, problemStatement: string) {
   try {
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(firebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required." };
+    }
+    const verifiedUid = authResult.user.uid;
+
     const participant = await prisma.participant.findUnique({
-      where: { firebaseUid },
+      where: { firebaseUid: verifiedUid },
       include: { team: { include: { participants: { orderBy: { registrationTime: "asc" } } } } }
     });
     if (!participant || !participant.team) {
@@ -194,9 +257,14 @@ export async function selectProblemStatement(firebaseUid: string, problemStateme
       return { success: false, error: `Only the team leader (${leader.fullName}) can select the problem statement.` };
     }
 
+    const cleanStatement = problemStatement?.trim();
+    if (!cleanStatement || cleanStatement.length < 3 || cleanStatement.length > 200) {
+      return { success: false, error: "Please choose a valid problem statement track." };
+    }
+
     await prisma.team.update({
       where: { id: participant.team.id },
-      data: { problemStatement },
+      data: { problemStatement: cleanStatement },
     });
 
     return { success: true };
@@ -211,8 +279,21 @@ export async function submitProject(
   data: { pptUrl: string; understanding: string; solutionSummary: string }
 ) {
   try {
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(firebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required." };
+    }
+    const verifiedUid = authResult.user.uid;
+
+    // Rate Limiting (MED-03)
+    const rateCheck = checkRateLimit(`submit_${verifiedUid}`, 10, 60000);
+    if (!rateCheck.allowed) {
+      return { success: false, error: "Too many submission attempts. Please wait a minute." };
+    }
+
     const participant = await prisma.participant.findUnique({
-      where: { firebaseUid },
+      where: { firebaseUid: verifiedUid },
       include: { team: { include: { participants: { orderBy: { registrationTime: "asc" } } } } }
     });
     if (!participant || !participant.team) {
@@ -224,16 +305,18 @@ export async function submitProject(
       return { success: false, error: `Only the team leader (${leader.fullName}) can submit the presentation.` };
     }
 
-    if (!data.pptUrl || (!data.pptUrl.startsWith("http://") && !data.pptUrl.startsWith("https://"))) {
-      return { success: false, error: "Please provide a valid presentation link (Google Slides, Canva, Drive)." };
+    // 2. Strict URL Validation & Domain Allowlist (MED-01)
+    const urlValidation = validatePresentationUrl(data.pptUrl);
+    if (!urlValidation.valid) {
+      return { success: false, error: urlValidation.error || "Invalid presentation link." };
     }
 
-    if (!data.understanding || data.understanding.trim().length < 10) {
-      return { success: false, error: "Please provide a detailed explanation of your problem understanding." };
+    if (!data.understanding || data.understanding.trim().length < 10 || data.understanding.trim().length > 3000) {
+      return { success: false, error: "Please provide a detailed explanation of your problem understanding (10-3000 characters)." };
     }
 
-    if (!data.solutionSummary || data.solutionSummary.trim().length < 10) {
-      return { success: false, error: "Please provide a brief description of your proposed solution." };
+    if (!data.solutionSummary || data.solutionSummary.trim().length < 10 || data.solutionSummary.trim().length > 3000) {
+      return { success: false, error: "Please provide a brief description of your proposed solution (10-3000 characters)." };
     }
 
     await prisma.team.update({
@@ -263,8 +346,21 @@ export async function submitFinalProject(
   }
 ) {
   try {
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(firebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required." };
+    }
+    const verifiedUid = authResult.user.uid;
+
+    // Rate Limiting (MED-03)
+    const rateCheck = checkRateLimit(`submit_final_${verifiedUid}`, 10, 60000);
+    if (!rateCheck.allowed) {
+      return { success: false, error: "Too many submission attempts. Please wait a minute." };
+    }
+
     const participant = await prisma.participant.findUnique({
-      where: { firebaseUid },
+      where: { firebaseUid: verifiedUid },
       include: { team: { include: { participants: { orderBy: { registrationTime: "asc" } } } } }
     });
     if (!participant || !participant.team) {
@@ -276,8 +372,24 @@ export async function submitFinalProject(
       return { success: false, error: `Only the team leader (${leader.fullName}) can submit the final project deliverable.` };
     }
 
-    if (!data.finalDocUrl || (!data.finalDocUrl.startsWith("http://") && !data.finalDocUrl.startsWith("https://"))) {
-      return { success: false, error: "Please provide a valid document link (Google Docs, Drive, PDF URL, Notion)." };
+    // 2. Strict URL Validations (MED-01)
+    const docValidation = validateDeliverableUrl(data.finalDocUrl, "Final Document");
+    if (!docValidation.valid) {
+      return { success: false, error: docValidation.error || "Invalid document link." };
+    }
+
+    if (data.finalRepoUrl && data.finalRepoUrl.trim()) {
+      const repoValidation = validateDeliverableUrl(data.finalRepoUrl, "Repository");
+      if (!repoValidation.valid) {
+        return { success: false, error: repoValidation.error };
+      }
+    }
+
+    if (data.finalDemoUrl && data.finalDemoUrl.trim()) {
+      const demoValidation = validateDeliverableUrl(data.finalDemoUrl, "Demo Video");
+      if (!demoValidation.valid) {
+        return { success: false, error: demoValidation.error };
+      }
     }
 
     await prisma.team.update({
@@ -325,8 +437,15 @@ export async function getSystemSettings() {
 
 export async function kickTeamMember(leaderFirebaseUid: string, targetParticipantId: string) {
   try {
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(leaderFirebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required." };
+    }
+    const verifiedUid = authResult.user.uid;
+
     const leaderParticipant = await prisma.participant.findUnique({
-      where: { firebaseUid: leaderFirebaseUid },
+      where: { firebaseUid: verifiedUid },
       include: {
         team: {
           include: {
@@ -370,8 +489,15 @@ export async function kickTeamMember(leaderFirebaseUid: string, targetParticipan
 
 export async function leaveTeam(firebaseUid: string) {
   try {
+    // 1. Server-Side Identity Verification (CRIT-01)
+    const authResult = await getAuthenticatedUser(firebaseUid);
+    if (!authResult.user) {
+      return { success: false, error: authResult.error || "Authentication required." };
+    }
+    const verifiedUid = authResult.user.uid;
+
     const participant = await prisma.participant.findUnique({
-      where: { firebaseUid },
+      where: { firebaseUid: verifiedUid },
       include: {
         team: {
           include: {
@@ -421,8 +547,8 @@ export async function leaveTeam(firebaseUid: string) {
       return { success: true, message: `You have successfully left team ${team.name}.` };
     }
 
-    // Leader is leaving and other members exist: randomly assign a new leader
-    const randomIndex = Math.floor(Math.random() * otherMembers.length);
+    // Leader is leaving and other members exist: randomly assign a new leader (CSPRNG, MED-02)
+    const randomIndex = randomInt(0, otherMembers.length);
     const newLeader = otherMembers[randomIndex];
 
     await prisma.$transaction([
@@ -446,4 +572,3 @@ export async function leaveTeam(firebaseUid: string) {
     return { success: false, error: "Failed to leave the team: " + (error?.message || "Unknown error") };
   }
 }
-
