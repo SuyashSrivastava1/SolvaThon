@@ -29,7 +29,7 @@ export default function LoginPage() {
         await auth.signOut();
         clearParticipantSession();
         setStatus("error");
-        setMessage("You must use your @vitstudent.ac.in or @vit.ac.in email address to participate.");
+        setMessage("You must use your @vitstudent.ac.in email address to participate.");
         return;
       }
 

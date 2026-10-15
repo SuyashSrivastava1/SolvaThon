@@ -106,6 +106,12 @@ export default function ProfilePage() {
         }
         if (result.success) {
           setTeamData(result);
+          if (!result.team) {
+            setJoinMsg("");
+            setJoinStatus("idle");
+            setCreateMsg("");
+            setCreateStatus("idle");
+          }
           if (result.team?.problemStatement) {
             setSelectedTrack(result.team.problemStatement);
           }
@@ -248,6 +254,10 @@ export default function ProfilePage() {
     if (res.success) {
       setTeamActionMsg(res.message || "You have left the team.");
       setLeaveModal(false);
+      setJoinMsg("");
+      setJoinStatus("idle");
+      setCreateMsg("");
+      setCreateStatus("idle");
       fetchTeam();
     } else {
       setTeamActionError(res.error || "Failed to leave team.");
@@ -376,9 +386,9 @@ export default function ProfilePage() {
                   </div>
                   <p className="text-xs font-mono text-white/50">{participant.emailId}</p>
                 </div>
-                <div className="bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 rounded-2xl text-right">
-                  <span className="text-[10px] uppercase font-mono text-cyan-400/70 block">TICKET ID</span>
-                  <span className="text-lg font-mono font-black text-cyan-300 tracking-wider block">{participant.ticketId}</span>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-2xl text-right">
+                  <span className="text-[10px] uppercase font-mono text-emerald-400/80 block">REGISTRATION STATUS</span>
+                  <span className="text-sm font-mono font-black text-emerald-300 tracking-wider block">CONFIRMED</span>
                 </div>
               </div>
 
@@ -475,7 +485,7 @@ export default function ProfilePage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] font-mono text-white/40 truncate">{m.ticketId}</p>
+                        <p className="text-[11px] font-mono text-white/40 truncate">{m.isLeader ? "Team Lead" : "Team Member"}</p>
                       </div>
                     </div>
 
@@ -997,7 +1007,7 @@ export default function ProfilePage() {
 
             <div className="bg-black/50 border border-white/10 rounded-2xl p-4 space-y-2">
               <p className="text-sm text-white/90">
-                Are you sure you want to remove <strong className="text-red-300">{kickModal.member.name}</strong> ({kickModal.member.ticketId}) from the team?
+                Are you sure you want to remove <strong className="text-red-300">{kickModal.member.name}</strong> from the team?
               </p>
               <p className="text-xs text-white/50 leading-relaxed">
                 They will immediately be unlinked from this team cluster and can join or create another team.

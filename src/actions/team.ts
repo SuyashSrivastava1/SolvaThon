@@ -13,16 +13,47 @@ function getTeamLeader(team: any) {
   return team.participants[0];
 }
 
+function normalizeTeamName(name: string): string {
+  return (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export async function cleanupEmptyTeams() {
+  try {
+    const emptyTeams = await prisma.team.findMany({
+      where: {
+        participants: { none: {} }
+      },
+      select: { id: true }
+    });
+    for (const t of emptyTeams) {
+      await prisma.teamEvaluation.deleteMany({ where: { teamId: t.id } });
+      await prisma.team.delete({ where: { id: t.id } });
+    }
+  } catch (e) {
+    console.error("cleanupEmptyTeams error:", e);
+  }
+}
+
 export async function createTeam(firebaseUid: string, teamName: string) {
   try {
     const participant = await prisma.participant.findUnique({ where: { firebaseUid } });
     if (!participant) return { success: false, error: "Participant not found. Please register first." };
     if (participant.teamId) return { success: false, error: "You are already in a team." };
 
-    if (!teamName || teamName.length < 3) return { success: false, error: "Team name must be at least 3 characters." };
+    const trimmed = (teamName || "").trim();
+    if (trimmed.length < 3) return { success: false, error: "Team name must be at least 3 characters." };
 
-    const existingTeam = await prisma.team.findUnique({ where: { name: teamName } });
-    if (existingTeam) return { success: false, error: "Team name already taken." };
+    const normalizedInput = normalizeTeamName(trimmed);
+    if (normalizedInput.length < 2) {
+      return { success: false, error: "Team name must contain at least 2 alphanumeric characters." };
+    }
+
+    // Check all existing teams by normalized name (ignoring casing, underscores, hyphens, spaces, and all special characters)
+    const existingTeams = await prisma.team.findMany({ select: { id: true, name: true } });
+    const duplicate = existingTeams.find((t: any) => normalizeTeamName(t.name) === normalizedInput);
+    if (duplicate) {
+      return { success: false, error: `Team name "${trimmed}" is already taken (conflicts with "${duplicate.name}"). Please choose a unique name.` };
+    }
 
     let newTeamCode = "";
     let isUnique = false;
@@ -34,7 +65,7 @@ export async function createTeam(firebaseUid: string, teamName: string) {
     }
 
     const team = await prisma.team.create({
-      data: { name: teamName, teamCode: newTeamCode, leaderId: participant.id },
+      data: { name: trimmed, teamCode: newTeamCode, leaderId: participant.id },
     });
 
     await prisma.participant.update({
@@ -360,38 +391,8 @@ export async function leaveTeam(firebaseUid: string) {
 
     const otherMembers = team.participants.filter((p: any) => p.id !== participant.id);
 
-    if (!isLeader) {
-      // Normal member leaving
-      await prisma.participant.update({
-        where: { id: participant.id },
-        data: { teamId: null }
-      });
-      return { success: true, message: `You have successfully left team ${team.name}.` };
-    }
-
-    // Leader is leaving
-    if (otherMembers.length > 0) {
-      // Randomly allocate a new team leader from remaining members
-      const randomIndex = Math.floor(Math.random() * otherMembers.length);
-      const newLeader = otherMembers[randomIndex];
-
-      await prisma.$transaction([
-        prisma.team.update({
-          where: { id: team.id },
-          data: { leaderId: newLeader.id }
-        }),
-        prisma.participant.update({
-          where: { id: participant.id },
-          data: { teamId: null }
-        })
-      ]);
-
-      return {
-        success: true,
-        message: `You have left the team. Leadership has been randomly assigned to ${newLeader.fullName}.`
-      };
-    } else {
-      // Leader is the sole member: unassign participant, delete evaluations and team
+    // If NO other person is there in the team (whether current person is leader or sole member)
+    if (otherMembers.length === 0) {
       await prisma.participant.update({
         where: { id: participant.id },
         data: { teamId: null }
@@ -402,12 +403,44 @@ export async function leaveTeam(firebaseUid: string) {
       await prisma.team.delete({
         where: { id: team.id }
       });
+      await cleanupEmptyTeams();
 
       return {
         success: true,
-        message: `You were the sole member of ${team.name}. The team has been disbanded.`
+        message: `You have left ${team.name}. As no other members remained, the team has been removed.`
       };
     }
+
+    if (!isLeader) {
+      // Normal member leaving while other members remain
+      await prisma.participant.update({
+        where: { id: participant.id },
+        data: { teamId: null }
+      });
+      await cleanupEmptyTeams();
+      return { success: true, message: `You have successfully left team ${team.name}.` };
+    }
+
+    // Leader is leaving and other members exist: randomly assign a new leader
+    const randomIndex = Math.floor(Math.random() * otherMembers.length);
+    const newLeader = otherMembers[randomIndex];
+
+    await prisma.$transaction([
+      prisma.team.update({
+        where: { id: team.id },
+        data: { leaderId: newLeader.id }
+      }),
+      prisma.participant.update({
+        where: { id: participant.id },
+        data: { teamId: null }
+      })
+    ]);
+    await cleanupEmptyTeams();
+
+    return {
+      success: true,
+      message: `You have left the team. Leadership has been randomly assigned to ${newLeader.fullName}.`
+    };
   } catch (error: any) {
     console.error("leaveTeam error:", error);
     return { success: false, error: "Failed to leave the team: " + (error?.message || "Unknown error") };

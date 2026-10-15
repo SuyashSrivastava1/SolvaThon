@@ -1157,14 +1157,9 @@ export default function AdminPortalPage() {
                                         ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
                                         : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
                                     }`}>
-                                      {isTeamFrozen ? "🧊 Frozen" : "🔓 Unfrozen"}
+                                      {isTeamFrozen ? "🔒 Locked" : "🔓 Unlocked"}
                                     </span>
                                   </div>
-                                  {(roundEval?.evaluatedBy || t.evaluatedBy) && (
-                                    <span className="text-[10px] text-white/40 font-mono truncate max-w-[150px]">
-                                      by {roundEval?.evaluatedBy || t.evaluatedBy}
-                                    </span>
-                                  )}
                                 </div>
                               ) : (
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[11px] w-fit">

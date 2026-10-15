@@ -103,6 +103,15 @@ export async function getAdminData(tokenOrEmail?: string | null) {
     const activeRoundConfig = configs.find((c: any) => c.key === "active_review_round");
     const activeReviewRound = activeRoundConfig ? parseInt(activeRoundConfig.value, 10) || 1 : 1;
 
+    // Purge and filter out any blank/empty teams with 0 participants
+    const emptyTeamIds = teams.filter((t: any) => !t.participants || t.participants.length === 0).map((t: any) => t.id);
+    if (emptyTeamIds.length > 0) {
+      prisma.teamEvaluation.deleteMany({ where: { teamId: { in: emptyTeamIds } } })
+        .then(() => prisma.team.deleteMany({ where: { id: { in: emptyTeamIds } } }))
+        .catch((err: any) => console.error("Error purging empty teams:", err));
+      teams = teams.filter((t: any) => t.participants && t.participants.length > 0);
+    }
+
     // Breakdown aggregations
     const blockStats: Record<string, number> = {};
     const messStats: Record<string, number> = {};

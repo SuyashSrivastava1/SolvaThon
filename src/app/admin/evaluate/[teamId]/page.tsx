@@ -179,7 +179,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
     });
 
     if (res.success) {
-      setSaveSuccessMsg(`✓ Marks successfully submitted & frozen! Total Score: ${currentTotal}/30`);
+      setSaveSuccessMsg(`✓ Marks successfully locked! Total Score: ${currentTotal}/30`);
 
       // Update local team state
       const updatedEval = {
@@ -234,7 +234,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
     const res = await toggleTeamFreezeStatus(adminIdentifier, currentTeam.id, activeReviewRound, targetFreeze);
     if (res.success) {
-      setFreezeMsg(targetFreeze ? "✓ Marks are now FROZEN and locked." : "✓ Marks are now UNFROZEN. Evaluators may now modify and resubmit.");
+      setFreezeMsg(targetFreeze ? "✓ Marks are now LOCKED." : "✓ Marks are now UNLOCKED. Evaluators may now modify and resubmit.");
 
       // Update state locally
       const existingEvals = currentTeam.evaluations || [];
@@ -482,19 +482,19 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                 OFFICIAL JURY WORKBENCH: {roundInfo.title.toUpperCase()} ({roundInfo.subtitle.toUpperCase()})
               </div>
               <h2 className="text-2xl font-black text-white">
-                {isCurrentUserSuperAdmin ? "Evaluation Oversight & Freeze Governance" : "Score Team via 5-Tier Rubrics (Out of 10)"}
+                {isCurrentUserSuperAdmin ? "Evaluation Oversight & Lock Governance" : "Score Team via 5-Tier Rubrics (Out of 10)"}
               </h2>
               <p className="text-xs text-white/60">
                 {isCurrentUserSuperAdmin
-                  ? "Super Admin Governance Mode: Marking is conducted exclusively by evaluators. You may review submitted marks and toggle freeze state."
-                  : "Select an evaluation tier for each rubric. Total marks will compute automatically. Marks will be frozen upon submission."}
+                  ? "Super Admin Governance Mode: Marking is conducted exclusively by evaluators. You may review submitted marks and toggle lock state."
+                  : "Select an evaluation tier for each rubric. Total marks will compute automatically. Marks will be locked upon submission."}
               </p>
             </div>
 
             {isEvaluated && (
               <div className="text-right">
                 <span className="text-xs font-mono text-purple-300 block">
-                  Graded by: <strong className="text-white">{currentRoundEval?.evaluatedBy || currentTeam.evaluatedBy}</strong>
+                  Status: <strong className="text-white">Evaluated &amp; Locked</strong>
                 </span>
                 <span className="text-[10px] font-mono text-white/40">
                   {currentRoundEval?.evaluatedAt ? new Date(currentRoundEval.evaluatedAt).toLocaleString() : new Date(currentTeam.evaluatedAt).toLocaleString()}
@@ -510,12 +510,12 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-400 text-lg">admin_panel_settings</span>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-300">Super Admin Freeze Control</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-300">Super Admin Lock Control</span>
                   </div>
                   <p className="text-xs text-white/70">
                     {isFrozen
-                      ? "Marks for this team are currently FROZEN. Evaluators cannot edit or change their submission."
-                      : "Marks for this team are currently UNFROZEN. Evaluators can edit and resubmit marks."}
+                      ? "Marks for this team are currently LOCKED. Evaluators cannot edit or change their submission."
+                      : "Marks for this team are currently UNLOCKED. Evaluators can edit and resubmit marks."}
                   </p>
                 </div>
 
@@ -532,17 +532,17 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                   {togglingFreeze ? (
                     <>
                       <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                      <span>Updating Freeze State...</span>
+                      <span>Updating Lock State...</span>
                     </>
                   ) : isFrozen ? (
                     <>
                       <span className="material-symbols-outlined text-base">lock_open</span>
-                      <span>Unfreeze Marks for Evaluator Editing</span>
+                      <span>Unlock Marks for Evaluator Editing</span>
                     </>
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-base">lock</span>
-                      <span>Freeze Marks</span>
+                      <span>Lock Marks</span>
                     </>
                   )}
                 </button>
@@ -556,7 +556,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* ─── FROZEN BANNER FOR EVALUATORS ─── */}
+          {/* ─── LOCKED BANNER FOR EVALUATORS ─── */}
           {!isCurrentUserSuperAdmin && isFrozen && (
             <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -564,9 +564,9 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                   <span className="material-symbols-outlined text-2xl">lock</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-amber-300">Evaluation Locked &amp; Frozen</h4>
+                  <h4 className="text-sm font-bold text-amber-300">Evaluation Locked</h4>
                   <p className="text-xs text-white/70">
-                    Marks for this team in {roundInfo.title} have been submitted and automatically frozen. Only Super Admin has permissions to unfreeze marks.
+                    Marks for this team in {roundInfo.title} have been submitted and locked. Only Super Admin has permissions to unlock marks.
                   </p>
                 </div>
               </div>
@@ -662,42 +662,68 @@ export default function TeamEvaluationPage({ params }: PageProps) {
               </span>
             </div>
 
-            {/* Evaluator Action Buttons */}
+            {/* Evaluator Action Buttons: Exactly One Button per user specifications */}
             {!isCurrentUserSuperAdmin && (
               <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleSaveMarks(false)}
-                  disabled={saving || isFrozen}
-                  className="flex-1 sm:flex-none px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-purple-500/20 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                      <span>Submitting Marks...</span>
-                    </>
-                  ) : isFrozen ? (
-                    <>
+                {isFrozen ? (
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled
+                      className="px-6 py-3.5 bg-white/10 text-white/50 font-extrabold text-xs uppercase tracking-wider rounded-xl cursor-not-allowed flex items-center justify-center gap-2 border border-white/10"
+                    >
                       <span className="material-symbols-outlined text-base">lock</span>
-                      <span>Marks Frozen</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-base">lock</span>
-                      <span>Submit &amp; Freeze Marks</span>
-                    </>
-                  )}
-                </button>
-
-                {nextTeam && !isFrozen && (
+                      <span>Marks Locked</span>
+                    </button>
+                    {nextTeam && (
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/admin/evaluate/${nextTeam.id}`)}
+                        className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Next Team</span>
+                        <span className="material-symbols-outlined text-base">arrow_forward</span>
+                      </button>
+                    )}
+                  </div>
+                ) : nextTeam ? (
                   <button
                     type="button"
                     onClick={() => handleSaveMarks(true)}
                     disabled={saving}
-                    className="flex-1 sm:flex-none px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-none px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-emerald-500/25 cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>Submit &amp; Next Team</span>
-                    <span className="material-symbols-outlined text-base">arrow_forward</span>
+                    {saving ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
+                        <span>Locking Marks...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-base">lock</span>
+                        <span>Lock and Next</span>
+                        <span className="material-symbols-outlined text-base">arrow_forward</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleSaveMarks(false)}
+                    disabled={saving}
+                    className="flex-1 sm:flex-none px-7 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-purple-500/25 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                        <span>Locking Marks...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-base">lock</span>
+                        <span>Lock and Save</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>
