@@ -71,14 +71,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center relative overflow-hidden text-white font-sans selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center relative overflow-hidden text-white font-sans selection:bg-violet-500/30">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none mix-blend-overlay"></div>
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-400/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-fuchsia-600/15 rounded-full blur-[140px] pointer-events-none"></div>
 
-      <div className="relative z-10 w-full max-w-md p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative z-10 w-full max-w-md p-8 bg-[#0e091c]/80 backdrop-blur-xl border border-violet-500/25 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_35px_rgba(168,85,247,0.15)]">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Authenticate</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-violet-400 via-fuchsia-300 to-indigo-400 bg-clip-text text-transparent">Authenticate</h1>
           <p className="text-white/60 text-sm">Sign in securely using your VIT Google account.</p>
         </div>
 

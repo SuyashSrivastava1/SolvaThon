@@ -129,8 +129,8 @@ export default function RegisterPage() {
 
   if (loading || checkingReg || isRegistered) {
     return (
-      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white">
+        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-sm tracking-wider">
           {isRegistered ? "VERIFIED. REDIRECTING TO YOUR DASHBOARD..." : "INITIALIZING SESSION..."}
         </p>
@@ -140,15 +140,17 @@ export default function RegisterPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white px-4 relative overflow-hidden">
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-        <div className="relative z-10 max-w-md w-full bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl text-center shadow-2xl">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-violet-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-fuchsia-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="relative z-10 max-w-md w-full bg-[#0e091c]/80 border border-violet-500/20 rounded-2xl p-8 backdrop-blur-xl text-center shadow-2xl">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
             <span className="material-symbols-outlined text-3xl">lock</span>
           </div>
           <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
           <p className="text-white/60 text-sm mb-6">
-            Please sign in with your verified <span className="text-cyan-400">@vitstudent.ac.in</span> Google account to register for Hostelle Solvathon.
+            Please sign in with your verified <span className="text-violet-400 font-semibold">@vitstudent.ac.in</span> Google account to register for Hostelle Solvathon.
           </p>
 
           <button
@@ -336,21 +338,21 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
     formData.consentAgreed;
 
   return (
-    <div className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden bg-[#050B14] relative text-white font-sans selection:bg-cyan-500/30 flex flex-col justify-center items-center px-4 py-3 sm:py-5">
+    <div className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden bg-[#07050e] relative text-white font-sans selection:bg-violet-500/30 flex flex-col justify-center items-center px-4 py-3 sm:py-5">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-600/12 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="w-full max-w-3xl relative z-10 flex flex-col items-center my-auto">
         {/* Header */}
         <div className="text-center max-w-xl mb-3">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight pb-1 mb-1.5 bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent leading-tight inline-block">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight pb-1 mb-1.5 bg-gradient-to-r from-violet-400 via-fuchsia-300 to-indigo-400 bg-clip-text text-transparent leading-tight inline-block">
             Participant Registration
           </h1>
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-white/80">
-              <span className="material-symbols-outlined text-cyan-400 text-sm">verified_user</span>
-              <span>Signed in as <strong className="text-cyan-400 font-mono">{user.email}</strong></span>
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-white/5 border border-violet-500/20 rounded-lg text-xs text-white/80">
+              <span className="material-symbols-outlined text-violet-400 text-sm">verified_user</span>
+              <span>Signed in as <strong className="text-violet-300 font-mono">{user.email}</strong></span>
             </div>
           </div>
         </div>
@@ -358,7 +360,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
         {/* Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-5 sm:p-6 md:p-7 rounded-2xl shadow-2xl space-y-3.5"
+          className="w-full bg-[#0e091c]/80 backdrop-blur-2xl border border-violet-500/25 p-5 sm:p-6 md:p-7 rounded-2xl shadow-[0_0_35px_rgba(168,85,247,0.12)] space-y-3.5"
         >
           <div className="border-b border-white/10 pb-2">
             <h2 className="text-sm md:text-base font-bold text-white">Personal &amp; Hostel Details</h2>
@@ -368,7 +370,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Full Name <span className="text-cyan-400">*</span>
+                Full Name <span className="text-violet-400">*</span>
               </label>
               <input
                 type="text"
@@ -376,14 +378,14 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                 required
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="w-full h-11 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full h-11 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all"
                 placeholder="e.g. Rahul Sharma"
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Mobile Number <span className="text-cyan-400">*</span>
+                Mobile Number <span className="text-violet-400">*</span>
               </label>
               <input
                 type="tel"
@@ -395,7 +397,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                 onInput={(e) => (e.target as HTMLInputElement).setCustomValidity("")}
                 value={formData.mobileNumber}
                 onChange={handleInputChange}
-                className="w-full h-11 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full h-11 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all"
                 placeholder="10-digit mobile number"
               />
             </div>
@@ -405,7 +407,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Gender <span className="text-cyan-400">*</span>
+                Gender <span className="text-violet-400">*</span>
               </label>
               <div className="relative">
                 <select
@@ -413,7 +415,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                   required
                   value={formData.gender}
                   onChange={(e) => handleGenderSelect(e.target.value as "Male" | "Female")}
-                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer [&>option]:bg-[#050B14]"
+                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all cursor-pointer [&>option]:bg-[#0e091c]"
                 >
                   <option value="" disabled>Select Gender</option>
                   <option value="Male">Male</option>
@@ -427,7 +429,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
 
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Hostel Block <span className="text-cyan-400">*</span>
+                Hostel Block <span className="text-violet-400">*</span>
               </label>
               <div className="relative">
                 <select
@@ -436,7 +438,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                   disabled={!formData.gender}
                   value={formData.hostelBlock}
                   onChange={handleInputChange}
-                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
+                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#0e091c]"
                 >
                   <option value="" disabled>
                     {!formData.gender ? "Select Gender first" : "Select assigned block"}
@@ -455,7 +457,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
 
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Room Number <span className="text-cyan-400">*</span>
+                Room Number <span className="text-violet-400">*</span>
               </label>
               <input
                 type="text"
@@ -467,7 +469,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                 disabled={!formData.gender}
                 value={formData.roomNumber}
                 onChange={handleInputChange}
-                className="w-full h-11 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all font-mono disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full h-11 bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all font-mono disabled:opacity-40 disabled:cursor-not-allowed"
                 placeholder={!formData.gender ? "Select Gender first" : "e.g. 412"}
               />
             </div>
@@ -477,7 +479,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Mess Caterer <span className="text-cyan-400">*</span>
+                Mess Caterer <span className="text-violet-400">*</span>
               </label>
               <div className="relative">
                 <select
@@ -486,7 +488,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                   disabled={!formData.hostelBlock}
                   value={formData.messCaterer}
                   onChange={handleInputChange}
-                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
+                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#0e091c]"
                 >
                   <option value="" disabled>
                     {!formData.gender
@@ -509,7 +511,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
 
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-white/80 uppercase tracking-wider block">
-                Mess Type <span className="text-cyan-400">*</span>
+                Mess Type <span className="text-violet-400">*</span>
               </label>
               <div className="relative">
                 <select
@@ -518,7 +520,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
                   disabled={!formData.messCaterer}
                   value={formData.messType}
                   onChange={handleInputChange}
-                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#050B14]"
+                  className="w-full h-11 bg-black/40 border border-white/10 rounded-xl pl-3.5 pr-9 py-2 text-sm text-white appearance-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/40 outline-none transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed [&>option]:bg-[#0e091c]"
                 >
                   <option value="" disabled>
                     {!formData.gender
@@ -548,7 +550,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
               required
               checked={formData.consentAgreed}
               onChange={handleInputChange}
-              className="mt-0.5 w-4 h-4 accent-cyan-500 rounded cursor-pointer shrink-0"
+              className="mt-0.5 w-4 h-4 accent-violet-500 rounded cursor-pointer shrink-0"
             />
             <label htmlFor="consentAgreed" className="text-[11px] text-white/70 leading-snug cursor-pointer">
               I verify that I am currently a residential student residing on the VIT campus. I agree to abide by all the hackathon guidelines, overnight attendance checks, and lab protocols.
@@ -573,7 +575,7 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
             className={`w-full font-bold py-2.5 md:py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-sm ${
               !isFormValid || status === "loading" || status === "success"
                 ? "bg-slate-800/80 text-white/30 border border-white/5 cursor-not-allowed shadow-none"
-                : "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 cursor-pointer"
+                : "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-500/25 cursor-pointer"
             }`}
           >
             {status === "loading" ? (

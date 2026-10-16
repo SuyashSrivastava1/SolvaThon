@@ -139,7 +139,7 @@ export const REVIEW_ROUNDS: ReviewRoundInfo[] = [
     key: "REVIEW_1",
     title: "Review 1",
     subtitle: "Internal Review 1",
-    badgeColor: "cyan"
+    badgeColor: "violet"
   },
   {
     round: 2,

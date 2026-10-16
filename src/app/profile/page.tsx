@@ -292,8 +292,8 @@ export default function ProfilePage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
-        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
+        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
       </div>
     );
@@ -301,8 +301,8 @@ export default function ProfilePage() {
 
   if (fetchError) {
     return (
-      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
-        <div className="max-w-md w-full bg-white/[0.04] border border-white/10 p-8 rounded-3xl backdrop-blur-2xl text-center space-y-5 shadow-2xl">
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
+        <div className="max-w-md w-full bg-[#0e091c]/80 border border-violet-500/20 p-8 rounded-3xl backdrop-blur-2xl text-center space-y-5 shadow-2xl">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
             <span className="material-symbols-outlined text-3xl">warning</span>
           </div>
@@ -313,13 +313,13 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-3 pt-2">
             <button
               onClick={fetchTeam}
-              className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-500/20 cursor-pointer"
             >
               Retry Connection
             </button>
             <Link
               href="/register"
-              className="w-full py-3.5 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-xl text-xs uppercase tracking-wider transition-all"
+              className="w-full py-3.5 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-violet-500/30 text-white font-semibold rounded-xl text-xs uppercase tracking-wider transition-all"
             >
               Complete Registration
             </Link>
@@ -331,8 +331,8 @@ export default function ProfilePage() {
 
   if (!teamData || !teamData.participant) {
     return (
-      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
-        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
+        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
       </div>
     );
@@ -342,17 +342,17 @@ export default function ProfilePage() {
   const isFinalActive = teamData.submissionPhase === "FINAL";
 
   return (
-    <div className="min-h-screen bg-[#030712] relative text-white font-sans selection:bg-cyan-500/30 py-12 px-4 md:px-8">
+    <div className="min-h-screen bg-[#07050e] relative text-white font-sans selection:bg-violet-500/30 py-12 px-4 md:px-8">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-fuchsia-600/12 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
         
         {/* Navigation & Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors">
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back to Portal
           </Link>
@@ -369,7 +369,7 @@ export default function ProfilePage() {
 
         {/* Global Phase Notification Banner */}
         {isFinalActive && (
-          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border border-emerald-500/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/10">
+          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-teal-500/20 border border-emerald-500/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/10">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
                 <span className="material-symbols-outlined text-2xl">rocket_launch</span>
@@ -389,17 +389,17 @@ export default function ProfilePage() {
 
         {/* Participant Identification Pass */}
         {participant && (
-          <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-4 w-full">
               <div className="border-b border-white/10 pb-4">
-                <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
+                <div className="text-[11px] font-mono text-violet-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <h1 className="text-2xl md:text-3xl font-black text-white">{participant.fullName}</h1>
                   {participant.gender && (
                     <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
                       participant.gender === "Female"
-                        ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
-                        : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                        ? "bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300"
+                        : "bg-violet-500/10 border-violet-500/30 text-violet-300"
                     }`}>
                       {participant.gender}
                     </span>
@@ -423,7 +423,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="bg-black/40 p-3.5 rounded-2xl border border-white/10 space-y-0.5">
                   <span className="text-[10px] text-white/40 uppercase font-mono tracking-wider block">Meal Plan</span>
-                  <span className="text-sm font-bold text-cyan-400 block">{participant.messType}</span>
+                  <span className="text-sm font-bold text-violet-400 block">{participant.messType}</span>
                 </div>
               </div>
             </div>
@@ -435,17 +435,17 @@ export default function ProfilePage() {
           <div className="space-y-10">
             
             {/* Active Team Cluster Card */}
-            <div className="bg-gradient-to-br from-blue-950/30 via-cyan-950/10 to-slate-900/40 border border-cyan-500/30 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-2xl space-y-6">
+            <div className="bg-gradient-to-br from-violet-950/40 via-[#0e091c] to-purple-950/30 border border-violet-500/30 rounded-3xl p-6 md:p-8 shadow-[0_0_35px_rgba(168,85,247,0.12)] backdrop-blur-2xl space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-white/10 gap-4">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
+                  <div className="inline-flex items-center text-xs font-mono text-violet-400 uppercase tracking-widest font-semibold">
                     ACTIVE TEAM CLUSTER
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black text-white">{teamData.team.name}</h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
+                  <div className="bg-black/60 border border-violet-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
                     <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
                     <div className="flex items-center justify-center gap-2 my-0.5">
                       <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
@@ -460,7 +460,7 @@ export default function ProfilePage() {
                             setTimeout(() => setCopiedCode(false), 2000);
                           }
                         }}
-                        className="p-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-white/60 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer"
+                        className="p-1 rounded-lg bg-white/5 hover:bg-violet-500/20 text-white/60 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 transition-all cursor-pointer"
                         title="Copy Team Code"
                       >
                         <span className="material-symbols-outlined text-sm block">
@@ -470,7 +470,7 @@ export default function ProfilePage() {
                     </div>
                     <p className="text-[10px] text-white/40 font-mono">
                       {copiedCode ? (
-                        <span className="text-cyan-400 font-bold">Code copied!</span>
+                        <span className="text-violet-400 font-bold">Code copied!</span>
                       ) : (
                         `${teamData.team.members.length}/4 Members Joined`
                       )}
@@ -511,7 +511,7 @@ export default function ProfilePage() {
                 {teamData.team.members.map((m: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between bg-black/40 p-3.5 rounded-2xl border border-white/10 group">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center font-mono text-xs text-violet-300 font-bold shrink-0">
                         0{idx + 1}
                       </div>
                       <div className="overflow-hidden">
@@ -551,10 +551,10 @@ export default function ProfilePage() {
             {teamData.isLeader && !isFinalActive && (
               <div className="space-y-8 animate-fadeIn">
                 {/* Problem Statement Track Selection */}
-                <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
+                <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_0_30px_rgba(168,85,247,0.08)] space-y-6">
                   <div className="border-b border-white/10 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1">
-                      <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
+                      <div className="inline-flex items-center gap-2 text-xs font-mono text-violet-400 uppercase tracking-widest font-semibold">
                         PROTOCOL: TRACK ALLOCATION
                       </div>
                       <h3 className="text-xl font-bold text-white">Select Your Problem Statement</h3>
@@ -576,12 +576,12 @@ export default function ProfilePage() {
                             onClick={() => setSelectedTrack(ps.id)}
                             className={`p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-3 ${
                               isSelected
-                                ? "bg-cyan-500/10 border-cyan-500 shadow-xl shadow-cyan-500/10 ring-1 ring-cyan-500/50"
-                                : "bg-black/30 border-white/10 hover:border-white/20 hover:bg-white/[0.02]"
+                                ? "bg-violet-500/15 border-violet-500 shadow-xl shadow-violet-500/15 ring-1 ring-violet-500/50"
+                                : "bg-black/40 border-white/10 hover:border-violet-500/30 hover:bg-violet-950/10"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-400">
+                              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-violet-400">
                                 {ps.id}
                               </span>
                               <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
@@ -608,7 +608,7 @@ export default function ProfilePage() {
                       <button
                         type="submit"
                         disabled={!selectedTrack || trackStatus === "loading"}
-                        className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
+                        className="px-6 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/20 cursor-pointer"
                       >
                         {trackStatus === "loading" ? "Locking Track..." : "Confirm Problem Statement"}
                       </button>
@@ -625,9 +625,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Phase 1: Presentation & Abstract Submission Form */}
-                <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
+                <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_0_30px_rgba(168,85,247,0.08)] space-y-6">
                   <div className="border-b border-white/10 pb-4 space-y-1">
-                    <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
+                    <div className="inline-flex items-center gap-2 text-xs font-mono text-violet-400 uppercase tracking-widest font-semibold">
                       STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                     </div>
                     <h3 className="text-xl font-bold text-white">Idea &amp; Presentation Submission</h3>
@@ -651,7 +651,7 @@ export default function ProfilePage() {
                   <form onSubmit={handleSubmitProject} className="space-y-5">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        Presentation / PPT Link <span className="text-cyan-400">*</span>
+                        Presentation / PPT Link <span className="text-violet-400">*</span>
                       </label>
                       <input
                         type="url"
@@ -659,13 +659,13 @@ export default function ProfilePage() {
                         value={submission.pptUrl}
                         onChange={(e) => setSubmission({ ...submission, pptUrl: e.target.value })}
                         placeholder="https://docs.google.com/presentation/d/... or Canva / Drive link"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm"
                       />
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        Understanding of Problem Statement <span className="text-cyan-400">*</span>
+                        Understanding of Problem Statement <span className="text-violet-400">*</span>
                       </label>
                       <textarea
                         required
@@ -673,13 +673,13 @@ export default function ProfilePage() {
                         value={submission.understanding}
                         onChange={(e) => setSubmission({ ...submission, understanding: e.target.value })}
                         placeholder="Explain your team's understanding of the core issues and technical constraints..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm leading-relaxed"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed"
                       />
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        Proposed Solution Architecture <span className="text-cyan-400">*</span>
+                        Proposed Solution Architecture <span className="text-violet-400">*</span>
                       </label>
                       <textarea
                         required
@@ -687,7 +687,7 @@ export default function ProfilePage() {
                         value={submission.solutionSummary}
                         onChange={(e) => setSubmission({ ...submission, solutionSummary: e.target.value })}
                         placeholder="Outline your tech stack, system architecture, and novelty of your idea..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm leading-relaxed"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed"
                       />
                     </div>
 
@@ -698,7 +698,7 @@ export default function ProfilePage() {
                         className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
                           !isIdeaComplete || submitting
                             ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                            : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 cursor-pointer"
+                            : "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-500/20 cursor-pointer"
                         }`}
                       >
                         {submitting ? (
@@ -732,7 +732,7 @@ export default function ProfilePage() {
 
             {/* ═════════ VIEW 2: PHASE 2 (FINAL PROJECT SUBMISSION PAGE) ═════════ */}
             {teamData.isLeader && isFinalActive && (
-              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6 animate-fadeIn">
+              <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_0_30px_rgba(168,85,247,0.08)] space-y-6 animate-fadeIn">
                 <div className="border-b border-white/10 pb-4 space-y-1">
                   <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
                     STAGE 02: FINAL PROJECT DELIVERABLE SUBMISSION
@@ -765,7 +765,7 @@ export default function ProfilePage() {
                           href={teamData.team.finalRepoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded text-[11px] underline"
+                          className="px-2.5 py-1 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 rounded text-[11px] underline"
                         >
                           View Code Repo ↗
                         </a>
@@ -795,7 +795,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        GitHub / Source Code Repository <span className="text-cyan-400">*</span>
+                        GitHub / Source Code Repository <span className="text-violet-400">*</span>
                       </label>
                       <input
                         type="url"
@@ -803,7 +803,7 @@ export default function ProfilePage() {
                         value={finalSubmission.finalRepoUrl}
                         onChange={(e) => setFinalSubmission({ ...finalSubmission, finalRepoUrl: e.target.value })}
                         placeholder="https://github.com/organization/repo"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm"
                       />
                     </div>
 
@@ -816,7 +816,7 @@ export default function ProfilePage() {
                         value={finalSubmission.finalDemoUrl}
                         onChange={(e) => setFinalSubmission({ ...finalSubmission, finalDemoUrl: e.target.value })}
                         placeholder="https://youtu.be/... or deployed Vercel URL"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm"
                       />
                     </div>
                   </div>
@@ -875,25 +875,25 @@ export default function ProfilePage() {
 
             {/* ═════════ VIEW 3: NON-LEADER MEMBER DASHBOARD VIEW ═════════ */}
             {!teamData.isLeader && (
-              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-6 animate-fadeIn">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/10">
+              <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-6 animate-fadeIn shadow-[0_0_30px_rgba(168,85,247,0.08)]">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 shadow-lg shadow-violet-500/10">
                   <span className="material-symbols-outlined text-3xl">verified_user</span>
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold text-white">Team Member Dashboard</h3>
                   <p className="text-sm text-white/60 max-w-lg mx-auto">
-                    Submissions are managed exclusively by your team leader, <strong className="text-cyan-400">{teamData.leaderName || "Team Leader"}</strong>.
+                    Submissions are managed exclusively by your team leader, <strong className="text-violet-300">{teamData.leaderName || "Team Leader"}</strong>.
                   </p>
                 </div>
 
                 {/* Team Invite Code for Non-Leaders */}
-                <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                <div className="p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
                   <div>
                     <p className="text-xs font-bold text-white">Team Invite Code</p>
                     <p className="text-[11px] text-white/60">Share with peers to join your team ({teamData.team.members.length}/4 spots filled).</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono text-base font-black tracking-widest text-emerald-400 bg-black/60 px-3 py-1.5 rounded-xl border border-cyan-500/30 select-all">
+                    <span className="font-mono text-base font-black tracking-widest text-emerald-400 bg-black/60 px-3 py-1.5 rounded-xl border border-violet-500/30 select-all">
                       {teamData.team.teamCode}
                     </span>
                     <button
@@ -905,7 +905,7 @@ export default function ProfilePage() {
                           setTimeout(() => setCopiedCode(false), 2000);
                         }
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                      className="px-3 py-1.5 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 text-violet-300 font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">
                         {copiedCode ? "check" : "content_copy"}
@@ -929,7 +929,7 @@ export default function ProfilePage() {
                   )}
 
                   {teamData.team.submittedAt && (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-semibold">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-300 font-mono text-xs font-semibold">
                       <span className="material-symbols-outlined text-base">check_circle</span>
                       Idea Submission Recorded
                     </span>
@@ -949,7 +949,7 @@ export default function ProfilePage() {
           /* Not in a team yet: Create or Join */
           <div className="grid md:grid-cols-2 gap-8">
             {leaveNotice && (
-              <div className="md:col-span-2 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
+              <div className="md:col-span-2 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">info</span>
                   <span>{leaveNotice}</span>
@@ -964,9 +964,9 @@ export default function ProfilePage() {
               </div>
             )}
             {/* Create Team */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
+            <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
                   <span className="material-symbols-outlined text-2xl">add_circle</span>
                 </div>
                 <div>
@@ -990,13 +990,13 @@ export default function ProfilePage() {
                         setTeamName(e.target.value);
                         if (createMsg) setCreateMsg("");
                       }}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 font-sans text-sm"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/50 font-sans text-sm"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={createStatus === "loading"}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+                    className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
                   >
                     {createStatus === "loading" ? "Creating Team..." : "Create Team Cluster"}
                   </button>
@@ -1017,9 +1017,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Join Team */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
+            <div className="bg-[#0e091c]/80 border border-fuchsia-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
                   <span className="material-symbols-outlined text-2xl">group_add</span>
                 </div>
                 <div>
@@ -1044,13 +1044,13 @@ export default function ProfilePage() {
                         setTeamCode(e.target.value.toUpperCase());
                         if (joinMsg) setJoinMsg("");
                       }}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono tracking-widest text-lg uppercase text-center"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 font-mono tracking-widest text-lg uppercase text-center"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={joinStatus === "loading"}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+                    className="w-full bg-gradient-to-r from-fuchsia-600 via-purple-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-fuchsia-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
                   >
                     {joinStatus === "loading" ? "Joining Team..." : "Join Team"}
                   </button>
@@ -1148,7 +1148,7 @@ export default function ProfilePage() {
                 teamData.team.members.length > 1 ? (
                   <>
                     <p className="text-sm text-white/90">
-                      You are currently the <strong className="text-amber-300">Team Leader</strong> of <strong className="text-cyan-300">{teamData.team.name}</strong>.
+                      You are currently the <strong className="text-amber-300">Team Leader</strong> of <strong className="text-violet-300">{teamData.team.name}</strong>.
                     </p>
                     <p className="text-xs text-amber-200/80 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl leading-relaxed">
                       Notice: If you leave, team leadership will automatically be randomly allocated to one of your remaining teammates.
@@ -1157,7 +1157,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <p className="text-sm text-white/90">
-                      You are the <strong className="text-amber-300">only member</strong> in <strong className="text-cyan-300">{teamData.team.name}</strong>.
+                      You are the <strong className="text-amber-300">only member</strong> in <strong className="text-violet-300">{teamData.team.name}</strong>.
                     </p>
                     <p className="text-xs text-red-200/80 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl leading-relaxed">
                       Warning: Leaving will permanently disband and delete this team.
@@ -1167,7 +1167,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <p className="text-sm text-white/90">
-                    Are you sure you want to leave team <strong className="text-cyan-300">{teamData.team.name}</strong>?
+                    Are you sure you want to leave team <strong className="text-violet-300">{teamData.team.name}</strong>?
                   </p>
                   <p className="text-xs text-white/50 leading-relaxed">
                     You will be removed from this team and can join another team with an invite code or create a new team.

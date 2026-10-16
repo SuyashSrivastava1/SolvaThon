@@ -283,8 +283,8 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white">
+        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-xs tracking-widest uppercase">
           LOADING JURY EVALUATION WORKBENCH...
         </p>
@@ -294,7 +294,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
   if (errorMsg || !currentTeam) {
     return (
-      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white px-4">
+      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 max-w-md text-center space-y-4">
           <span className="material-symbols-outlined text-4xl text-red-400">error</span>
           <h2 className="text-xl font-bold">Evaluation Workbench Error</h2>
@@ -304,7 +304,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
               onClick={() => {
                 loadEvaluationData();
               }}
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
+              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-violet-600/30"
             >
               Retry Connection
             </button>
@@ -324,20 +324,20 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const roundInfo = getRoundInfo(activeReviewRound);
 
   return (
-    <div className="min-h-screen bg-[#030712] relative text-white font-sans selection:bg-purple-500/30 pb-20">
+    <div className="min-h-screen bg-[#07050e] relative text-white font-sans selection:bg-violet-500/30 pb-20">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-fuchsia-600/12 rounded-full blur-[140px] pointer-events-none"></div>
 
       {/* ═════════ STICKY TOP NAVIGATION BAR ═════════ */}
-      <header className="sticky top-0 z-50 bg-[#030712]/90 backdrop-blur-2xl border-b border-white/10 px-4 md:px-8 py-3.5 shadow-2xl">
+      <header className="sticky top-0 z-50 bg-[#07050e]/90 backdrop-blur-2xl border-b border-white/10 px-4 md:px-8 py-3.5 shadow-2xl">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           {/* Left: Back Link & Counter */}
           <div className="flex items-center gap-3">
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:text-cyan-300 transition-all text-xs font-semibold cursor-pointer"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-violet-400 hover:text-violet-300 transition-all text-xs font-semibold cursor-pointer"
             >
               <span className="material-symbols-outlined text-base">arrow_back</span>
               Back to Admin Panel
@@ -345,12 +345,12 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
             <span className="h-5 w-[1px] bg-white/10 hidden sm:block"></span>
 
-            <div className="inline-flex items-center px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
+            <div className="inline-flex items-center px-3 py-1 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 font-mono text-xs font-bold">
               TEAM {currentIndex + 1} OF {teams.length}
             </div>
 
             {/* Active Round Indicator Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold uppercase">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 font-mono text-xs font-bold uppercase">
               <span className="material-symbols-outlined text-sm">schedule</span>
               <span>{roundInfo.title}: {roundInfo.subtitle}</span>
             </div>
@@ -362,7 +362,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             <select
               value={currentTeamId}
               onChange={(e) => router.push(`/admin/evaluate/${e.target.value}`)}
-              className="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer [&>option]:bg-[#030712]"
+              className="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer [&>option]:bg-[#0e091c]"
             >
               {teams.map((t, idx) => {
                 const teamRoundEval = (t.evaluations || []).find((e: any) => e.round === activeReviewRound);
@@ -414,10 +414,10 @@ export default function TeamEvaluationPage({ params }: PageProps) {
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <span className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300 font-mono text-xs font-bold uppercase tracking-wider">
                   TEAM CLUSTER: {currentTeam.teamCode}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 font-mono text-xs">
+                <span className="px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 font-mono text-xs">
                   {currentTeam.memberCount} / 4 Members
                 </span>
                 {isEvaluated && (
@@ -444,7 +444,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             {/* Track Badge */}
             <div className="bg-black/40 border border-white/10 rounded-2xl p-4 text-right min-w-[200px]">
               <span className="text-[10px] font-mono uppercase text-white/40 block">PROBLEM STATEMENT TRACK</span>
-              <span className="text-sm font-bold text-cyan-300 block truncate max-w-[280px]">
+              <span className="text-sm font-bold text-violet-300 block truncate max-w-[280px]">
                 {currentTeam.problemStatement || "Not Selected"}
               </span>
             </div>
@@ -534,7 +534,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                   className={`px-5 py-3 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-lg ${
                     isFrozen
                       ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/20"
-                      : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-cyan-500/20"
+                      : "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-purple-500/20"
                   }`}
                 >
                   {togglingFreeze ? (
@@ -748,15 +748,15 @@ export default function TeamEvaluationPage({ params }: PageProps) {
         {/* ─── DELIVERABLES SHOWCASE: STAGE 1 VS STAGE 2 ─── */}
         <section className="space-y-4">
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-cyan-400">inventory_2</span>
+            <span className="material-symbols-outlined text-violet-400">inventory_2</span>
             Team Submissions &amp; Project Deliverables
           </h3>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Stage 1 Deliverables Card */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-xl space-y-4">
+            <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-mono text-cyan-400 uppercase font-bold flex items-center gap-1.5">
+                <span className="text-xs font-mono text-violet-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">lightbulb</span>
                   STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                 </span>
@@ -773,7 +773,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                       href={currentTeam.pptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-mono rounded-xl transition-all"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-mono rounded-xl transition-all"
                     >
                       <span className="material-symbols-outlined text-base">open_in_new</span>
                       Open Presentation / Slides ↗
@@ -806,7 +806,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             </div>
 
             {/* Stage 2 Deliverables Card */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-xl space-y-4">
+            <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="text-xs font-mono text-emerald-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">rocket_launch</span>
@@ -836,7 +836,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                         href={currentTeam.finalRepoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-mono rounded-xl transition-all"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-mono rounded-xl transition-all"
                       >
                         <span className="material-symbols-outlined text-base">code</span>
                         Source Code Repo ↗
