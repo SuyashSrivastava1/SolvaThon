@@ -49,12 +49,16 @@ next-env.d.ts
 .dev.vars*
 !.dev.vars.example
 
-# Stitch UI & documents (INFO-02)
+# Design mockups & source documents (not part of the app)
 stitch_ui/
 *.zip
 *.docx
 
-# Dev scratch utility scripts (INFO-02)
+# Security / audit reports (sensitive — should not be in version control)
+security_audit_report.md
+Website Cybersecurity Features Guide.md
+
+# One-off dev utility scripts
 scripts/convert.js
 scripts/count-divs.js
 scripts/extract-section.js
