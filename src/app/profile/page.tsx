@@ -16,7 +16,7 @@ import {
 import { auth } from "@/lib/firebase/config";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
-import problemStatements from "@/data/problemStatements.json";
+import { allProblemStatements } from "@/data/themes";
 import { clearParticipantSession } from "@/lib/authSession";
 
 export default function ProfilePage() {
@@ -51,6 +51,9 @@ export default function ProfilePage() {
   const [trackStatus, setTrackStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
   const [trackMsg, setTrackMsg] = useState("");
 
+  // Implementation Type (Hardware vs Software)
+  const [implementationType, setImplementationType] = useState<"Hardware" | "Software">("Software");
+
   // Phase 1: Idea submission
   const [submission, setSubmission] = useState({
     pptUrl: "",
@@ -72,6 +75,20 @@ export default function ProfilePage() {
   const [finalMsg, setFinalMsg] = useState("");
   const [finalError, setFinalError] = useState("");
 
+  const currentPS = allProblemStatements.find(
+    (ps) => ps.id === (teamData?.team?.problemStatement || selectedTrack)
+  );
+
+  useEffect(() => {
+    if (currentPS) {
+      if (currentPS.mode === "hardware") {
+        setImplementationType("Hardware");
+      } else if (currentPS.mode === "software") {
+        setImplementationType("Software");
+      }
+    }
+  }, [currentPS]);
+
   const handleSignOut = async () => {
     isLoggingOut.current = true;
     clearParticipantSession();
@@ -86,7 +103,8 @@ export default function ProfilePage() {
   const isIdeaComplete =
     Boolean(submission.pptUrl?.trim()) &&
     Boolean(submission.understanding?.trim()) &&
-    Boolean(submission.solutionSummary?.trim());
+    Boolean(submission.solutionSummary?.trim()) &&
+    Boolean(implementationType);
 
   const isFinalComplete =
     Boolean(finalSubmission.finalDocUrl?.trim()) &&
@@ -144,6 +162,9 @@ export default function ProfilePage() {
             setSelectedTrack(result.team.problemStatement);
           }
           if (result.team) {
+            if (result.team.implementationType) {
+              setImplementationType(result.team.implementationType as "Hardware" | "Software");
+            }
             setSubmission({
               pptUrl: result.team.pptUrl || "",
               understanding: result.team.understanding || "",
@@ -238,7 +259,10 @@ export default function ProfilePage() {
     setSubmitting(true);
     setSubError("");
     setSubMsg("");
-    const res = await submitProject(user!.uid, submission);
+    const res = await submitProject(user!.uid, {
+      ...submission,
+      implementationType,
+    });
     if (res.success) {
       setSubMsg("Idea presentation submitted and locked successfully! Ready for jury evaluation.");
       fetchTeam();
@@ -456,37 +480,49 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
-                    <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
-                    <div className="flex items-center justify-center gap-2 my-0.5">
-                      <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
-                        {teamData.team.teamCode}
+                  {teamData.isLeader && teamData.team.teamCode ? (
+                    <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
+                      <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
+                      <div className="flex items-center justify-center gap-2 my-0.5">
+                        <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
+                          {teamData.team.teamCode}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (teamData?.team?.teamCode) {
+                              navigator.clipboard.writeText(teamData.team.teamCode);
+                              setCopiedCode(true);
+                              setTimeout(() => setCopiedCode(false), 2000);
+                            }
+                          }}
+                          className="p-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-white/60 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer"
+                          title="Copy Team Code"
+                        >
+                          <span className="material-symbols-outlined text-sm block">
+                            {copiedCode ? "check" : "content_copy"}
+                          </span>
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-white/40 font-mono">
+                        {copiedCode ? (
+                          <span className="text-cyan-400 font-bold">Code copied!</span>
+                        ) : (
+                          `${teamData.team.members.length}/4 Members Joined`
+                        )}
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (teamData?.team?.teamCode) {
-                            navigator.clipboard.writeText(teamData.team.teamCode);
-                            setCopiedCode(true);
-                            setTimeout(() => setCopiedCode(false), 2000);
-                          }
-                        }}
-                        className="p-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-white/60 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer"
-                        title="Copy Team Code"
-                      >
-                        <span className="material-symbols-outlined text-sm block">
-                          {copiedCode ? "check" : "content_copy"}
-                        </span>
-                      </button>
                     </div>
-                    <p className="text-[10px] text-white/40 font-mono">
-                      {copiedCode ? (
-                        <span className="text-cyan-400 font-bold">Code copied!</span>
-                      ) : (
-                        `${teamData.team.members.length}/4 Members Joined`
-                      )}
-                    </p>
-                  </div>
+                  ) : (
+                    <div className="bg-black/60 border border-white/10 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
+                      <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM ROSTER</p>
+                      <p className="font-mono text-xl font-bold text-cyan-400 my-1">
+                        {teamData.team.members.length} / 4 Members
+                      </p>
+                      <p className="text-[10px] text-white/40 font-mono">
+                        Active Team Cluster
+                      </p>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -583,7 +619,7 @@ export default function ProfilePage() {
 
                   <form onSubmit={handleSaveTrack} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {problemStatements.map((ps) => {
+                      {allProblemStatements.map((ps) => {
                         const isSelected = selectedTrack === ps.id;
                         return (
                           <div
@@ -605,9 +641,17 @@ export default function ProfilePage() {
                               <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-400">
                                 {ps.id}
                               </span>
-                              <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
-                                {ps.track}
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                                  ps.mode === "hardware"
+                                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                                    : ps.mode === "software"
+                                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                                    : "bg-purple-500/10 border-purple-500/30 text-purple-300"
+                                }`}>
+                                  {ps.mode === "hardware" ? "Hardware Only" : ps.mode === "software" ? "Software Only" : "Hardware / Software"}
+                                </span>
+                              </div>
                             </div>
                             <div>
                               <h4 className="font-bold text-sm text-white mb-1">{ps.title}</h4>
@@ -735,6 +779,46 @@ export default function ProfilePage() {
                   )}
 
                   <form onSubmit={handleSubmitProject} className="space-y-5">
+                    {/* Implementation Type Selection */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+                        Implementation Type <span className="text-cyan-400">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-3 max-w-md">
+                        <button
+                          type="button"
+                          disabled={currentPS?.mode === "software"}
+                          onClick={() => setImplementationType("Hardware")}
+                          className={`py-2.5 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                            implementationType === "Hardware"
+                              ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50"
+                              : currentPS?.mode === "software"
+                              ? "bg-white/[0.02] border-white/5 text-white/20 cursor-not-allowed opacity-40"
+                              : "bg-black/40 border-white/10 text-white/60 hover:text-white hover:border-white/30 cursor-pointer"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-base">memory</span>
+                          <span>Hardware</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={currentPS?.mode === "hardware"}
+                          onClick={() => setImplementationType("Software")}
+                          className={`py-2.5 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                            implementationType === "Software"
+                              ? "bg-blue-500/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/50"
+                              : currentPS?.mode === "hardware"
+                              ? "bg-white/[0.02] border-white/5 text-white/20 cursor-not-allowed opacity-40"
+                              : "bg-black/40 border-white/10 text-white/60 hover:text-white hover:border-white/30 cursor-pointer"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-base">code</span>
+                          <span>Software</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
                         Presentation / PPT Link <span className="text-cyan-400">*</span>
@@ -1039,35 +1123,6 @@ export default function ProfilePage() {
                   <p className="text-sm text-white/60 max-w-lg mx-auto">
                     Submissions are managed exclusively by your team leader, <strong className="text-cyan-400">{teamData.leaderName || "Team Leader"}</strong>.
                   </p>
-                </div>
-
-                {/* Team Invite Code for Non-Leaders */}
-                <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
-                  <div>
-                    <p className="text-xs font-bold text-white">Team Invite Code</p>
-                    <p className="text-[11px] text-white/60">Share with peers to join your team ({teamData.team.members.length}/4 spots filled).</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono text-base font-black tracking-widest text-emerald-400 bg-black/60 px-3 py-1.5 rounded-xl border border-cyan-500/30 select-all">
-                      {teamData.team.teamCode}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (teamData?.team?.teamCode) {
-                          navigator.clipboard.writeText(teamData.team.teamCode);
-                          setCopiedCode(true);
-                          setTimeout(() => setCopiedCode(false), 2000);
-                        }
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
-                    >
-                      <span className="material-symbols-outlined text-sm">
-                        {copiedCode ? "check" : "content_copy"}
-                      </span>
-                      <span>{copiedCode ? "Copied" : "Copy"}</span>
-                    </button>
-                  </div>
                 </div>
 
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-3">

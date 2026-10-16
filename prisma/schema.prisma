@@ -18,11 +18,15 @@ model Team {
   createdAt    DateTime      @default(now())
   
   // Phase 1: Track selection & Idea submission
-  problemStatement String?
-  pptUrl           String?
-  understanding    String?
-  solutionSummary  String?
-  submittedAt      DateTime?
+  problemStatement   String?
+  implementationType String?
+  pptUrl             String?
+  understanding      String?
+  solutionSummary    String?
+  submittedAt        DateTime?
+
+  phase1Unlocked     Boolean?      @default(true)
+  phase2Unlocked     Boolean?      @default(false)
 
   // Phase 2: Final Project submission
   finalDocUrl      String?

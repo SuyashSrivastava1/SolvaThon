@@ -18,5 +18,8 @@ export const timeline = timelineData;
 export const chiefGuest = chiefGuestData;
 export const prizes = prizesData;
 
+export { themes, allProblemStatements, getThemeBySlug, getProblemStatementById } from "./themes";
+export type { Theme, ProblemStatement } from "./themes";
+
 
 

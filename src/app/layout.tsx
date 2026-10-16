@@ -27,7 +27,7 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
-      <body className="bg-[#07050e] text-slate-100 min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 antialiased">
+      <body className="bg-[#030712] text-slate-100 min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200 antialiased">
         <AuthProvider>
           {children}
         </AuthProvider>

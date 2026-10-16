@@ -203,7 +203,8 @@ export async function getTeamDetails(firebaseUid: string) {
         team: {
           id: participant.team.id,
           name: participant.team.name,
-          teamCode: participant.team.teamCode,
+          teamCode: isLeader ? participant.team.teamCode : null,
+          implementationType: participant.team.implementationType,
           leaderId: participant.team.leaderId,
           problemStatement: participant.team.problemStatement,
           pptUrl: participant.team.pptUrl,
@@ -289,7 +290,12 @@ export async function selectProblemStatement(firebaseUid: string, problemStateme
 
 export async function submitProject(
   firebaseUid: string,
-  data: { pptUrl: string; understanding: string; solutionSummary: string }
+  data: {
+    pptUrl: string;
+    understanding: string;
+    solutionSummary: string;
+    implementationType?: string;
+  }
 ) {
   try {
     // 1. Server-Side Identity Verification (CRIT-01)
@@ -341,12 +347,17 @@ export async function submitProject(
       return { success: false, error: "Please provide a brief description of your proposed solution (10-3000 characters)." };
     }
 
+    const validTypes = ["Hardware", "Software"];
+    const cleanType = data.implementationType?.trim();
+    const finalImplementationType = cleanType && validTypes.includes(cleanType) ? cleanType : null;
+
     await prisma.team.update({
       where: { id: participant.team.id },
       data: {
         pptUrl: data.pptUrl.trim(),
         understanding: data.understanding.trim(),
         solutionSummary: data.solutionSummary.trim(),
+        implementationType: finalImplementationType,
         submittedAt: new Date(),
         phase1Unlocked: false, // Immediately locked upon submission
       },

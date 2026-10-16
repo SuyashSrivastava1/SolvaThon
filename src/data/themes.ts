@@ -1,0 +1,558 @@
+export interface ProblemStatement {
+  id: string;
+  themeId: string;
+  themeTitle: string;
+  themeNumber: number;
+  title: string;
+  track: string;
+  icon: string;
+  color: string;
+  tags: string[];
+  mode: "hardware" | "software" | "both";
+  description: string;
+  detailedDescription: string;
+  challenges: string[];
+  requirements: string[];
+  guidelines: string[];
+}
+
+export interface Theme {
+  id: string;
+  slug: string;
+  number: number;
+  title: string;
+  shortTitle: string;
+  icon: string;
+  color: string;
+  description: string;
+  detailedDescription: string;
+  problemStatements: ProblemStatement[];
+}
+
+export const themes: Theme[] = [
+  {
+    id: "theme-1",
+    slug: "smart-hostel-monitoring",
+    number: 1,
+    title: "Theme 1: Integrated Smart Hostel Monitoring & Information Management System",
+    shortTitle: "Smart Hostel Monitoring & Management",
+    icon: "security",
+    color: "#38bdf8",
+    description: "Centralized screening, digital hostel administrative operations, and intelligent privacy-preserving safety & intrusion monitoring.",
+    detailedDescription: "Covers non-intrusive screening at hostel entry points, centralized information and complaints management portals for students and wardens, and privacy-first automated intrusion detection across residential wings.",
+    problemStatements: [
+      {
+        id: "PS-001",
+        themeId: "theme-1",
+        themeTitle: "Integrated Smart Hostel Monitoring & Information Management System",
+        themeNumber: 1,
+        title: "Smart & Respectful Screening at Hostel Entry Points",
+        track: "Smart Screening",
+        icon: "verified_user",
+        color: "#38bdf8",
+        tags: ["Non-Invasive Sensing", "Digital Gate Pass", "Privacy First"],
+        mode: "both",
+        description: "Quick, practical, and respectful solution to identify concealed prohibited items at entry points while respecting student privacy and dignity.",
+        detailedDescription: "Hostel authorities have observed that some students sneak prohibited items — such as outside food and alcohol — into premises by concealing them inside everyday objects like steel water bottles and opaque containers. Security checks currently rely on visual inspection, which makes detection difficult and manual checking uncomfortable. Participants can build either a smart non-invasive hardware inspection device or a digital entry check-in and screening tracking system.",
+        challenges: [
+          "Security checks currently rely mainly on manual visual inspection",
+          "Hidden items inside opaque containers are difficult to detect without intrusion",
+          "Strict manual checking can lead to student privacy concerns and discomfort",
+          "Need to balance discipline with student dignity and transparency"
+        ],
+        requirements: [
+          "Helps hostel staff identify concealed prohibited items quickly and respectfully",
+          "Minimizes physical or manual invasive inspection",
+          "Respects student privacy and dignity at entry gates",
+          "Cost-effective and feasible for high-traffic hostel gates without expensive lab equipment",
+          "Can be deployed without complex or high-end infrastructure"
+        ],
+        guidelines: [
+          "The solution should ensure fairness, transparency, and ease of use while maintaining a positive hostel environment."
+        ]
+      },
+      {
+        id: "PS-002",
+        themeId: "theme-1",
+        themeTitle: "Integrated Smart Hostel Monitoring & Information Management System",
+        themeNumber: 1,
+        title: "Smart Hostel Information & Management Portal",
+        track: "Hostel ERP & Operations",
+        icon: "dashboard_customize",
+        color: "#06b6d4",
+        tags: ["Full-Stack Portal", "Room Allocation", "Role-Based Access"],
+        mode: "software",
+        description: "Centralized hostel management solution for student records, automated room allocation, complaint ticketing, and warden operational visibility.",
+        detailedDescription: "Hostel administration manages student records, room allocations, maintenance requests, and late-entry logs across disparate manual spreadsheets or disconnected physical logbooks. This results in slow record retrieval, poor tracking of maintenance complaints, and communication delays between students and hostel offices. This challenge demands a comprehensive, intuitive management platform for students and wardens.",
+        challenges: [
+          "Difficulty in retrieving student historical records and contact telemetry quickly",
+          "Poor tracking and delayed resolution of hostel maintenance requests and complaints",
+          "Limited visibility of real-time hostel wing occupancy for administrators",
+          "Inefficient communication channels between students and hostel offices"
+        ],
+        requirements: [
+          "Maintain verified student records and digital room allocation details",
+          "Track hostel maintenance complaints and late-entry activity logs in real time",
+          "Provide administrative dashboard for wardens to monitor block operations",
+          "Enable students to easily access verified notices and submit service requests",
+          "Incorporate role-based access control and strict data privacy"
+        ],
+        guidelines: [
+          "The solution should ensure data privacy, role-based access control, and ease of use for both students and administrators."
+        ]
+      },
+      {
+        id: "PS-003",
+        themeId: "theme-1",
+        themeTitle: "Integrated Smart Hostel Monitoring & Information Management System",
+        themeNumber: 1,
+        title: "AI-Based Intrusion & Activity Monitoring System",
+        track: "Edge Intrusion Detection",
+        icon: "visibility",
+        color: "#818cf8",
+        tags: ["PIR Sensor Array", "Edge Anomaly Detection", "Privacy Safeguards"],
+        mode: "hardware",
+        description: "Privacy-preserving edge hardware module to detect animal intrusions and abnormal late-night movements in common areas without facial recognition.",
+        detailedDescription: "Maintaining safety and monitoring unusual occurrences in common hostel areas currently relies on sporadic human guards and passive CCTV. Incidents like stray animal intrusion or unusual gatherings in isolated corridors go unnoticed until reported. Teams must construct an edge hardware unit combining motion/PIR sensors or low-power optical anomaly detection that sends immediate alerts to security without recording biometric identities.",
+        challenges: [
+          "No automated detection for animal intrusion (dogs/monkeys) entering premises",
+          "No intelligent mechanism to identify abnormal gatherings during late-night hours",
+          "No structured data to analyze patterns of recurring incidents across hostel wings",
+          "Delayed security responses due to manual patrolling limitations"
+        ],
+        requirements: [
+          "Detect animal intrusion or unusual movement using PIR sensors or edge optical anomaly logic",
+          "Implement abnormal activity detection logic without using facial recognition or invasive surveillance",
+          "Real-time alert dispatch to hostel security or wardens upon anomaly detection",
+          "Generate incident heatmap telemetry highlighting frequent alert zones",
+          "Ensure complete compliance with student privacy standards"
+        ],
+        guidelines: [
+          "The solution should be practical, privacy-conscious, and easy to implement without complex server infrastructure."
+        ]
+      }
+    ]
+  },
+  {
+    id: "theme-2",
+    slug: "water-intelligence-sustainability",
+    number: 2,
+    title: "Theme 2: Unified Water Intelligence & Sustainability",
+    shortTitle: "Water Intelligence & Sustainability",
+    icon: "water_drop",
+    color: "#22d3ee",
+    description: "Automated reservoir telemetry, pipeline leakage detection, and continuous real-time drinking water quality monitoring.",
+    detailedDescription: "Addresses critical campus utilities through automated water tank level sensing, intelligent pump shut-off to eliminate dry running and overflow, and multi-parameter continuous monitoring for drinking water RO purification units.",
+    problemStatements: [
+      {
+        id: "PS-004",
+        themeId: "theme-2",
+        themeTitle: "Unified Water Intelligence & Sustainability",
+        themeNumber: 2,
+        title: "Smart Water Monitoring & Leakage Detection for Hostel Facilities",
+        track: "Hydro-Telemetry",
+        icon: "water",
+        color: "#22d3ee",
+        tags: ["Ultrasonic Sensors", "Auto Pump Cutoff", "Leak Detection"],
+        mode: "hardware",
+        description: "Simple, cost-effective hardware solution to automate tank level monitoring, control pumps to prevent dry-run/overflow, and detect pipeline leaks.",
+        detailedDescription: "Hostel blocks rely on multi-stage overhead and ground water reservoirs. Currently, tank levels are checked manually, pumps are operated on guesswork leading to dry running or massive overflows, and buried pipeline leaks go unnoticed for weeks, wasting thousands of liters of clean water and electricity. Teams must construct an automated microcontroller sensing setup with relays and flow telemetry.",
+        challenges: [
+          "Water tank levels are checked manually by maintenance staff",
+          "Pumps are operated without proper telemetry, leading to dry runs or tank overflow",
+          "Pipeline leaks in hostel walls and shafts go unnoticed for extended periods",
+          "Water quality parameters like salinity or turbidity are rarely verified continuously"
+        ],
+        requirements: [
+          "Monitor water tank levels automatically with ultrasonic or hydrostatic transducers",
+          "Control pump actuation relays to prevent overflow and pump burnouts from dry running",
+          "Detect abnormal flow rates and latent pipeline pressure drops indicative of leaks",
+          "Measure basic water parameters (salinity, turbidity) and notify hostel maintenance",
+          "Low power, affordable, and durable for humid utility shafts"
+        ],
+        guidelines: [
+          "The solution should be practical, affordable, and easy to maintain in a residential hostel environment."
+        ]
+      },
+      {
+        id: "PS-005",
+        themeId: "theme-2",
+        themeTitle: "Unified Water Intelligence & Sustainability",
+        themeNumber: 2,
+        title: "Smart Drinking Water Quality Monitoring for Hostel RO Systems",
+        track: "Drinking Water Quality",
+        icon: "local_drink",
+        color: "#38bdf8",
+        tags: ["pH & Turbidity Probes", "TDS Telemetry", "Filter Health"],
+        mode: "both",
+        description: "Smart and reliable monitoring of hostel RO purification systems to track water safety, pH, turbidity, and send maintenance alerts.",
+        detailedDescription: "Hostels provide drinking water through reverse osmosis (RO) plants on every floor. However, filter health and water purity are checked infrequently. Membrane failure or mineral imbalances can expose students to impure water without anyone noticing. Teams can choose either a hardware sensor probe unit retrofitted onto RO dispensers or a software telemetry analytics platform tracking maintenance schedules, cartridge lifecycle, and water safety alerts.",
+        challenges: [
+          "Students have no real-time transparency into whether dispenser water is safe",
+          "Changes in pH, turbidity, TDS, or microbial contaminants may go unnoticed",
+          "Maintenance staff receive no automated alerts when RO filters degrade or clog",
+          "Inefficient backwashing and delayed membrane replacement waste significant water"
+        ],
+        requirements: [
+          "Continuously monitor water quality parameters (pH, TDS, turbidity)",
+          "Detect unsafe water conditions and immediately trigger alerts",
+          "Track water flow volumes through the filtration unit to estimate filter degradation",
+          "Provide simple visual indicators for students and a centralized maintenance dashboard",
+          "Reliable, low-cost installation suitable for existing hostel RO units"
+        ],
+        guidelines: [
+          "The solution should be low-cost, reliable, and suitable for real hostel RO installations."
+        ]
+      },
+      {
+        id: "PS-006",
+        themeId: "theme-2",
+        themeTitle: "Unified Water Intelligence & Sustainability",
+        themeNumber: 2,
+        title: "Hostel Water Conservation & Demand Forecasting Engine",
+        track: "Resource Analytics",
+        icon: "analytics",
+        color: "#0284c7",
+        tags: ["Predictive Analytics", "Demand Forecasting", "Conservation Portal"],
+        mode: "software",
+        description: "Software analytics platform predicting hostel block water demand patterns, identifying consumption anomalies, and optimizing supply schedules.",
+        detailedDescription: "Hostel blocks experience extreme water demand spikes during morning rush hours and nocturnal lulls. Without predictive forecasting, reservoir refills are mistimed, causing low water pressure during peak hours and unnecessary pumping during peak tariff hours. This software platform ingests historical usage data to forecast block requirements, identify abnormal branch spikes, and help facilities optimize supply cycles.",
+        challenges: [
+          "Unpredictable demand spikes during morning schedules strain water pressure",
+          "No data-driven scheduling for refilling overhead tanks from central campus borewells",
+          "Difficulty in detecting which hostel wings exhibit abnormally high water loss",
+          "Lack of student visibility and incentives for residential water conservation"
+        ],
+        requirements: [
+          "Model hourly consumption patterns per hostel block using predictive algorithms",
+          "Generate automated optimal pump scheduling recommendations based on demand curves",
+          "Flag sudden consumption anomalies that suggest open taps or fixture leaks",
+          "Provide interactive student dashboards encouraging conservation and efficiency",
+          "Integrate with campus facility scheduling tools via clean APIs"
+        ],
+        guidelines: [
+          "Focus on lightweight web architecture that facilities engineers can easily operate without training."
+        ]
+      }
+    ]
+  },
+  {
+    id: "theme-3",
+    slug: "mess-dining-optimization",
+    number: 3,
+    title: "Theme 3: Mess & Dining Optimization",
+    shortTitle: "Mess & Dining Optimization",
+    icon: "restaurant",
+    color: "#34d399",
+    description: "Digital nutrition transparency, dining queue management, and food wastage tracking & surplus redistribution.",
+    detailedDescription: "Modernizes hostel dining operations by providing students with digital nutritional insights, eliminating long entry queues through smart occupancy coordination, and reducing food waste through demand forecasting and surplus redistribution.",
+    problemStatements: [
+      {
+        id: "PS-007",
+        themeId: "theme-3",
+        themeTitle: "Mess & Dining Optimization",
+        themeNumber: 3,
+        title: "Automated Dining Hall Queue Sensor & Turnstile Controller",
+        track: "Queue Telemetry",
+        icon: "people_alt",
+        color: "#10b981",
+        tags: ["Break-Beam Sensors", "Occupancy Counter", "Flow Regulation"],
+        mode: "hardware",
+        description: "Physical crowd occupancy counter and entry regulator that streams live mess hall availability and eliminates physical stampedes.",
+        detailedDescription: "With thousands of students dining simultaneously in limited meal slots, dining hall entrances experience dangerous bottlenecks and queue overcrowding. This hardware challenge requires engineering a non-intrusive bidirectional break-beam, ultrasonic, or thermal occupancy sensor module installed at dining hall gates that updates a live occupancy counter and prevents hall overcrowding.",
+        challenges: [
+          "Severe physical bottlenecks during lunch and dinner entry rushes",
+          "Students waste 15-25 minutes in blind queues without knowing hall fullness",
+          "Manual crowd regulation by mess contractors is chaotic and inefficient",
+          "Lack of historical crowd density data to optimize meal timings"
+        ],
+        requirements: [
+          "Construct accurate bidirectional people-counting hardware for entry/exit doors",
+          "Provide a bright, local digital status display showing real-time available seats",
+          "Broadcast occupancy telemetry wirelessly to student dashboards with sub-second latency",
+          "Ruggedized, tamper-resistant enclosure suitable for high-traffic dining gates",
+          "Privacy-preserving design without facial identification or biometric storage"
+        ],
+        guidelines: [
+          "The hardware setup must be resilient to high ambient dining hall noise and lighting fluctuations."
+        ]
+      },
+      {
+        id: "PS-008",
+        themeId: "theme-3",
+        themeTitle: "Mess & Dining Optimization",
+        themeNumber: 3,
+        title: "Smart Mess Menu & Nutrition Information System",
+        track: "Smart Dining ERP",
+        icon: "menu_book",
+        color: "#34d399",
+        tags: ["Digital Menu", "Nutrition Analytics", "Waste Reduction"],
+        mode: "software",
+        description: "Digital mess menu platform providing macronutrient breakdowns, student rating feedback, and advance meal choice preferences to curb food wastage.",
+        detailedDescription: "In hostel dining facilities, menus are posted on static noticeboards without nutritional data. Students cannot track calorie or protein intake, catering managers cannot forecast demand for specific dishes, and massive quantities of food are discarded due to unpredicted popularity swings. This software platform provides rich nutritional transparency, lets students choose regular or feast meals in advance, and provides demand analytics to mess managers.",
+        challenges: [
+          "Students cannot track calories, protein, carbs, or allergen warnings in mess food",
+          "Mess management cannot predict daily student headcount or meal preferences",
+          "High volume of food wastage caused by over-preparation of unpopular dishes",
+          "Students with dietary preferences or fitness regimens have zero visibility"
+        ],
+        requirements: [
+          "Digitally display the daily mess menu with detailed macronutrient metrics",
+          "Allow students to rate dishes and submit actionable feedback to caterers",
+          "Enable students to indicate preferred meal choices in advance (Regular vs Feast Menu)",
+          "Provide caterers with predictive headcount analytics to calibrate cooking volumes",
+          "Simple, mobile-friendly interface accessible to thousands of concurrent hostellites"
+        ],
+        guidelines: [
+          "The solution should be simple, accessible for students, and practical for hostel mess operations."
+        ]
+      },
+      {
+        id: "PS-009",
+        themeId: "theme-3",
+        themeTitle: "Mess & Dining Optimization",
+        themeNumber: 3,
+        title: "Food Wastage Tracking & Surplus Redistribution System",
+        track: "Food Sustainability",
+        icon: "compost",
+        color: "#059669",
+        tags: ["Smart Waste Weighing", "Surplus Logistics", "Zero Waste"],
+        mode: "both",
+        description: "IoT plate waste weighing station or digital surplus food redistribution portal connecting kitchens with campus workers and food banks.",
+        detailedDescription: "Kilograms of edible food are wasted daily at tray disposal points while campus support staff and community centers face meal insecurity. Teams can construct a smart waste tray drop-off station equipped with load cells and waste categorization cameras, or develop an end-to-end logistics platform that logs surplus batch quantities after meal hours and coordinates verified distribution before food spoils.",
+        challenges: [
+          "Lack of quantitative accountability for plate food discard volumes per meal",
+          "Surplus unserved food is routinely discarded rather than repurposed safely",
+          "Logistical barrier in packaging and transporting surplus meals under food safety timelines",
+          "No incentive or awareness mechanism for hostellites to minimize plate leftovers"
+        ],
+        requirements: [
+          "Measure or log surplus food and plate waste volumes automatically per mess hall",
+          "Provide real-time alerts when surplus kitchen batches remain available after service hours",
+          "Coordinate verified collection routes for campus support staff or community NGOs",
+          "Track safety timestamps to ensure food quality and hygiene compliance",
+          "Display aggregate hostel waste metrics to foster peer consciousness"
+        ],
+        guidelines: [
+          "Ensure food safety protocols, temperature logging considerations, and rapid logistics workflows."
+        ]
+      }
+    ]
+  },
+  {
+    id: "theme-4",
+    slug: "laundry-coordination-system",
+    number: 4,
+    title: "Theme 4: Efficient Laundry Facility Coordination System",
+    shortTitle: "Laundry Coordination System",
+    icon: "local_laundry_service",
+    color: "#f59e0b",
+    description: "Drop-off schedule management, submitted laundry tracking, pickup notifications, and automated collection coordination.",
+    detailedDescription: "Streamlines campus hostel laundry ('Chota Dhobi') services by eliminating blind drop-offs, lost clothes, and unnecessary physical inquiries through digital bag tracking, status alerts, and smart pickup infrastructure.",
+    problemStatements: [
+      {
+        id: "PS-010",
+        themeId: "theme-4",
+        themeTitle: "Efficient Laundry Facility Coordination System",
+        themeNumber: 4,
+        title: "Smart Hostel Laundry Locker & Automated Drop-off Pod",
+        track: "Smart Storage Pod",
+        icon: "lock",
+        color: "#d97706",
+        tags: ["Electronic Latches", "RFID / OTP Access", "Smart Lockers"],
+        mode: "hardware",
+        description: "Physical smart laundry locker pod with electronic solenoid latches allowing 24/7 contactless clothes drop-off and pickup without queueing.",
+        detailedDescription: "Students with irregular academic schedules often miss fixed laundry operational hours. This hardware challenge requires engineering a modular smart locker pod equipped with electronic solenoid locks, an RFID/OTP keypad reader, and load verification sensors that allow students to securely drop off dirty clothes and retrieve washed bundles 24/7 without queueing.",
+        challenges: [
+          "Fixed laundry operating hours clash with students' lab and lecture timings",
+          "Unattended drop-offs on counters lead to misplaced bundles and clothing theft",
+          "Students stand in long lines during morning hours just to hand over laundry bags",
+          "Physical lockers currently require manual key administration"
+        ],
+        requirements: [
+          "Build an electronic smart locker compartment with microcontroller-controlled locks",
+          "Enable contactless unlock via student RFID campus ID or dynamic 6-digit OTP",
+          "Integrate internal weight or break-beam sensor confirming bag placement",
+          "Send automated pickup codes to students once laundry operators reload cleaned clothes",
+          "Sturdy, durable construction suitable for hostel ground floor lobbies"
+        ],
+        guidelines: [
+          "The pod must function safely with battery backup in case of temporary power interruptions."
+        ]
+      },
+      {
+        id: "PS-011",
+        themeId: "theme-4",
+        themeTitle: "Efficient Laundry Facility Coordination System",
+        themeNumber: 4,
+        title: "Smart Laundry Coordination for Hostel Students",
+        track: "Laundry Logistics Portal",
+        icon: "checkroom",
+        color: "#f59e0b",
+        tags: ["Schedule Workflow", "Bag QR Tracking", "Pickup Alerts"],
+        mode: "software",
+        description: "Simple, low-cost coordination platform organizing drop-off schedules, tracking submitted laundry bags, and notifying students when clothes are ready.",
+        detailedDescription: "In campus hostels, students depend on the local laundry service ('Chota Dhobi'). However, there is no clearly communicated drop-off schedule, no tracking system for submitted clothes, and no readiness notification mechanism. Students frequently make multiple frustrating, unnecessary trips just to check if their clothes are ready, leading to counter congestion, lost garments, and staff miscommunication.",
+        challenges: [
+          "No clearly communicated hostel block drop-off schedule",
+          "No proper tracking system for submitted clothes bags",
+          "No automated notification mechanism for pickup readiness",
+          "Students make repeated unnecessary trips causing physical congestion"
+        ],
+        requirements: [
+          "Organize and clearly communicate block-wise laundry drop-off and return schedules",
+          "Track submitted laundry bags digitally with unique identifiers or QR tags",
+          "Notify students automatically via WhatsApp, SMS, or app alerts when clothes are ready",
+          "Provide laundry staff with a dead-simple, 1-click update dashboard",
+          "Reduce unnecessary visits and eliminate administrative friction"
+        ],
+        guidelines: [
+          "The solution should be practical, easy to implement in a hostel environment, and should not require complex technical infrastructure."
+        ]
+      },
+      {
+        id: "PS-012",
+        themeId: "theme-4",
+        themeTitle: "Efficient Laundry Facility Coordination System",
+        themeNumber: 4,
+        title: "Laundry Cycle Telemetry & Machine Utilization Optimizer",
+        track: "Machine Telemetry",
+        icon: "sync_problem",
+        color: "#b45309",
+        tags: ["Current Clamps", "Virtual Queue", "Turn-by-Turn Alerts"],
+        mode: "both",
+        description: "IoT current/vibration sensor clamp or software virtual queue booking system for hostel shared washing machines.",
+        detailedDescription: "Residential hostels with self-service washing machines suffer from machines being hogged, clothes left inside barrels for hours after cycles complete, and students waiting endlessly in corridors. Teams can build a non-invasive current/vibration clamp sensor detecting machine state in real time, or a software slot reservation and virtual queue management system with turn-by-turn alerts.",
+        challenges: [
+          "Students walk to washing rooms only to find every single machine occupied",
+          "Completed laundry sits abandoned in drums, preventing subsequent students from washing",
+          "No reservation or fairness mechanism for peak weekend laundry demand",
+          "Frequent machine overloads cause recurring maintenance breakdowns"
+        ],
+        requirements: [
+          "Detect or book washing machine operating cycles with live status updates",
+          "Send immediate automated notifications to students when their cycle completes",
+          "Implement fair-usage queue limits preventing individuals from monopolizing machines",
+          "Provide a live availability widget accessible on student phones",
+          "Zero modifications required to internal washing machine circuitry"
+        ],
+        guidelines: [
+          "Safety-first implementation ensuring non-invasive sensor clamps and electrical safety compliance."
+        ]
+      }
+    ]
+  },
+  {
+    id: "theme-5",
+    slug: "student-wellbeing-counselling",
+    number: 5,
+    title: "Theme 5: Student Well-being & Counselling",
+    shortTitle: "Student Well-being & Counselling",
+    icon: "favorite",
+    color: "#f43f5e",
+    description: "Confidential mood pulse tracking, anonymized stress analytics, counsellor appointments, and structured hospital visit authorization.",
+    detailedDescription: "Empowers hostel mental health and physical safety through privacy-first mood sliders, automated counsellor appointment booking, aggregated block stress heatmaps for wardens, and emergency hospital authorization workflows.",
+    problemStatements: [
+      {
+        id: "PS-013",
+        themeId: "theme-5",
+        themeTitle: "Student Well-being & Counselling",
+        themeNumber: 5,
+        title: "Ambient Sensory Wellness & Bio-Feedback Pod",
+        track: "Sensory Pod Hardware",
+        icon: "spa",
+        color: "#ec4899",
+        tags: ["Circadian Lighting", "Acoustic Isolation", "Physiological Relaxation"],
+        mode: "hardware",
+        description: "Physical relaxation and acoustic decompression station equipped with ambient circadian lighting and non-contact wellness biofeedback for residential common rooms.",
+        detailedDescription: "Hostel life during exam periods and assignment deadlines induces high sensory fatigue and acute anxiety. This hardware challenge entails constructing an ergonomic de-stressing pod or micro-station for hostel study halls. The station incorporates dynamic circadian lighting, soundscapes, and non-contact physiological breathing/heart-rate biofeedback to guide students through 5-minute mental resets.",
+        challenges: [
+          "Hostel rooms offer limited private, calm decompression space during peak exam weeks",
+          "Students experience cognitive overload and insomnia from prolonged screen exposure",
+          "No physical wellness intervention available within residential hostel blocks",
+          "High friction in visiting distant campus wellness centers during late-night study hours"
+        ],
+        requirements: [
+          "Construct a compact, self-contained sensory wellness booth or tabletop module",
+          "Implement calibrated ambient lighting transitions and acoustic soundscapes",
+          "Integrate non-contact breathing or pulse bio-feedback guiding relaxation",
+          "Automated session timer (5 to 15 minutes) ensuring fair peer sharing",
+          "Safe, durable, and sanitizable materials suitable for public residential common rooms"
+        ],
+        guidelines: [
+          "Must focus on non-clinical relaxation and emotional comfort without medical claims."
+        ]
+      },
+      {
+        id: "PS-014",
+        themeId: "theme-5",
+        themeTitle: "Student Well-being & Counselling",
+        themeNumber: 5,
+        title: "Happiness Index, Stress Analytics & Counselling Management System",
+        track: "Mental Wellness Platform",
+        icon: "sentiment_satisfied_alt",
+        color: "#f43f5e",
+        tags: ["3-Second Pulse Check", "Confidential Booking", "Block Stress Heatmap"],
+        mode: "software",
+        description: "Privacy-first 3-second mood pulse slider, confidential counsellor booking, and anonymized block stress analytics for wardens without revealing identities.",
+        detailedDescription: "Hostel students frequently face academic pressure and adjustment issues affecting mental health. Counsellors visit periodically, but students lack a simple way to express mood trends or book appointments privately, while wardens have zero visibility into which blocks are suffering high stress. This platform provides a 3-second mood slider, automated appointment scheduling, and an anonymized block stress heatmap for wardens.",
+        challenges: [
+          "No simple system for students to track or express daily mood or stress levels",
+          "No organized, confidential method for scheduling counselling sessions",
+          "No structured way for wardens or management to identify blocks experiencing higher stress",
+          "Delayed identification of student mental health distress due to social stigma"
+        ],
+        requirements: [
+          "Quick Pulse Check: simple 3-second mood slider on student portal login",
+          "Enable students to easily book counselling slots when the counsellor visits",
+          "Automatically schedule counselling sessions and coordinate appointment logistics",
+          "Generate an anonymized analytics dashboard showing stress trends across hostel blocks",
+          "Implement an alert system flagging high aggregated stress to wardens without revealing identities"
+        ],
+        guidelines: [
+          "The solution should be privacy-focused, easy to implement in a hostel environment, and ensure absolute confidentiality of student data."
+        ]
+      },
+      {
+        id: "PS-015",
+        themeId: "theme-5",
+        themeTitle: "Student Well-being & Counselling",
+        themeNumber: 5,
+        title: "Hospital Visit Authorization & Escalation System",
+        track: "Emergency Healthcare Workflow",
+        icon: "local_hospital",
+        color: "#e11d48",
+        tags: ["Online Approval Workflow", "Emergency Escalation", "Guard Escort Tracking"],
+        mode: "both",
+        description: "Emergency hospital request and approval workflow, warden guard assignment and real-time tracking, and automated escalation to parents and proctors.",
+        detailedDescription: "Hostel students occasionally require urgent hospital visits for medical emergencies or consultations. The existing paper-based or unstructured phone authorization causes critical delays, communication gaps with parents, and difficulty in tracking assigned hostel guards. Teams can develop an emergency hardware SOS beacon / tracking tag or an end-to-end digital authorization and auto-escalation platform.",
+        challenges: [
+          "No proper online request and approval system for emergency hospital visits",
+          "No structured method to assign and track hostel guards accompanying students",
+          "No automated system to inform parents, proctors, or wardens during emergencies",
+          "No mechanism to record medical visit logs or post-consultation feedback"
+        ],
+        requirements: [
+          "Provide an online request and approval workflow for students requesting hospital visits",
+          "Enable wardens to approve requests digitally and assign hostel guards when required",
+          "Implement an auto-escalation mechanism alerting parents, proctors, or wardens if delayed",
+          "Track guard assignments and student hospital departures/returns in real time",
+          "Collect post-visit feedback and generate safety analytics for hostel management"
+        ],
+        guidelines: [
+          "The solution should be practical, ensuring student safety, speed of care, and transparent parent communication."
+        ]
+      }
+    ]
+  }
+];
+
+export const allProblemStatements: ProblemStatement[] = themes.flatMap((t) => t.problemStatements);
+
+export function getThemeBySlug(slug: string): Theme | undefined {
+  return themes.find((t) => t.slug === slug || t.id === slug);
+}
+
+export function getProblemStatementById(id: string): ProblemStatement | undefined {
+  return allProblemStatements.find((ps) => ps.id.toLowerCase() === id.toLowerCase());
+}

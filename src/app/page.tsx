@@ -7,6 +7,7 @@ import { getParticipantCount } from '@/actions/stats';
 import { getSystemSettings } from '@/actions/team';
 import { useAuth } from '@/context/AuthContext';
 import problemStatements from '@/data/problemStatements.json';
+import { themes } from '@/data/themes';
 import committeeMembers from '@/data/committee.json';
 import timelineMilestones from '@/data/timeline.json';
 import chiefGuest from '@/data/chiefGuest.json';
@@ -323,15 +324,15 @@ export default function Home() {
         <div
           className={`mx-3 sm:mx-6 mt-3 rounded-2xl transition-all duration-300 ${
             scrolled
-              ? 'bg-[#080512]/95 backdrop-blur-2xl border border-violet-500/20 shadow-[0_12px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.15)]'
-              : 'bg-[#080512]/75 backdrop-blur-xl border border-white/[0.08]'
+              ? 'bg-[#030712]/95 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.05)]'
+              : 'bg-[#030712]/70 backdrop-blur-xl border border-white/[0.08]'
           }`}
         >
           <div className="h-16 max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
               <div
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center transition-transform group-hover:scale-105 shadow-md shadow-violet-500/30"
-                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 15, color: '#ffffff' }}
+                className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center transition-transform group-hover:scale-105"
+                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 15, color: '#030712' }}
               >
                 S
               </div>
@@ -339,7 +340,7 @@ export default function Home() {
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
                   Solve-a-thon
                 </span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 500, fontSize: 10, color: '#a78bfa', letterSpacing: '0.05em' }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 500, fontSize: 10, color: '#64748b', letterSpacing: '0.05em' }}>
                   2026-27
                 </span>
               </div>
@@ -372,9 +373,9 @@ export default function Home() {
               {/* Live registration counter pill */}
               <div
                 className="hidden sm:flex items-center px-3.5 py-1.5 rounded-full"
-                style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.25)' }}
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
               >
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#c084fc', letterSpacing: '0.08em' }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#34d399', letterSpacing: '0.08em' }}>
                   {Math.max(100, participantCount)} REGISTERED
                 </span>
               </div>
@@ -383,10 +384,12 @@ export default function Home() {
                 href={isAdmin ? "/admin" : user ? "/profile" : "/register"}
                 className="inline-flex items-center justify-center px-4 sm:px-5 py-2 rounded-xl font-semibold text-[13px] transition-all hover:scale-[1.03] active:scale-[0.98]"
                 style={{
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
-                  color: '#ffffff',
+                  background: isAdmin
+                    ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                    : 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                  color: isAdmin ? '#ffffff' : '#030712',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  boxShadow: '0 0 28px rgba(168,85,247,0.42)',
+                  boxShadow: isAdmin ? '0 0 24px rgba(168,85,247,0.35)' : '0 0 24px rgba(56,189,248,0.3)',
                 }}
               >
                 {isAdmin ? "Admin Portal" : user ? "Dashboard" : "Register / Login"}
@@ -398,7 +401,7 @@ export default function Home() {
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                 title={isAdmin ? "Admin Console" : "Profile / Team"}
               >
-                <span className={`material-symbols-outlined ${isAdmin ? 'text-fuchsia-400' : 'text-slate-400'}`} style={{ fontSize: 17 }}>
+                <span className={`material-symbols-outlined ${isAdmin ? 'text-purple-400' : 'text-slate-400'}`} style={{ fontSize: 17 }}>
                   {isAdmin ? 'admin_panel_settings' : 'person'}
                 </span>
               </Link>
@@ -408,7 +411,7 @@ export default function Home() {
       </header>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="w-full pt-16 sm:pt-20 bg-[#07050e] overflow-x-clip">
+      <main className="w-full pt-16 sm:pt-20 bg-[#030712] overflow-x-clip">
         <div className="flex flex-col w-full">
 
           {/* ════════ HERO SECTION (FITS FULLY ON LAPTOP SCREEN, GDG FULL-WIDTH BOTTOM TIMER) ════════ */}
@@ -417,9 +420,9 @@ export default function Home() {
             className="relative w-full min-h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-4.5rem)] flex flex-col justify-between pt-2 sm:pt-4 pb-3 sm:pb-4 overflow-hidden"
           >
             {/* Ambient lighting orbs */}
-            <div className="absolute top-[-100px] left-[20%] w-[550px] h-[350px] rounded-full bg-violet-600/[0.12] blur-[170px] pointer-events-none ambient-orb" />
-            <div className="absolute top-[35%] right-[-5%] w-[450px] h-[450px] rounded-full bg-fuchsia-600/[0.08] blur-[150px] pointer-events-none ambient-orb-delay" />
-            <div className="absolute bottom-[-50px] left-[-10%] w-[350px] h-[350px] rounded-full bg-indigo-600/[0.08] blur-[140px] pointer-events-none ambient-orb" />
+            <div className="absolute top-[-100px] left-[20%] w-[550px] h-[350px] rounded-full bg-cyan-500/[0.08] blur-[160px] pointer-events-none ambient-orb" />
+            <div className="absolute top-[35%] right-[-5%] w-[450px] h-[450px] rounded-full bg-indigo-500/[0.05] blur-[140px] pointer-events-none ambient-orb-delay" />
+            <div className="absolute bottom-[-50px] left-[-10%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.04] blur-[120px] pointer-events-none ambient-orb" />
 
             <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-between h-full flex-1">
               {/* Top Row: Left Side (Text & CTAs) and Right Side (Large Stat Cards) */}
@@ -427,8 +430,8 @@ export default function Home() {
                 {/* Left Side: Big Bold Text & CTAs shifted upwards */}
                 <div className="lg:col-span-7 flex flex-col items-start text-left gap-3.5 sm:gap-4">
                   {/* Pill badge */}
-                  <motion.div variants={fadeItem} className="inline-flex items-center px-3.5 py-1 rounded-full glass-card border border-violet-500/30" style={{ boxShadow: '0 0 15px rgba(168,85,247,0.15)' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#d8b4fe', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                  <motion.div variants={fadeItem} className="inline-flex items-center px-3.5 py-1 rounded-full glass-card" style={{ boxShadow: 'none' }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#67e8f9', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
                       VIT Chennai · Hostellite Hackathon
                     </span>
                   </motion.div>
@@ -438,9 +441,9 @@ export default function Home() {
                     <h1 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 0.95, fontSize: 'clamp(3.2rem, 5.8vw, 6.4rem)' }} className="flex flex-col">
                       <span className="text-white">SOLVE</span>
                       <div className="flex items-center gap-3">
-                        <span className="bg-gradient-to-r from-violet-400 via-fuchsia-300 to-pink-400 bg-clip-text" style={{ WebkitTextFillColor: 'transparent' }}>-A-</span>
+                        <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-emerald-400 bg-clip-text" style={{ WebkitTextFillColor: 'transparent' }}>-A-</span>
                         <span className="text-white">THON</span>
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: '#a78bfa', letterSpacing: '0.15em', marginLeft: 8 }} className="self-center">
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, fontWeight: 700, color: '#64748b', letterSpacing: '0.15em', marginLeft: 8 }} className="self-center">
                           2026-27
                         </span>
                       </div>
@@ -456,11 +459,14 @@ export default function Home() {
                   <motion.div variants={fadeItem} className="flex flex-wrap items-center gap-3.5 pt-1">
                     <Link
                       href={isAdmin ? "/admin" : user ? "/profile" : "/register"}
-                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold transition-all hover:scale-[1.03] active:scale-[0.98] text-sm sm:text-base text-white"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold transition-all hover:scale-[1.03] active:scale-[0.98] text-sm sm:text-base"
                       style={{
-                        background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
+                        background: isAdmin
+                          ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                          : 'linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%)',
+                        color: isAdmin ? '#ffffff' : '#030712',
                         fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        boxShadow: '0 0 35px rgba(168,85,247,0.45)',
+                        boxShadow: isAdmin ? '0 0 30px rgba(168,85,247,0.4)' : '0 0 30px rgba(56,189,248,0.35)',
                       }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
@@ -474,7 +480,7 @@ export default function Home() {
                       className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl glass-card font-semibold transition-all hover:scale-[1.02] text-sm sm:text-base text-slate-200"
                       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: 'none' }}
                     >
-                      <span className="material-symbols-outlined text-violet-400" style={{ fontSize: 18 }}>terminal</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>terminal</span>
                       View Challenges
                     </a>
                   </motion.div>
@@ -491,12 +497,12 @@ export default function Home() {
                     <motion.div
                       variants={popCard}
                       key={s.label}
-                      className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#0e091c]/85 border-violet-500/15 group"
+                      className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#090e1a]/85 group"
                       style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.5)' }}
                     >
-                      <span className="material-symbols-outlined transition-transform group-hover:scale-110" style={{ fontSize: 32, color: '#c084fc' }}>{s.icon}</span>
+                      <span className="material-symbols-outlined transition-transform group-hover:scale-110" style={{ fontSize: 32, color: '#38bdf8' }}>{s.icon}</span>
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 32, color: '#f1f5f9', letterSpacing: '-0.03em', lineHeight: 1 }}>{s.val}</span>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#a78bfa', letterSpacing: '0.14em', textTransform: 'uppercase' }}>{s.label}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.14em', textTransform: 'uppercase' }}>{s.label}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -507,48 +513,54 @@ export default function Home() {
                 variants={fadeItem}
                 className="w-full pt-2 sm:pt-3 pb-8 sm:pb-12 mt-auto"
               >
-                {/* Centered 'Registration Ends in' header with glowing violet/fuchsia lines beside it */}
+                {/* Centered 'Registration Ends in' header with glowing cyan lines beside it */}
                 <div className="w-full flex items-center justify-center gap-3 sm:gap-5 pb-2 px-2">
-                  <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-r from-transparent via-violet-400/60 to-fuchsia-500 shadow-[0_0_12px_rgba(168,85,247,0.7)]" />
-                  <div className="flex items-center shrink-0 px-3.5 py-1 rounded-full bg-violet-950/60 border border-violet-500/40 backdrop-blur-md shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#e879f9', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+                  <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-r from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
+                  <div className="flex items-center shrink-0 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(56,189,248,0.15)]">
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
                       Registration Ends in
                     </span>
                   </div>
-                  <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-l from-transparent via-violet-400/60 to-fuchsia-500 shadow-[0_0_12px_rgba(168,85,247,0.7)]" />
+                  <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-l from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                 </div>
                 <GDGTimer timeLeft={timeLeft} />
               </motion.div>
             </div>
           </ScrollFadeSection>
 
-          {/* ════════ PROBLEM STATEMENTS MARQUEE (SEAMLESS INFINITE ROLLER) ════════ */}
+          {/* ════════ THEMES & PROBLEM STATEMENTS MARQUEE (SEAMLESS INFINITE ROLLER) ════════ */}
           <ScrollFadeSection 
             className="w-full py-14 sm:py-20 overflow-hidden relative" 
             id="problems"
           >
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mb-8">
               <div className="flex flex-col items-center text-center gap-2.5">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold tracking-wider uppercase mb-1">
+                  <span>5 OFFICIAL TRACKS</span>
+                </div>
                 <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
-                  Problem Statements
+                  Themes &amp; Problem Statements
                 </motion.h2>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#94a3b8', maxWidth: 640 }} className="mt-1">
+                  Hover to preview each theme, and click through to inspect its dedicated problem statements, technical requirements, and official dossier.
+                </p>
               </div>
             </div>
 
             {/* Continuous Marquee Track (Smooth Continuous Infinite Roller, Right to Left) */}
             <motion.div variants={fadeItem} className="relative w-full overflow-hidden py-4">
               {/* Fade gradients at edges */}
-              <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(90deg, #07050e, transparent)' }} />
-              <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(270deg, #07050e, transparent)' }} />
+              <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(90deg, #030712, transparent)' }} />
+              <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-48 z-10 pointer-events-none" style={{ background: 'linear-gradient(270deg, #030712, transparent)' }} />
 
               <div className="ps-marquee-track">
                 {/* Track Group 1 */}
                 <div className="flex gap-6 pr-6 shrink-0">
-                  {[...problemStatements, ...problemStatements].map((ps, i) => (
-                    <div 
-                      key={`track1-${ps.id}-${i}`} 
-                      className="ps-banner group cursor-pointer"
-                      onClick={() => setActiveModalPS(ps)}
+                  {[...themes, ...themes, ...themes].map((theme, i) => (
+                    <Link 
+                      key={`track1-${theme.id}-${i}`} 
+                      href={`/themes/${theme.slug}`}
+                      className="ps-banner group cursor-pointer block"
                     >
                       {/* Front state: Themed Large Icon + Title (Clean, Greyed-out square banner) */}
                       <div className="ps-front">
@@ -560,44 +572,53 @@ export default function Home() {
                             boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                           }}
                         >
-                          <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-fuchsia-300 transition-colors">
-                            {ps.icon}
+                          <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-cyan-300 transition-colors">
+                            {theme.icon}
                           </span>
                         </div>
+                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1.5 font-bold">
+                          THEME 0{theme.number}
+                        </span>
                         <h3
                           style={{
                             fontFamily: "'Plus Jakarta Sans', sans-serif",
                             fontWeight: 800,
-                            fontSize: 18,
+                            fontSize: 16,
                             lineHeight: 1.35,
                             color: '#e2e8f0',
                           }}
                           className="px-2 line-clamp-3 text-center"
                         >
-                          {ps.title}
+                          {theme.title}
                         </h3>
                       </div>
 
-                      {/* Hover state: Clean Centered Title + Short Description (No tag pills) */}
+                      {/* Hover state: Clean Centered Title + Short Description */}
                       <div className="ps-desc-container">
-                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.65rem' }}>
-                          {ps.title}
+                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1 font-bold">
+                          THEME 0{theme.number}
+                        </span>
+                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.45rem' }}>
+                          {theme.shortTitle}
                         </h3>
-                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
-                          {ps.description}
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, lineHeight: 1.55, color: '#94a3b8', marginBottom: '0.75rem' }}>
+                          {theme.description}
                         </p>
+                        <span className="text-[11px] font-mono font-bold text-cyan-400 inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          View Problem Statements →
+                        </span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
 
                 {/* Track Group 2 (Identical Clone for 100% Seamless Continuous Roller Loop) */}
                 <div className="flex gap-6 pr-6 shrink-0" aria-hidden="true">
-                  {[...problemStatements, ...problemStatements].map((ps, i) => (
-                    <div 
-                      key={`track2-${ps.id}-${i}`} 
-                      className="ps-banner group cursor-pointer"
-                      onClick={() => setActiveModalPS(ps)}
+                  {[...themes, ...themes, ...themes].map((theme, i) => (
+                    <Link 
+                      key={`track2-${theme.id}-${i}`} 
+                      href={`/themes/${theme.slug}`}
+                      className="ps-banner group cursor-pointer block"
                     >
                       {/* Front state: Themed Large Icon + Title (Clean, Greyed-out square banner) */}
                       <div className="ps-front">
@@ -609,34 +630,43 @@ export default function Home() {
                             boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                           }}
                         >
-                          <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-fuchsia-300 transition-colors">
-                            {ps.icon}
+                          <span className="material-symbols-outlined text-5xl text-slate-400 group-hover:text-cyan-300 transition-colors">
+                            {theme.icon}
                           </span>
                         </div>
+                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1.5 font-bold">
+                          THEME 0{theme.number}
+                        </span>
                         <h3
                           style={{
                             fontFamily: "'Plus Jakarta Sans', sans-serif",
                             fontWeight: 800,
-                            fontSize: 18,
+                            fontSize: 16,
                             lineHeight: 1.35,
                             color: '#e2e8f0',
                           }}
                           className="px-2 line-clamp-3 text-center"
                         >
-                          {ps.title}
+                          {theme.title}
                         </h3>
                       </div>
 
-                      {/* Hover state: Clean Centered Title + Short Description (No tag pills) */}
+                      {/* Hover state: Clean Centered Title + Short Description */}
                       <div className="ps-desc-container">
-                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.65rem' }}>
-                          {ps.title}
+                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1 font-bold">
+                          THEME 0{theme.number}
+                        </span>
+                        <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.45rem' }}>
+                          {theme.shortTitle}
                         </h3>
-                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.6, color: '#94a3b8' }}>
-                          {ps.description}
+                        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, lineHeight: 1.55, color: '#94a3b8', marginBottom: '0.75rem' }}>
+                          {theme.description}
                         </p>
+                        <span className="text-[11px] font-mono font-bold text-cyan-400 inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          View Problem Statements →
+                        </span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -665,48 +695,48 @@ export default function Home() {
                   preserveAspectRatio="xMidYMid meet"
                 >
                   <defs>
-                    {/* Road Gradient — Violet → Purple → Fuchsia → Rose → Indigo */}
+                    {/* Road Gradient — Cyan → Emerald → Violet → Pink → Amber */}
                     <linearGradient id="cyberRoadGrad" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="#8b5cf6" />
-                      <stop offset="22%" stopColor="#a855f7" />
-                      <stop offset="48%" stopColor="#d946ef" />
-                      <stop offset="72%" stopColor="#ec4899" />
-                      <stop offset="90%" stopColor="#818cf8" />
-                      <stop offset="100%" stopColor="#6366f1" />
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="22%" stopColor="#22d3ee" />
+                      <stop offset="44%" stopColor="#34d399" />
+                      <stop offset="66%" stopColor="#a855f7" />
+                      <stop offset="85%" stopColor="#f43f5e" />
+                      <stop offset="100%" stopColor="#f59e0b" />
                     </linearGradient>
 
                     {/* Dark 3D Extrusion Side-Bevel */}
                     <linearGradient id="cyberRoadExtrusion" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="#5b21b6" />
-                      <stop offset="22%" stopColor="#6b21a8" />
-                      <stop offset="48%" stopColor="#86198f" />
-                      <stop offset="72%" stopColor="#9d174d" />
-                      <stop offset="90%" stopColor="#3730a3" />
-                      <stop offset="100%" stopColor="#312e81" />
+                      <stop offset="0%" stopColor="#0284c7" />
+                      <stop offset="22%" stopColor="#0891b2" />
+                      <stop offset="44%" stopColor="#059669" />
+                      <stop offset="66%" stopColor="#7e22ce" />
+                      <stop offset="85%" stopColor="#be123c" />
+                      <stop offset="100%" stopColor="#b45309" />
                     </linearGradient>
 
-                    {/* Road Ambient Glow */}
+                    {/* Faint Road Ambient Glow */}
                     <filter id="roadNeonGlow" x="-10%" y="-10%" width="120%" height="120%">
-                      <feGaussianBlur stdDeviation="22" result="blur" />
+                      <feGaussianBlur stdDeviation="20" result="blur" />
                     </filter>
                   </defs>
 
                   {/* 1. Topographic Elevation Background Lines */}
                   <path
                     d="M 50 380 C 150 210, 280 230, 360 290 C 440 350, 600 250, 720 310 C 840 370, 1000 190, 1150 280"
-                    stroke="rgba(168, 85, 247, 0.08)"
+                    stroke="rgba(56, 189, 248, 0.05)"
                     strokeWidth="1"
                     fill="none"
                   />
                   <path
                     d="M 20 480 C 200 330, 340 370, 480 430 C 620 490, 780 370, 920 440 C 1020 490, 1100 380, 1180 410"
-                    stroke="rgba(217, 70, 239, 0.06)"
+                    stroke="rgba(168, 85, 247, 0.04)"
                     strokeWidth="1"
                     fill="none"
                   />
                   <path
                     d="M 80 190 C 220 110, 380 120, 520 180 C 660 240, 800 130, 950 170 C 1050 200, 1120 140, 1180 160"
-                    stroke="rgba(99, 102, 241, 0.06)"
+                    stroke="rgba(52, 211, 153, 0.04)"
                     strokeWidth="1"
                     fill="none"
                   />
@@ -718,7 +748,7 @@ export default function Home() {
                     strokeWidth="56"
                     strokeLinecap="round"
                     fill="none"
-                    opacity="0.22"
+                    opacity="0.18"
                     filter="url(#roadNeonGlow)"
                   />
 
@@ -743,7 +773,7 @@ export default function Home() {
                   {/* 5. Center Road Dashed Guideline */}
                   <path
                     d="M 50 470 C 130 470, 195 280, 295 280 C 395 280, 415 470, 515 470 C 615 470, 625 280, 725 280 C 825 280, 835 470, 935 470 C 1035 470, 1025 280, 1115 280"
-                    stroke="rgba(255, 255, 255, 0.35)"
+                    stroke="rgba(255, 255, 255, 0.28)"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeDasharray="8 12"
@@ -758,7 +788,7 @@ export default function Home() {
                     return (
                       <g key={idx}>
                         {/* Anchor Dot on the Road */}
-                        <circle cx={m.x} cy={m.y} r="7" fill="#07050e" stroke={m.color} strokeWidth="3" />
+                        <circle cx={m.x} cy={m.y} r="7" fill="#030712" stroke={m.color} strokeWidth="3" />
                         <circle cx={m.x} cy={m.y} r="2.5" fill="#ffffff" />
 
                         {/* Vertical White/Color Pin Line */}
@@ -786,7 +816,7 @@ export default function Home() {
                           <div
                             className="w-full flex flex-col items-center text-center p-2.5 rounded-xl card-pop cursor-pointer transition-all"
                             style={{
-                              background: 'rgba(16, 10, 32, 0.94)',
+                              background: 'rgba(8, 12, 24, 0.92)',
                               border: `1px solid ${m.color}45`,
                               backdropFilter: 'blur(16px)',
                               boxShadow: `0 8px 30px rgba(0,0,0,0.7), 0 0 20px ${m.color}25`,
@@ -827,7 +857,7 @@ export default function Home() {
                 {/* Vertical gradient circuit line */}
                 <div
                   className="absolute left-3 top-0 bottom-0 w-[3px] rounded-full"
-                  style={{ background: 'linear-gradient(180deg, #8b5cf6, #d946ef, #ec4899, #6366f1)' }}
+                  style={{ background: 'linear-gradient(180deg, #38bdf8, #22d3ee, #34d399, #a855f7, #f43f5e, #f59e0b)' }}
                 />
 
                 <div className="flex flex-col gap-8">
@@ -837,7 +867,7 @@ export default function Home() {
                       <div
                         className="absolute -left-[30px] top-4 w-[24px] h-[24px] rounded-full flex items-center justify-center"
                         style={{
-                          background: '#07050e',
+                          background: '#030712',
                           border: `2px solid ${item.color}`,
                           boxShadow: `0 0 12px ${item.color}60`,
                         }}
@@ -871,10 +901,10 @@ export default function Home() {
             className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
             id="committee"
           >
-            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(168,85,247,0.04) 0%, transparent 70%)' }} />
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(56,189,248,0.02) 0%, transparent 70%)' }} />
             <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-14 relative z-10">
               <div className="flex flex-col items-center text-center gap-3">
-                <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#c084fc', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                   Governance
                 </motion.span>
                 <motion.h2 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
@@ -884,23 +914,23 @@ export default function Home() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {committeeMembers.map(p => (
-                  <motion.div variants={popCard} key={p.name} className="glass-card card-pop rounded-2xl overflow-hidden flex flex-col cursor-pointer border-violet-500/10">
-                    <div className="w-full h-48 overflow-hidden relative" style={{ background: '#0e081c' }}>
+                  <motion.div variants={popCard} key={p.name} className="glass-card card-pop rounded-2xl overflow-hidden flex flex-col cursor-pointer">
+                    <div className="w-full h-48 overflow-hidden relative" style={{ background: '#0f172a' }}>
                       <img className="w-full h-full object-cover" src={p.img} alt={p.name} />
                       <div
                         className="absolute top-2 right-2 px-2 py-[3px] rounded-md"
-                        style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, background: 'rgba(18,10,36,0.75)', backdropFilter: 'blur(8px)', color: '#e879f9', border: '1px solid rgba(168,85,247,0.25)' }}
+                        style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', color: '#38bdf8', border: '1px solid rgba(255,255,255,0.06)' }}
                       >
                         {p.tag}
                       </div>
                     </div>
                     <div className="p-4 sm:p-5 flex flex-col gap-1.5 flex-1">
                       <h4 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 15, color: '#f1f5f9' }}>{p.name}</h4>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, color: '#c084fc' }}>{p.role}</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600, color: '#38bdf8' }}>{p.role}</span>
                       <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#94a3b8', lineHeight: 1.6, flex: 1 }}>{p.desc}</p>
-                      <div className="mt-auto pt-3 flex flex-col gap-1" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#64748b' }}>
+                      <div className="mt-auto pt-3 flex flex-col gap-1" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#475569' }}>
                         <span>{p.jurisdiction}</span>
-                        <span style={{ color: '#a78bfa' }}>{p.email}</span>
+                        <span style={{ color: '#64748b' }}>{p.email}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -919,27 +949,27 @@ export default function Home() {
               {/* Distinguished Chief Guest */}
               <motion.div
                 variants={popCard}
-                className="glass-card card-pop rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 cursor-pointer border-violet-500/20"
-                style={{ boxShadow: '0 0 60px rgba(168,85,247,0.1), 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+                className="glass-card card-pop rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 cursor-pointer"
+                style={{ boxShadow: '0 0 60px rgba(56,189,248,0.06), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)' }}
               >
-                <div className="w-full lg:w-1/3 aspect-square max-w-[280px] rounded-2xl overflow-hidden relative shadow-2xl shrink-0" style={{ background: '#0e081c' }}>
+                <div className="w-full lg:w-1/3 aspect-square max-w-[280px] rounded-2xl overflow-hidden relative shadow-2xl shrink-0" style={{ background: '#0f172a' }}>
                   <img
                     className="w-full h-full object-cover"
                     src={chiefGuest.img}
                     alt={chiefGuest.name}
                   />
-                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg glass" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, color: '#e879f9' }}>
+                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg glass" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, fontWeight: 700, color: '#38bdf8' }}>
                     {chiefGuest.badge}
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 flex-1">
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#c084fc', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                     {chiefGuest.subtitle}
                   </span>
                   <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
                     {chiefGuest.name}
                   </h3>
-                  <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: '#c084fc' }}>
+                  <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 600, color: '#38bdf8' }}>
                     {chiefGuest.role}
                   </p>
                   <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#94a3b8', lineHeight: 1.7 }}>
@@ -959,13 +989,13 @@ export default function Home() {
               {/* Cash Prizes */}
               <div className="flex flex-col gap-8">
                 <div className="flex flex-col items-center text-center gap-2">
-                  <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#c084fc', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  <motion.span variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
                     Bounties & Recognition
                   </motion.span>
                   <motion.h3 variants={fadeItem} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#f1f5f9', letterSpacing: '-0.03em' }}>
                     {prizes.totalPool}
                   </motion.h3>
-                  <motion.p variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  <motion.p variants={fadeItem} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                     {prizes.disbursementNote}
                   </motion.p>
                 </div>
@@ -975,15 +1005,15 @@ export default function Home() {
                     <motion.div
                       key={tier.rank}
                       variants={popCard}
-                      className={`glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-4 relative overflow-hidden ${tier.order} ${tier.rank.includes('1ST') ? 'border-fuchsia-400/40 shadow-[0_0_60px_rgba(217,70,239,0.2)]' : ''} cursor-pointer`}
+                      className={`glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-4 relative overflow-hidden ${tier.order} ${tier.rank.includes('1ST') ? 'border-cyan-400/30' : ''} cursor-pointer`}
                       style={{
                         boxShadow: tier.rank.includes('1ST')
-                          ? '0 0 60px rgba(217,70,239,0.2), 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)'
+                          ? '0 0 60px rgba(56,189,248,0.12), 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'
                           : undefined
                       }}
                     >
                       {tier.rank.includes('1ST') && (
-                        <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-fuchsia-500/15 blur-2xl pointer-events-none" />
+                        <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-cyan-400/10 blur-2xl pointer-events-none" />
                       )}
                       <div className="relative z-10 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
@@ -1001,15 +1031,15 @@ export default function Home() {
                 {/* Certificate & Resume Enhancement Card */}
                 <motion.div
                   variants={popCard}
-                  className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-violet-500/30 cursor-pointer relative overflow-hidden"
+                  className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-cyan-500/25 cursor-pointer relative overflow-hidden"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(18, 12, 34, 0.85) 100%)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.06) 0%, rgba(10, 15, 26, 0.8) 100%)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
                   }}
                 >
-                  <div className="absolute top-0 right-0 w-64 h-full bg-fuchsia-500/10 blur-3xl pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-64 h-full bg-cyan-400/5 blur-3xl pointer-events-none" />
                   <div className="flex items-center gap-4 relative z-10 w-full sm:w-auto">
-                    <div className="w-12 h-12 rounded-xl bg-violet-500/15 border border-violet-500/35 flex items-center justify-center shrink-0 text-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.25)]">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0 text-cyan-400 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
                       <span className="material-symbols-outlined text-2xl">workspace_premium</span>
                     </div>
                     <div className="flex flex-col gap-0.5 text-center sm:text-left">
@@ -1022,12 +1052,12 @@ export default function Home() {
                           lineHeight: 1.45,
                         }}
                       >
-                        {prizes.certificate.title} <span className="text-fuchsia-400 font-extrabold">{prizes.certificate.organization}</span>.
+                        {prizes.certificate.title} <span className="text-cyan-400 font-extrabold">{prizes.certificate.organization}</span>.
                       </span>
                     </div>
                   </div>
-                  <div className="shrink-0 relative z-10 flex items-center px-3.5 py-1.5 rounded-full bg-violet-950/70 border border-violet-500/40">
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#d8b4fe', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  <div className="shrink-0 relative z-10 flex items-center px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                       {prizes.certificate.badge}
                     </span>
                   </div>
@@ -1040,21 +1070,21 @@ export default function Home() {
       </main>
 
       {/* ── FOOTER ── */}
-      <footer className="w-full bg-[#07050e]" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <footer className="w-full" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex flex-col gap-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div
-                className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/20"
-                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 12, color: '#ffffff' }}
+                className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center"
+                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 12, color: '#030712' }}
               >
                 S
               </div>
-              <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: 13, color: '#94a3b8' }}>
+              <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: 13, color: '#64748b' }}>
                 Solve-a-thon 2026-27 · VIT Chennai
               </span>
             </div>
-            <div className="flex items-center" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#c084fc' }}>
+            <div className="flex items-center" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, color: '#34d399' }}>
               SYSTEMS OPERATIONAL
             </div>
           </div>
@@ -1063,11 +1093,11 @@ export default function Home() {
               <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#94a3b8' }}>
                 Organized by Solve-a-thon Technical Committee & Student Guild
               </p>
-              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#64748b' }}>
+              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569' }}>
                 Direct Enquiries: operations@solvathon.org
               </p>
             </div>
-            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#475569' }}>
+            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: '#334155' }}>
               © 2026 SOLVE-A-THON. ALL RIGHTS RESERVED.
             </p>
           </div>
@@ -1082,18 +1112,18 @@ export default function Home() {
         >
           {/* Bigger card: consistent uniform size for all cards */}
           <div 
-            className="relative w-full max-w-[680px] h-[480px] sm:h-[500px] glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-violet-500/35 shadow-[0_0_60px_rgba(168,85,247,0.25)] bg-[#0d071c]/95 backdrop-blur-2xl overflow-hidden"
+            className="relative w-full max-w-[680px] h-[480px] sm:h-[500px] glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-cyan-500/35 shadow-[0_0_60px_rgba(56,189,248,0.2)] bg-[#0a0f1d]/95 backdrop-blur-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
-            style={{ boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 45px rgba(168, 85, 247, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12)' }}
+            style={{ boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 45px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12)' }}
           >
             {/* Top ambient aura */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-28 bg-fuchsia-500/15 blur-3xl pointer-events-none" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-28 bg-cyan-500/10 blur-3xl pointer-events-none" />
 
             {/* Top Bar: Track Badge */}
             <div className="flex items-center justify-between pb-4 border-b border-white/10 relative z-10 shrink-0">
-              <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-violet-950/70 border border-violet-500/40">
-                <span className="material-symbols-outlined text-fuchsia-400 text-lg">{activeModalPS.icon}</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#e879f9', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                <span className="material-symbols-outlined text-cyan-400 text-lg">{activeModalPS.icon}</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                   {activeModalPS.track}
                 </span>
               </div>
@@ -1131,13 +1161,13 @@ export default function Home() {
 
             {/* Footer Row */}
             <div className="pt-4 mt-2 border-t border-white/10 flex items-center justify-between relative z-10 shrink-0">
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#a78bfa', letterSpacing: '0.1em' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#64748b', letterSpacing: '0.1em' }}>
                 SOLVE-A-THON · VIT CHENNAI
               </span>
               <button
                 type="button"
                 onClick={() => setActiveModalPS(null)}
-                className="px-5 py-2 rounded-xl text-xs font-semibold bg-violet-500/15 hover:bg-violet-500/25 text-violet-300 border border-violet-500/35 hover:border-violet-400/50 transition-all cursor-pointer"
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:border-cyan-400/50 transition-all cursor-pointer"
               >
                 Cancel
               </button>

@@ -67,10 +67,10 @@ export default function EvaluateIndexPage() {
   }, [user, authLoading, isAdmin, router]);
 
   return (
-    <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
+    <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
       {loading ? (
         <>
-          <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
+          <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-400 rounded-full animate-spin mb-4"></div>
           <p className="text-white/60 font-mono text-xs tracking-widest uppercase">
             CONNECTING TO JURY WORKBENCH...
           </p>
@@ -84,7 +84,7 @@ export default function EvaluateIndexPage() {
               onClick={() => {
                 loadWorkbench();
               }}
-              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-500/30"
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
             >
               Retry Connection
             </button>

@@ -243,6 +243,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
           createdAt: t.createdAt.toISOString(),
           memberCount: t.participants.length,
           problemStatement: t.problemStatement || "Not Selected",
+          implementationType: t.implementationType || null,
           pptUrl: t.pptUrl,
           understanding: t.understanding,
           submittedAt: t.submittedAt ? t.submittedAt.toISOString() : null,
