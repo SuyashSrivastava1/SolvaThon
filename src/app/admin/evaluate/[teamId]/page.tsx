@@ -92,7 +92,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
     setLoading(false);
   };
 
-  // Load Admin Telemetry & Teams
+  // Load Admin Data & Teams
   useEffect(() => {
     if (authLoading) return;
 

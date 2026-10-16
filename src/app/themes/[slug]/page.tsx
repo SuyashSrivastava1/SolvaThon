@@ -107,9 +107,9 @@ export default function ThemePage({ params }: PageProps) {
 
   ${theme.problemStatements
     .map(
-      (ps) => `
+      (ps, index) => `
     <div style="margin-bottom: 24pt; page-break-inside: avoid;">
-      <h3>${ps.id}: ${ps.title}</h3>
+      <h3>PS ${ps.psNumber || index + 1}: ${ps.title}</h3>
       <p><strong>Description:</strong> ${ps.description}</p>
       
       <h4>Problem Background &amp; Context</h4>
@@ -194,7 +194,7 @@ export default function ThemePage({ params }: PageProps) {
           </h2>
 
           <div className="space-y-6">
-            {theme.problemStatements.map((ps: ProblemStatement) => (
+            {theme.problemStatements.map((ps: ProblemStatement, index: number) => (
               <div
                 key={ps.id}
                 id={ps.id.toLowerCase()}
@@ -203,7 +203,7 @@ export default function ThemePage({ params }: PageProps) {
                 {/* Header */}
                 <div className="flex items-center gap-3 border-b border-white/5 pb-3">
                   <span className="font-mono text-xs font-bold text-cyan-400">
-                    {ps.id}
+                    PS {ps.psNumber || index + 1}
                   </span>
                   <span className="text-white/30 text-xs">•</span>
                   <span className="text-xs font-mono text-white/50 uppercase tracking-wider">

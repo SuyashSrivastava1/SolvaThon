@@ -337,7 +337,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
         <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-        <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
+        <p className="text-white/60 font-mono text-xs tracking-widest uppercase">LOADING PROFILE...</p>
       </div>
     );
   }
@@ -376,7 +376,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
         <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
-        <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
+        <p className="text-white/60 font-mono text-xs tracking-widest uppercase">LOADING PROFILE...</p>
       </div>
     );
   }
@@ -618,7 +618,7 @@ export default function ProfilePage() {
                         ? "bg-amber-500/20 border border-amber-500/30 text-amber-300"
                         : "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
                         }`}>
-                        {isPhase1Locked ? `🔒 TRACK LOCKED: ${teamData.team.problemStatement}` : `✓ TRACK SELECTED: ${teamData.team.problemStatement}`}
+                        {isPhase1Locked ? `🔒 TRACK LOCKED: ${currentPS ? `PS ${currentPS.psNumber} • ${currentPS.track}` : teamData.team.problemStatement}` : `✓ TRACK SELECTED: ${currentPS ? `PS ${currentPS.psNumber} • ${currentPS.track}` : teamData.team.problemStatement}`}
                       </span>
                     )}
                   </div>
@@ -643,7 +643,7 @@ export default function ProfilePage() {
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-400">
-                                {ps.id}
+                                PS {ps.psNumber} • {ps.track}
                               </span>
                               <div className="flex items-center gap-1.5">
                                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${ps.mode === "hardware"
@@ -1127,7 +1127,7 @@ export default function ProfilePage() {
                   {teamData.team.problemStatement ? (
                     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-semibold">
                       <span className="material-symbols-outlined text-base">task_alt</span>
-                      Assigned Track: {teamData.team.problemStatement}
+                      Assigned Track: {currentPS ? `PS ${currentPS.psNumber} • ${currentPS.track}` : teamData.team.problemStatement}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs font-semibold">

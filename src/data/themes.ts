@@ -1,5 +1,6 @@
 export interface ProblemStatement {
   id: string;
+  psNumber: number;
   themeId: string;
   themeTitle: string;
   themeNumber: number;
@@ -43,6 +44,7 @@ export const themes: Theme[] = [
     problemStatements: [
       {
         id: "PS-001",
+        psNumber: 1,
         themeId: "theme-1",
         themeTitle: "Integrated Smart Hostel Monitoring & Information Management System",
         themeNumber: 1,
@@ -73,6 +75,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-002",
+        psNumber: 2,
         themeId: "theme-1",
         themeTitle: "Integrated Smart Hostel Monitoring & Information Management System",
         themeNumber: 1,
@@ -85,7 +88,7 @@ export const themes: Theme[] = [
         description: "Centralized hostel management solution for student records, automated room allocation, complaint ticketing, and warden operational visibility.",
         detailedDescription: "Hostel administration manages student records, room allocations, maintenance requests, and late-entry logs across disparate manual spreadsheets or disconnected physical logbooks. This results in slow record retrieval, poor tracking of maintenance complaints, and communication delays between students and hostel offices. This challenge demands a comprehensive, intuitive management platform for students and wardens.",
         challenges: [
-          "Difficulty in retrieving student historical records and contact telemetry quickly",
+          "Difficulty in retrieving student historical records and contact information quickly",
           "Poor tracking and delayed resolution of hostel maintenance requests and complaints",
           "Limited visibility of real-time hostel wing occupancy for administrators",
           "Inefficient communication channels between students and hostel offices"
@@ -103,6 +106,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-003",
+        psNumber: 3,
         themeId: "theme-1",
         themeTitle: "Integrated Smart Hostel Monitoring & Information Management System",
         themeNumber: 1,
@@ -124,7 +128,7 @@ export const themes: Theme[] = [
           "Detect animal intrusion or unusual movement using PIR sensors or edge optical anomaly logic",
           "Implement abnormal activity detection logic without using facial recognition or invasive surveillance",
           "Real-time alert dispatch to hostel security or wardens upon anomaly detection",
-          "Generate incident heatmap telemetry highlighting frequent alert zones",
+          "Generate incident heatmaps highlighting frequent alert zones",
           "Ensure complete compliance with student privacy standards"
         ],
         guidelines: [
@@ -141,25 +145,26 @@ export const themes: Theme[] = [
     shortTitle: "Water Intelligence & Sustainability",
     icon: "water_drop",
     color: "#22d3ee",
-    description: "Automated reservoir telemetry, pipeline leakage detection, and continuous real-time drinking water quality monitoring.",
+    description: "Automated reservoir monitoring, pipeline leakage detection, and continuous real-time drinking water quality monitoring.",
     detailedDescription: "Addresses critical campus utilities through automated water tank level sensing, intelligent pump shut-off to eliminate dry running and overflow, and multi-parameter continuous monitoring for drinking water RO purification units.",
     problemStatements: [
       {
         id: "PS-004",
+        psNumber: 1,
         themeId: "theme-2",
         themeTitle: "Unified Water Intelligence & Sustainability",
         themeNumber: 2,
         title: "Smart Water Monitoring & Leakage Detection for Hostel Facilities",
-        track: "Hydro-Telemetry",
+        track: "Water Automation",
         icon: "water",
         color: "#22d3ee",
         tags: ["Ultrasonic Sensors", "Auto Pump Cutoff", "Leak Detection"],
         mode: "hardware",
         description: "Simple, cost-effective hardware solution to automate tank level monitoring, control pumps to prevent dry-run/overflow, and detect pipeline leaks.",
-        detailedDescription: "Hostel blocks rely on multi-stage overhead and ground water reservoirs. Currently, tank levels are checked manually, pumps are operated on guesswork leading to dry running or massive overflows, and buried pipeline leaks go unnoticed for weeks, wasting thousands of liters of clean water and electricity. Teams must construct an automated microcontroller sensing setup with relays and flow telemetry.",
+        detailedDescription: "Hostel blocks rely on multi-stage overhead and ground water reservoirs. Currently, tank levels are checked manually, pumps are operated on guesswork leading to dry running or massive overflows, and buried pipeline leaks go unnoticed for weeks, wasting thousands of liters of clean water and electricity. Teams must construct an automated microcontroller sensing setup with relays and flow monitoring.",
         challenges: [
           "Water tank levels are checked manually by maintenance staff",
-          "Pumps are operated without proper telemetry, leading to dry runs or tank overflow",
+          "Pumps are operated without proper sensors, leading to dry runs or tank overflow",
           "Pipeline leaks in hostel walls and shafts go unnoticed for extended periods",
           "Water quality parameters like salinity or turbidity are rarely verified continuously"
         ],
@@ -176,6 +181,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-005",
+        psNumber: 2,
         themeId: "theme-2",
         themeTitle: "Unified Water Intelligence & Sustainability",
         themeNumber: 2,
@@ -183,10 +189,10 @@ export const themes: Theme[] = [
         track: "Drinking Water Quality",
         icon: "local_drink",
         color: "#38bdf8",
-        tags: ["pH & Turbidity Probes", "TDS Telemetry", "Filter Health"],
+        tags: ["pH & Turbidity Probes", "TDS Sensing", "Filter Health"],
         mode: "both",
         description: "Smart and reliable monitoring of hostel RO purification systems to track water safety, pH, turbidity, and send maintenance alerts.",
-        detailedDescription: "Hostels provide drinking water through reverse osmosis (RO) plants on every floor. However, filter health and water purity are checked infrequently. Membrane failure or mineral imbalances can expose students to impure water without anyone noticing. Teams can choose either a hardware sensor probe unit retrofitted onto RO dispensers or a software telemetry analytics platform tracking maintenance schedules, cartridge lifecycle, and water safety alerts.",
+        detailedDescription: "Hostels provide drinking water through reverse osmosis (RO) plants on every floor. However, filter health and water purity are checked infrequently. Membrane failure or mineral imbalances can expose students to impure water without anyone noticing. Teams can choose either a hardware sensor probe unit retrofitted onto RO dispensers or a software analytics platform tracking maintenance schedules, cartridge lifecycle, and water safety alerts.",
         challenges: [
           "Students have no real-time transparency into whether dispenser water is safe",
           "Changes in pH, turbidity, TDS, or microbial contaminants may go unnoticed",
@@ -206,6 +212,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-006",
+        psNumber: 3,
         themeId: "theme-2",
         themeTitle: "Unified Water Intelligence & Sustainability",
         themeNumber: 2,
@@ -249,11 +256,12 @@ export const themes: Theme[] = [
     problemStatements: [
       {
         id: "PS-007",
+        psNumber: 1,
         themeId: "theme-3",
         themeTitle: "Mess & Dining Optimization",
         themeNumber: 3,
         title: "Automated Dining Hall Queue Sensor & Turnstile Controller",
-        track: "Queue Telemetry",
+        track: "Queue Management",
         icon: "people_alt",
         color: "#10b981",
         tags: ["Break-Beam Sensors", "Occupancy Counter", "Flow Regulation"],
@@ -269,7 +277,7 @@ export const themes: Theme[] = [
         requirements: [
           "Construct accurate bidirectional people-counting hardware for entry/exit doors",
           "Provide a bright, local digital status display showing real-time available seats",
-          "Broadcast occupancy telemetry wirelessly to student dashboards with sub-second latency",
+          "Broadcast occupancy status wirelessly to student dashboards with sub-second latency",
           "Ruggedized, tamper-resistant enclosure suitable for high-traffic dining gates",
           "Privacy-preserving design without facial identification or biometric storage"
         ],
@@ -279,6 +287,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-008",
+        psNumber: 2,
         themeId: "theme-3",
         themeTitle: "Mess & Dining Optimization",
         themeNumber: 3,
@@ -309,6 +318,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-009",
+        psNumber: 3,
         themeId: "theme-3",
         themeTitle: "Mess & Dining Optimization",
         themeNumber: 3,
@@ -352,6 +362,7 @@ export const themes: Theme[] = [
     problemStatements: [
       {
         id: "PS-010",
+        psNumber: 1,
         themeId: "theme-4",
         themeTitle: "Efficient Laundry Facility Coordination System",
         themeNumber: 4,
@@ -382,6 +393,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-011",
+        psNumber: 2,
         themeId: "theme-4",
         themeTitle: "Efficient Laundry Facility Coordination System",
         themeNumber: 4,
@@ -412,11 +424,12 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-012",
+        psNumber: 3,
         themeId: "theme-4",
         themeTitle: "Efficient Laundry Facility Coordination System",
         themeNumber: 4,
-        title: "Laundry Cycle Telemetry & Machine Utilization Optimizer",
-        track: "Machine Telemetry",
+        title: "Laundry Cycle & Machine Utilization Optimizer",
+        track: "Machine Utilization",
         icon: "sync_problem",
         color: "#b45309",
         tags: ["Current Clamps", "Virtual Queue", "Turn-by-Turn Alerts"],
@@ -455,6 +468,7 @@ export const themes: Theme[] = [
     problemStatements: [
       {
         id: "PS-013",
+        psNumber: 1,
         themeId: "theme-5",
         themeTitle: "Student Well-being & Counselling",
         themeNumber: 5,
@@ -485,6 +499,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-014",
+        psNumber: 2,
         themeId: "theme-5",
         themeTitle: "Student Well-being & Counselling",
         themeNumber: 5,
@@ -515,6 +530,7 @@ export const themes: Theme[] = [
       },
       {
         id: "PS-015",
+        psNumber: 3,
         themeId: "theme-5",
         themeTitle: "Student Well-being & Counselling",
         themeNumber: 5,

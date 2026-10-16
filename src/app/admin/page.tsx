@@ -932,7 +932,7 @@ export default function AdminPortalPage() {
         </div>
       )}
 
-        {/* Telemetry Stats Grid */}
+        {/* Overview Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 backdrop-blur-xl space-y-1">
             <span className="text-[11px] font-mono text-white/40 uppercase">Verified Participants</span>
