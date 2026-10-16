@@ -13,6 +13,7 @@ import { auth } from "@/lib/firebase/config";
 import { checkIsAdmin } from "@/actions/admin";
 import {
   getParticipantSession,
+  saveParticipantSession,
   clearParticipantSession,
   saveAdminSession,
   getRemainingSessionMs,
@@ -121,40 +122,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // ════════════════════════════════════════════════════════════════
         const session: ParticipantSession | null = getParticipantSession();
 
-        // If session is expired or belongs to a different uid:
-        if (session && (session.uid !== firebaseUser.uid || Date.now() >= session.expiresAt)) {
+        // If session is expired:
+        if (session && session.uid === firebaseUser.uid && Date.now() >= session.expiresAt) {
           console.warn("Participant session expired (> 1 hour). Auto-logging out.");
           await logout("session_expired");
           setLoading(false);
           return;
         }
 
-        // If no session exists yet:
-        if (!session) {
-          const isAuthPage =
-            typeof window !== "undefined" &&
-            (window.location.pathname.startsWith("/login") ||
-              window.location.pathname.startsWith("/register"));
-
-          if (isAuthPage) {
-            // Hand off to the login/register page handler to create & save token
-            setUser(firebaseUser);
-            setLoading(false);
-            return;
-          }
-
-          // Outside auth pages with no token -> session was cleared or expired
-          console.warn("No tokenized session found for participant. Logging out.");
-          await logout("session_expired");
-          setLoading(false);
-          return;
+        // If no session exists yet or session belongs to a different uid,
+        // automatically initialize and persist the participant session so they aren't kicked out.
+        let activeSession = session;
+        if (!activeSession || activeSession.uid !== firebaseUser.uid) {
+          activeSession = saveParticipantSession(firebaseUser, idToken, false);
+        } else {
+          // Re-assert cookie for edge middleware
+          document.cookie = `auth_token=${encodeURIComponent(
+            activeSession.token
+          )}; path=/; max-age=3600; SameSite=Lax`;
         }
 
         // Active valid participant session
         setUser(firebaseUser);
-        setSessionToken(session.token);
+        setSessionToken(activeSession?.token || idToken);
 
-        const timeLeft = Math.max(0, session.expiresAt - Date.now());
+        const timeLeft = activeSession
+          ? Math.max(0, activeSession.expiresAt - Date.now())
+          : 3600000;
         setRemainingMs(timeLeft);
         setLoading(false);
 

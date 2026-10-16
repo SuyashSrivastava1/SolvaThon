@@ -100,6 +100,11 @@ export default function RegisterPage() {
         return;
       }
 
+      // Ensure session is active and cookies set for middleware
+      user.getIdToken().then((tok) => {
+        saveParticipantSession(user, tok, false);
+      }).catch((e) => console.warn("Failed to save session on register page load:", e));
+
       checkIsRegistered(user.uid)
         .then((alreadyReg) => {
           if (alreadyReg) {
@@ -309,16 +314,32 @@ const MESS_TYPES_BY_CATERER: Record<string, string[]> = {
       return;
     }
 
+    let clientToken: string | undefined;
+    try {
+      clientToken = await user.getIdToken(true);
+      saveParticipantSession(user, clientToken, false);
+    } catch (tokErr) {
+      console.warn("Could not retrieve fresh token before registration:", tokErr);
+    }
+
     const result = await registerParticipant({
       firebaseUid: user.uid,
       emailId: user.email!,
       ...formData,
       gender: formData.gender as "Male" | "Female",
-    });
+    }, clientToken);
 
     if (result.success) {
       setStatus("success");
-      setTimeout(() => router.replace("/profile"), 1800);
+      try {
+        const freshToken = clientToken || (await user.getIdToken());
+        saveParticipantSession(user, freshToken, false);
+      } catch (tokErr) {
+        console.warn("Failed to update token on registration success:", tokErr);
+      }
+      setTimeout(() => {
+        window.location.replace("/profile");
+      }, 1200);
     } else {
       setStatus("error");
       setErrorMessage(result.error || "Registration failed");

@@ -17,7 +17,7 @@ import { auth } from "@/lib/firebase/config";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
 import { allProblemStatements } from "@/data/themes";
-import { clearParticipantSession } from "@/lib/authSession";
+import { clearParticipantSession, saveParticipantSession } from "@/lib/authSession";
 
 export default function ProfilePage() {
   const { user, loading, isAdmin } = useAuth();
@@ -138,9 +138,17 @@ export default function ProfilePage() {
     setFetching(true);
     setFetchError(null);
 
+    let clientToken: string | undefined;
+    try {
+      clientToken = await user.getIdToken();
+      saveParticipantSession(user, clientToken, false);
+    } catch (e) {
+      console.warn("Could not retrieve token in fetchTeam:", e);
+    }
+
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const result = await getTeamDetails(user.uid);
+        const result = await getTeamDetails(user.uid, clientToken);
         if (!result.success && result.error === "Participant not found.") {
           router.push("/register");
           setFetching(false);
@@ -384,7 +392,7 @@ export default function ProfilePage() {
       <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
-        
+
         {/* Navigation & Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
           <Link href="/" className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
@@ -431,11 +439,10 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2 mt-0.5">
                   <h1 className="text-2xl md:text-3xl font-black text-white">{participant.fullName}</h1>
                   {participant.gender && (
-                    <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
-                      participant.gender === "Female"
-                        ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
-                        : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
-                    }`}>
+                    <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${participant.gender === "Female"
+                      ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
+                      : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                      }`}>
                       {participant.gender}
                     </span>
                   )}
@@ -468,7 +475,7 @@ export default function ProfilePage() {
         {/* Team & Submissions Section */}
         {teamData.hasTeam ? (
           <div className="space-y-10">
-            
+
             {/* Active Team Cluster Card */}
             <div className="bg-gradient-to-br from-blue-950/30 via-cyan-950/10 to-slate-900/40 border border-cyan-500/30 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-2xl space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-white/10 gap-4">
@@ -607,11 +614,10 @@ export default function ProfilePage() {
                       <h3 className="text-xl font-bold text-white">Select Your Problem Statement</h3>
                     </div>
                     {teamData.team.problemStatement && (
-                      <span className={`px-3.5 py-1 rounded-full text-xs font-mono font-semibold ${
-                        isPhase1Locked
-                          ? "bg-amber-500/20 border border-amber-500/30 text-amber-300"
-                          : "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
-                      }`}>
+                      <span className={`px-3.5 py-1 rounded-full text-xs font-mono font-semibold ${isPhase1Locked
+                        ? "bg-amber-500/20 border border-amber-500/30 text-amber-300"
+                        : "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
+                        }`}>
                         {isPhase1Locked ? `🔒 TRACK LOCKED: ${teamData.team.problemStatement}` : `✓ TRACK SELECTED: ${teamData.team.problemStatement}`}
                       </span>
                     )}
@@ -627,28 +633,25 @@ export default function ProfilePage() {
                             onClick={() => {
                               if (!isPhase1Locked) setSelectedTrack(ps.id);
                             }}
-                            className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 ${
-                              isPhase1Locked ? "cursor-not-allowed" : "cursor-pointer"
-                            } ${
-                              isSelected
+                            className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 ${isPhase1Locked ? "cursor-not-allowed" : "cursor-pointer"
+                              } ${isSelected
                                 ? "bg-cyan-500/10 border-cyan-500 shadow-xl shadow-cyan-500/10 ring-1 ring-cyan-500/50"
                                 : isPhase1Locked
                                   ? "bg-black/20 border-white/5 opacity-50"
                                   : "bg-black/30 border-white/10 hover:border-white/20 hover:bg-white/[0.02]"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-400">
                                 {ps.id}
                               </span>
                               <div className="flex items-center gap-1.5">
-                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                                  ps.mode === "hardware"
-                                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                                    : ps.mode === "software"
+                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${ps.mode === "hardware"
+                                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                                  : ps.mode === "software"
                                     ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
                                     : "bg-purple-500/10 border-purple-500/30 text-purple-300"
-                                }`}>
+                                  }`}>
                                   {ps.mode === "hardware" ? "Hardware Only" : ps.mode === "software" ? "Software Only" : "Hardware / Software"}
                                 </span>
                               </div>
@@ -687,9 +690,8 @@ export default function ProfilePage() {
                     </div>
 
                     {trackMsg && (
-                      <div className={`p-3.5 rounded-xl text-center text-xs font-mono ${
-                        trackStatus === "error" ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      }`}>
+                      <div className={`p-3.5 rounded-xl text-center text-xs font-mono ${trackStatus === "error" ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        }`}>
                         {trackMsg}
                       </div>
                     )}
@@ -789,13 +791,12 @@ export default function ProfilePage() {
                           type="button"
                           disabled={currentPS?.mode === "software"}
                           onClick={() => setImplementationType("Hardware")}
-                          className={`py-2.5 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
-                            implementationType === "Hardware"
-                              ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50"
-                              : currentPS?.mode === "software"
+                          className={`py-2.5 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 ${implementationType === "Hardware"
+                            ? "bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50"
+                            : currentPS?.mode === "software"
                               ? "bg-white/[0.02] border-white/5 text-white/20 cursor-not-allowed opacity-40"
                               : "bg-black/40 border-white/10 text-white/60 hover:text-white hover:border-white/30 cursor-pointer"
-                          }`}
+                            }`}
                         >
                           <span className="material-symbols-outlined text-base">memory</span>
                           <span>Hardware</span>
@@ -805,13 +806,12 @@ export default function ProfilePage() {
                           type="button"
                           disabled={currentPS?.mode === "hardware"}
                           onClick={() => setImplementationType("Software")}
-                          className={`py-2.5 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
-                            implementationType === "Software"
-                              ? "bg-blue-500/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/50"
-                              : currentPS?.mode === "hardware"
+                          className={`py-2.5 px-4 rounded-xl font-mono text-xs font-bold border transition-all flex items-center justify-center gap-2 ${implementationType === "Software"
+                            ? "bg-blue-500/20 border-blue-500 text-blue-300 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/50"
+                            : currentPS?.mode === "hardware"
                               ? "bg-white/[0.02] border-white/5 text-white/20 cursor-not-allowed opacity-40"
                               : "bg-black/40 border-white/10 text-white/60 hover:text-white hover:border-white/30 cursor-pointer"
-                          }`}
+                            }`}
                         >
                           <span className="material-symbols-outlined text-base">code</span>
                           <span>Software</span>
@@ -874,11 +874,10 @@ export default function ProfilePage() {
                         <button
                           type="submit"
                           disabled={!isIdeaComplete || submitting}
-                          className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
-                            !isIdeaComplete || submitting
-                              ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                              : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 cursor-pointer"
-                          }`}
+                          className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${!isIdeaComplete || submitting
+                            ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                            : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 cursor-pointer"
+                            }`}
                         >
                           {submitting ? (
                             <>
@@ -966,7 +965,7 @@ export default function ProfilePage() {
                     </div>
                     <p className="text-[11px] text-amber-300/80 font-mono bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl flex items-center gap-2">
                       <span className="material-symbols-outlined text-base text-amber-400">info</span>
-                      <span>Only a Super Admin can unlock your final project submission page if you require revisions. Please contact the hackathon administration to request an unlock.</span>
+                      <span>Only an Admin can unlock your final project submission page if you require revisions. Please contact the hackathon administration to request an unlock.</span>
                     </p>
                   </div>
                 )}
@@ -978,9 +977,9 @@ export default function ProfilePage() {
                         <span className="material-symbols-outlined text-2xl">lock_open</span>
                       </div>
                       <div>
-                        <span className="font-bold text-white text-sm block">🔓 Final Submission Unlocked by Super Admin</span>
+                        <span className="font-bold text-white text-sm block">🔓 Final Submission Unlocked by Admin</span>
                         <span className="text-emerald-200/80">
-                          A Super Admin has unlocked your submission page. You can now update your document, code repository, and demo. Note: Submitting will lock your changes again.
+                          An Admin has unlocked your submission page. You can now update your document, code repository, and demo. Note: Submitting will lock your changes again.
                         </span>
                       </div>
                     </div>
@@ -994,7 +993,7 @@ export default function ProfilePage() {
                   <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-emerald-400">
                     <div className="flex items-center gap-2.5">
                       <span className="material-symbols-outlined text-xl">info</span>
-                      <span>Note: Once submitted, your final deliverables will be locked and cannot be changed unless unlocked by a Super Admin.</span>
+                      <span>Note: Once submitted, your final deliverables will be locked and cannot be changed.</span>
                     </div>
                     <span className="uppercase font-bold tracking-wider px-2.5 py-0.5 bg-emerald-500/20 rounded">
                       DELIVERABLES EDITABLE
@@ -1071,17 +1070,16 @@ export default function ProfilePage() {
                     {isPhase2Locked ? (
                       <div className="flex items-center gap-2 px-6 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white/40 font-mono text-xs font-bold uppercase cursor-not-allowed">
                         <span className="material-symbols-outlined text-base">lock</span>
-                        <span>Final Submission Locked — Only Super Admin Can Unlock</span>
+                        <span>Final Submission Locked</span>
                       </div>
                     ) : (
                       <button
                         type="submit"
                         disabled={!isFinalComplete || submittingFinal}
-                        className={`px-9 py-4 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
-                          !isFinalComplete || submittingFinal
-                            ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                            : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black shadow-xl shadow-emerald-500/20 cursor-pointer"
-                        }`}
+                        className={`px-9 py-4 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${!isFinalComplete || submittingFinal
+                          ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                          : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black shadow-xl shadow-emerald-500/20 cursor-pointer"
+                          }`}
                       >
                         {submittingFinal ? (
                           <>
@@ -1213,11 +1211,10 @@ export default function ProfilePage() {
 
                   {createMsg && (
                     <div
-                      className={`text-center p-3 rounded-xl border text-xs font-mono font-medium ${
-                        createStatus === "error"
-                          ? "bg-red-500/10 border-red-500/20 text-red-400"
-                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                      }`}
+                      className={`text-center p-3 rounded-xl border text-xs font-mono font-medium ${createStatus === "error"
+                        ? "bg-red-500/10 border-red-500/20 text-red-400"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                        }`}
                     >
                       {createMsg}
                     </div>
@@ -1267,11 +1264,10 @@ export default function ProfilePage() {
 
                   {joinMsg && (
                     <div
-                      className={`text-center p-3 rounded-xl border text-xs font-mono font-medium ${
-                        joinStatus === "error"
-                          ? "bg-red-500/10 border-red-500/20 text-red-400"
-                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                      }`}
+                      className={`text-center p-3 rounded-xl border text-xs font-mono font-medium ${joinStatus === "error"
+                        ? "bg-red-500/10 border-red-500/20 text-red-400"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                        }`}
                     >
                       {joinMsg}
                     </div>

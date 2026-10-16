@@ -153,9 +153,9 @@ export async function joinTeam(firebaseUid: string, teamCode: string) {
   }
 }
 
-export async function getTeamDetails(firebaseUid: string) {
+export async function getTeamDetails(firebaseUid: string, clientToken?: string) {
   // 1. Server-Side Identity Verification (CRIT-01)
-  const authResult = await getAuthenticatedUser(firebaseUid);
+  const authResult = await getAuthenticatedUser(clientToken || firebaseUid);
   if (!authResult.user) {
     return { success: false, error: authResult.error || "Authentication required." };
   }

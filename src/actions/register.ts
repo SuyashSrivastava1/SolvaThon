@@ -18,7 +18,10 @@ function generateSecureTicketId(): string {
   return `TKT-${suffix}`;
 }
 
-export async function registerParticipant(data: z.infer<typeof registrationSchema>) {
+export async function registerParticipant(
+  data: z.infer<typeof registrationSchema>,
+  clientToken?: string
+) {
   try {
     // 1. Rate Limiting Check (MED-03)
     let clientIp = "unknown-ip";
@@ -37,7 +40,7 @@ export async function registerParticipant(data: z.infer<typeof registrationSchem
     }
 
     // 2. Cryptographic Server-Side Auth Verification (CRIT-01)
-    const authResult = await getAuthenticatedUser(data.firebaseUid);
+    const authResult = await getAuthenticatedUser(clientToken || data.firebaseUid);
     if (!authResult.user) {
       return {
         success: false,
