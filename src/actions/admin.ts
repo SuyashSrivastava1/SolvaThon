@@ -119,7 +119,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         participants = await prisma.participant.findMany({
           include: {
             team: {
-              select: { name: true, teamCode: true, problemStatement: true, submittedAt: true, phase1Unlocked: true, finalSubmittedAt: true, phase2Unlocked: true }
+              select: { name: true, teamCode: true, problemStatement: true, submittedAt: true, finalSubmittedAt: true }
             }
           },
           orderBy: { registrationTime: "desc" }
@@ -245,18 +245,17 @@ export async function getAdminData(tokenOrEmail?: string | null) {
           problemStatement: t.problemStatement || "Not Selected",
           pptUrl: t.pptUrl,
           understanding: t.understanding,
-          solutionSummary: t.solutionSummary,
           submittedAt: t.submittedAt ? t.submittedAt.toISOString() : null,
-          phase1Unlocked: t.phase1Unlocked || false,
-          isPhase1Locked: Boolean(t.submittedAt && !t.phase1Unlocked),
+          phase1Unlocked: t.phase1Unlocked,
+          phase2Unlocked: t.phase2Unlocked,
+          isPhase1Locked: Boolean(t.submittedAt && t.phase1Unlocked !== true),
+          isPhase2Locked: Boolean(t.finalSubmittedAt && t.phase2Unlocked !== true),
           // Final Project Submissions
           finalDocUrl: t.finalDocUrl,
           finalRepoUrl: t.finalRepoUrl,
           finalDemoUrl: t.finalDemoUrl,
           finalSummary: t.finalSummary,
           finalSubmittedAt: t.finalSubmittedAt ? t.finalSubmittedAt.toISOString() : null,
-          phase2Unlocked: t.phase2Unlocked || false,
-          isPhase2Locked: Boolean(t.finalSubmittedAt && !t.phase2Unlocked),
           // Round-based evaluations
           evaluations: (t.evaluations || []).map((ev: any) => ({
             id: ev.id,
@@ -474,65 +473,6 @@ export async function toggleTeamFreezeStatus(
 }
 
 /**
- * Super Admin Exclusive: Toggle submission unlock status for a particular team.
- * Allows Super Admin to unlock or re-lock Phase 1, Phase 2, or both.
- * Only Super Admin can unlock submission changes for a team.
- */
-export async function toggleTeamSubmissionUnlock(
-  adminEmailOrToken: string,
-  teamId: string,
-  phase: "PHASE_1" | "PHASE_2" | "ALL",
-  unlocked: boolean
-) {
-  const caller = await resolveAdminCaller(adminEmailOrToken);
-  if (!caller?.isSuperAdmin) {
-    return {
-      success: false,
-      error: "Access Denied: Only Super Admins can unlock or lock submissions for a team."
-    };
-  }
-
-  try {
-    const updateData: { phase1Unlocked?: boolean; phase2Unlocked?: boolean } = {};
-    if (phase === "PHASE_1" || phase === "ALL") {
-      updateData.phase1Unlocked = unlocked;
-    }
-    if (phase === "PHASE_2" || phase === "ALL") {
-      updateData.phase2Unlocked = unlocked;
-    }
-
-    const updated = await prisma.team.update({
-      where: { id: teamId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        submittedAt: true,
-        phase1Unlocked: true,
-        finalSubmittedAt: true,
-        phase2Unlocked: true,
-      }
-    });
-
-    return {
-      success: true,
-      teamId: updated.id,
-      teamName: updated.name,
-      phase1Unlocked: updated.phase1Unlocked,
-      phase2Unlocked: updated.phase2Unlocked,
-      isPhase1Locked: Boolean(updated.submittedAt && !updated.phase1Unlocked),
-      isPhase2Locked: Boolean(updated.finalSubmittedAt && !updated.phase2Unlocked),
-      message: unlocked 
-        ? `Submissions for ${updated.name} have been unlocked. The team can now edit their deliverables.` 
-        : `Submissions for ${updated.name} have been locked.`
-    };
-  } catch (error) {
-    console.error("toggleTeamSubmissionUnlock error:", error);
-    return { success: false, error: "Failed to update team submission unlock state." };
-  }
-}
-
-/**
  * Evaluators: Submit rubric marks for a team in the active review round.
  * Note: Super Admins are prohibited from submitting marks directly.
  * Once submitted, marks are automatically frozen until Super Admin unfreezes them.
@@ -674,5 +614,65 @@ export async function saveTeamEvaluation(
   } catch (error) {
     console.error("saveTeamEvaluation error:", error);
     return { success: false, error: "Failed to save team evaluation marks." };
+  }
+}
+
+/**
+ * Super Admin Exclusive: Toggle submission lock/unlock for a specific team.
+ * Once team leaders submit, changes are locked by default.
+ * Only a Super Admin can unlock the submissions page for a particular team.
+ *
+ * @param phase "IDEA" (Phase 1) | "FINAL" (Phase 2) | "BOTH"
+ * @param unlocked true to allow the team to edit/resubmit, false to lock
+ */
+export async function toggleTeamSubmissionLock(
+  adminEmailOrToken: string,
+  teamId: string,
+  phase: "IDEA" | "FINAL" | "BOTH",
+  unlocked: boolean
+) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller?.isSuperAdmin) {
+    return {
+      success: false,
+      error: "Access Denied: Super Admin permissions required to unlock or lock team submissions."
+    };
+  }
+
+  try {
+    const updateData: { phase1Unlocked?: boolean; phase2Unlocked?: boolean } = {};
+    if (phase === "IDEA" || phase === "BOTH") {
+      updateData.phase1Unlocked = unlocked;
+    }
+    if (phase === "FINAL" || phase === "BOTH") {
+      updateData.phase2Unlocked = unlocked;
+    }
+
+    const updated = await prisma.team.update({
+      where: { id: teamId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        submittedAt: true,
+        finalSubmittedAt: true,
+        phase1Unlocked: true,
+        phase2Unlocked: true,
+      }
+    });
+
+    return {
+      success: true,
+      teamId: updated.id,
+      teamName: updated.name,
+      phase,
+      phase1Unlocked: updated.phase1Unlocked,
+      phase2Unlocked: updated.phase2Unlocked,
+      isPhase1Locked: Boolean(updated.submittedAt && updated.phase1Unlocked !== true),
+      isPhase2Locked: Boolean(updated.finalSubmittedAt && updated.phase2Unlocked !== true),
+    };
+  } catch (error) {
+    console.error("toggleTeamSubmissionLock error:", error);
+    return { success: false, error: "Failed to update team submission lock status in database." };
   }
 }

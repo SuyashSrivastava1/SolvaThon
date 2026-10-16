@@ -23,7 +23,6 @@ model Team {
   understanding    String?
   solutionSummary  String?
   submittedAt      DateTime?
-  phase1Unlocked   Boolean       @default(false)
 
   // Phase 2: Final Project submission
   finalDocUrl      String?
@@ -31,7 +30,6 @@ model Team {
   finalDemoUrl     String?
   finalSummary     String?
   finalSubmittedAt DateTime?
-  phase2Unlocked   Boolean       @default(false)
 
   // Evaluation & Scoring (3 Criteria: Innovation, Understanding of Problem Statement, Progress)
   scoreInnovation     Float?
@@ -42,6 +40,11 @@ model Team {
   evaluationNotes     String?
   evaluatedAt         DateTime?
   
+  // Submission Locking (Controlled by Super Admin)
+  phase1Unlocked     Boolean?         @default(true)
+  phase2Unlocked     Boolean?         @default(false)
+  implementationType String?
+
   participants Participant[] // Hard max limit of 4 enforced in logic
   evaluations  TeamEvaluation[]
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { getAdminData, saveTeamEvaluation, toggleTeamFreezeStatus, toggleTeamSubmissionUnlock } from "@/actions/admin";
+import { getAdminData, saveTeamEvaluation, toggleTeamFreezeStatus, toggleTeamSubmissionLock } from "@/actions/admin";
 import { RUBRICS, getRoundInfo } from "@/config/rubrics";
 import Link from "next/link";
 
@@ -35,7 +35,8 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
   const [togglingFreeze, setTogglingFreeze] = useState(false);
   const [freezeMsg, setFreezeMsg] = useState("");
-  const [togglingUnlockPhase, setTogglingUnlockPhase] = useState<string | null>(null);
+  const [togglingSubLock, setTogglingSubLock] = useState<string | null>(null);
+  const [subLockMsg, setSubLockMsg] = useState("");
 
   const adminIdentifier = user?.email || "unknown_admin";
   const isCurrentUserSuperAdmin = isSuperAdmin;
@@ -282,32 +283,44 @@ export default function TeamEvaluationPage({ params }: PageProps) {
     setTogglingFreeze(false);
   };
 
-  // Super Admin: Toggle Team Submission Unlock Status
-  const handleToggleSubmissionUnlock = async (phase: "PHASE_1" | "PHASE_2", targetUnlocked: boolean) => {
-    if (!currentTeam || !isCurrentUserSuperAdmin) return;
-    setTogglingUnlockPhase(phase);
+  // Super Admin Exclusive: Toggle Team Submission Lock/Unlock (Phase 1 or Phase 2)
+  const handleToggleSubmissionLock = async (phase: "IDEA" | "FINAL", unlock: boolean) => {
+    if (!isCurrentUserSuperAdmin || !currentTeam) return;
 
-    const res = await toggleTeamSubmissionUnlock(adminIdentifier, currentTeam.id, phase, targetUnlocked);
+    setTogglingSubLock(phase);
+    setSubLockMsg("");
+
+    const res = await toggleTeamSubmissionLock(adminIdentifier, currentTeam.id, phase, unlock);
     if (res.success) {
+      setSubLockMsg(
+        unlock
+          ? `✓ ${phase === "IDEA" ? "Stage 1 (Idea)" : "Stage 2 (Final)"} submission has been UNLOCKED. The team leader can now edit and resubmit their deliverable on the profile page.`
+          : `✓ ${phase === "IDEA" ? "Stage 1 (Idea)" : "Stage 2 (Final)"} submission is now LOCKED.`
+      );
+
+      const updatedPhase1Unlocked = phase === "IDEA" ? unlock : currentTeam.phase1Unlocked;
+      const updatedPhase2Unlocked = phase === "FINAL" ? unlock : currentTeam.phase2Unlocked;
+
       const updatedTeam = {
         ...currentTeam,
-        phase1Unlocked: res.phase1Unlocked !== undefined ? res.phase1Unlocked : currentTeam.phase1Unlocked,
-        phase2Unlocked: res.phase2Unlocked !== undefined ? res.phase2Unlocked : currentTeam.phase2Unlocked,
-        isPhase1Locked: res.isPhase1Locked !== undefined ? res.isPhase1Locked : currentTeam.isPhase1Locked,
-        isPhase2Locked: res.isPhase2Locked !== undefined ? res.isPhase2Locked : currentTeam.isPhase2Locked,
+        phase1Unlocked: updatedPhase1Unlocked,
+        phase2Unlocked: updatedPhase2Unlocked,
+        isPhase1Locked: Boolean(currentTeam.submittedAt && updatedPhase1Unlocked !== true),
+        isPhase2Locked: Boolean(currentTeam.finalSubmittedAt && updatedPhase2Unlocked !== true),
       };
+
       setCurrentTeam(updatedTeam);
       setTeams((prev) => prev.map((t) => (t.id === currentTeam.id ? updatedTeam : t)));
     } else {
-      alert(res.error || "Failed to toggle submission unlock status.");
+      alert(res.error || "Failed to toggle submission lock.");
     }
-    setTogglingUnlockPhase(null);
+    setTogglingSubLock(null);
   };
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white">
+        <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-xs tracking-widest uppercase">
           LOADING JURY EVALUATION WORKBENCH...
         </p>
@@ -317,7 +330,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
   if (errorMsg || !currentTeam) {
     return (
-      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
+      <div className="min-h-screen bg-[#050B14] flex flex-col items-center justify-center text-white px-4">
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 max-w-md text-center space-y-4">
           <span className="material-symbols-outlined text-4xl text-red-400">error</span>
           <h2 className="text-xl font-bold">Evaluation Workbench Error</h2>
@@ -327,7 +340,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
               onClick={() => {
                 loadEvaluationData();
               }}
-              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-violet-600/30"
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-purple-600/30"
             >
               Retry Connection
             </button>
@@ -347,20 +360,20 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const roundInfo = getRoundInfo(activeReviewRound);
 
   return (
-    <div className="min-h-screen bg-[#07050e] relative text-white font-sans selection:bg-violet-500/30 pb-20">
+    <div className="min-h-screen bg-[#030712] relative text-white font-sans selection:bg-purple-500/30 pb-20">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-fuchsia-600/12 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none"></div>
 
       {/* ═════════ STICKY TOP NAVIGATION BAR ═════════ */}
-      <header className="sticky top-0 z-50 bg-[#07050e]/90 backdrop-blur-2xl border-b border-white/10 px-4 md:px-8 py-3.5 shadow-2xl">
+      <header className="sticky top-0 z-50 bg-[#030712]/90 backdrop-blur-2xl border-b border-white/10 px-4 md:px-8 py-3.5 shadow-2xl">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           {/* Left: Back Link & Counter */}
           <div className="flex items-center gap-3">
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-violet-400 hover:text-violet-300 transition-all text-xs font-semibold cursor-pointer"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400 hover:text-cyan-300 transition-all text-xs font-semibold cursor-pointer"
             >
               <span className="material-symbols-outlined text-base">arrow_back</span>
               Back to Admin Panel
@@ -368,12 +381,12 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
             <span className="h-5 w-[1px] bg-white/10 hidden sm:block"></span>
 
-            <div className="inline-flex items-center px-3 py-1 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 font-mono text-xs font-bold">
+            <div className="inline-flex items-center px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">
               TEAM {currentIndex + 1} OF {teams.length}
             </div>
 
             {/* Active Round Indicator Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 font-mono text-xs font-bold uppercase">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold uppercase">
               <span className="material-symbols-outlined text-sm">schedule</span>
               <span>{roundInfo.title}: {roundInfo.subtitle}</span>
             </div>
@@ -385,7 +398,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             <select
               value={currentTeamId}
               onChange={(e) => router.push(`/admin/evaluate/${e.target.value}`)}
-              className="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer [&>option]:bg-[#0e091c]"
+              className="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer [&>option]:bg-[#030712]"
             >
               {teams.map((t, idx) => {
                 const teamRoundEval = (t.evaluations || []).find((e: any) => e.round === activeReviewRound);
@@ -437,10 +450,10 @@ export default function TeamEvaluationPage({ params }: PageProps) {
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300 font-mono text-xs font-bold uppercase tracking-wider">
+                <span className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider">
                   TEAM CLUSTER: {currentTeam.teamCode}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 font-mono text-xs">
+                <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 font-mono text-xs">
                   {currentTeam.memberCount} / 4 Members
                 </span>
                 {isEvaluated && (
@@ -467,7 +480,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             {/* Track Badge */}
             <div className="bg-black/40 border border-white/10 rounded-2xl p-4 text-right min-w-[200px]">
               <span className="text-[10px] font-mono uppercase text-white/40 block">PROBLEM STATEMENT TRACK</span>
-              <span className="text-sm font-bold text-violet-300 block truncate max-w-[280px]">
+              <span className="text-sm font-bold text-cyan-300 block truncate max-w-[280px]">
                 {currentTeam.problemStatement || "Not Selected"}
               </span>
             </div>
@@ -557,7 +570,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                   className={`px-5 py-3 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer shadow-lg ${
                     isFrozen
                       ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black shadow-amber-500/20"
-                      : "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-purple-500/20"
+                      : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white shadow-cyan-500/20"
                   }`}
                 >
                   {togglingFreeze ? (
@@ -584,6 +597,119 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                   {freezeMsg}
                 </div>
               )}
+
+              {/* Submission Lock Governance for Stage 1 & Stage 2 */}
+              <div className="pt-4 border-t border-white/10 space-y-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400 text-lg">edit_note</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                      Team Submissions Page Lock &amp; Unlock Controls
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/60">
+                    Once a team leader submits, their changes are locked permanently by default. As Super Admin, you can unlock their submission page so they can update their presentation or final deliverables.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Stage 1 Submission Control */}
+                  <div className="bg-black/40 border border-white/10 rounded-xl p-3.5 flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-white">Stage 1: Idea Submission</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                          currentTeam.submittedAt
+                            ? (currentTeam.isPhase1Locked
+                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40")
+                            : "bg-white/5 text-white/40 border-white/10"
+                        }`}>
+                          {currentTeam.submittedAt
+                            ? (currentTeam.isPhase1Locked ? "🔒 Locked" : "🔓 Unlocked")
+                            : "Pending Submission"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/50 font-mono">
+                        {currentTeam.submittedAt
+                          ? `Submitted: ${new Date(currentTeam.submittedAt).toLocaleDateString()}`
+                          : "No presentation submitted yet"}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSubmissionLock("IDEA", currentTeam.isPhase1Locked)}
+                      disabled={togglingSubLock === "IDEA"}
+                      className={`w-full py-2 px-3 rounded-lg font-mono text-xs font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
+                        currentTeam.isPhase1Locked
+                          ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/10"
+                          : "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-500/10"
+                      } disabled:opacity-50`}
+                    >
+                      {togglingSubLock === "IDEA" ? (
+                        <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <span className="material-symbols-outlined text-sm">
+                          {currentTeam.isPhase1Locked ? "lock_open" : "lock"}
+                        </span>
+                      )}
+                      <span>{currentTeam.isPhase1Locked ? "Unlock Stage 1 Page" : "Lock Stage 1 Page"}</span>
+                    </button>
+                  </div>
+
+                  {/* Stage 2 Submission Control */}
+                  <div className="bg-black/40 border border-white/10 rounded-xl p-3.5 flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-white">Stage 2: Final Deliverables</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                          currentTeam.finalSubmittedAt
+                            ? (currentTeam.isPhase2Locked
+                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : "bg-cyan-500/20 text-cyan-300 border-cyan-500/40")
+                            : "bg-white/5 text-white/40 border-white/10"
+                        }`}>
+                          {currentTeam.finalSubmittedAt
+                            ? (currentTeam.isPhase2Locked ? "🔒 Locked" : "🔓 Unlocked")
+                            : "Pending Submission"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/50 font-mono">
+                        {currentTeam.finalSubmittedAt
+                          ? `Submitted: ${new Date(currentTeam.finalSubmittedAt).toLocaleDateString()}`
+                          : "No final project submitted yet"}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSubmissionLock("FINAL", currentTeam.isPhase2Locked)}
+                      disabled={togglingSubLock === "FINAL"}
+                      className={`w-full py-2 px-3 rounded-lg font-mono text-xs font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
+                        currentTeam.isPhase2Locked
+                          ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/10"
+                          : "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-500/10"
+                      } disabled:opacity-50`}
+                    >
+                      {togglingSubLock === "FINAL" ? (
+                        <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <span className="material-symbols-outlined text-sm">
+                          {currentTeam.isPhase2Locked ? "lock_open" : "lock"}
+                        </span>
+                      )}
+                      <span>{currentTeam.isPhase2Locked ? "Unlock Stage 2 Page" : "Lock Stage 2 Page"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {subLockMsg && (
+                  <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-mono text-center">
+                    {subLockMsg}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -771,49 +897,21 @@ export default function TeamEvaluationPage({ params }: PageProps) {
         {/* ─── DELIVERABLES SHOWCASE: STAGE 1 VS STAGE 2 ─── */}
         <section className="space-y-4">
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-violet-400">inventory_2</span>
+            <span className="material-symbols-outlined text-cyan-400">inventory_2</span>
             Team Submissions &amp; Project Deliverables
           </h3>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Stage 1 Deliverables Card */}
-            <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
-              <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
-                <span className="text-xs font-mono text-violet-400 uppercase font-bold flex items-center gap-1.5">
+            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <span className="text-xs font-mono text-cyan-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">lightbulb</span>
                   STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono text-white/40">
-                    {currentTeam.submittedAt ? new Date(currentTeam.submittedAt).toLocaleString() : "Not submitted"}
-                  </span>
-                  {currentTeam.submittedAt && (
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                      currentTeam.phase1Unlocked
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                    }`}>
-                      {currentTeam.phase1Unlocked ? "🔓 UNLOCKED" : "🔒 LOCKED"}
-                    </span>
-                  )}
-                  {isCurrentUserSuperAdmin && currentTeam.submittedAt && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleSubmissionUnlock("PHASE_1", !currentTeam.phase1Unlocked)}
-                      disabled={togglingUnlockPhase === "PHASE_1"}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
-                        currentTeam.phase1Unlocked
-                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
-                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-                      } disabled:opacity-50`}
-                    >
-                      <span className="material-symbols-outlined text-xs">
-                        {currentTeam.phase1Unlocked ? "lock" : "lock_open"}
-                      </span>
-                      <span>{togglingUnlockPhase === "PHASE_1" ? "..." : (currentTeam.phase1Unlocked ? "Lock S1" : "Unlock S1")}</span>
-                    </button>
-                  )}
-                </div>
+                <span className="text-[11px] font-mono text-white/40">
+                  {currentTeam.submittedAt ? new Date(currentTeam.submittedAt).toLocaleString() : "Not submitted"}
+                </span>
               </div>
 
               {currentTeam.pptUrl ? (
@@ -824,7 +922,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                       href={currentTeam.pptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-mono rounded-xl transition-all"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-mono rounded-xl transition-all"
                     >
                       <span className="material-symbols-outlined text-base">open_in_new</span>
                       Open Presentation / Slides ↗
@@ -857,43 +955,15 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             </div>
 
             {/* Stage 2 Deliverables Card */}
-            <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
-              <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
+            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="text-xs font-mono text-emerald-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">rocket_launch</span>
                   STAGE 02: FINAL PROJECT DELIVERABLE
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono text-white/40">
-                    {currentTeam.finalSubmittedAt ? new Date(currentTeam.finalSubmittedAt).toLocaleString() : "Not submitted"}
-                  </span>
-                  {currentTeam.finalSubmittedAt && (
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                      currentTeam.phase2Unlocked
-                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                    }`}>
-                      {currentTeam.phase2Unlocked ? "🔓 UNLOCKED" : "🔒 LOCKED"}
-                    </span>
-                  )}
-                  {isCurrentUserSuperAdmin && currentTeam.finalSubmittedAt && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleSubmissionUnlock("PHASE_2", !currentTeam.phase2Unlocked)}
-                      disabled={togglingUnlockPhase === "PHASE_2"}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
-                        currentTeam.phase2Unlocked
-                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
-                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-                      } disabled:opacity-50`}
-                    >
-                      <span className="material-symbols-outlined text-xs">
-                        {currentTeam.phase2Unlocked ? "lock" : "lock_open"}
-                      </span>
-                      <span>{togglingUnlockPhase === "PHASE_2" ? "..." : (currentTeam.phase2Unlocked ? "Lock S2" : "Unlock S2")}</span>
-                    </button>
-                  )}
-                </div>
+                <span className="text-[11px] font-mono text-white/40">
+                  {currentTeam.finalSubmittedAt ? new Date(currentTeam.finalSubmittedAt).toLocaleString() : "Not submitted"}
+                </span>
               </div>
 
               {currentTeam.finalDocUrl || currentTeam.finalRepoUrl ? (
@@ -915,7 +985,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
                         href={currentTeam.finalRepoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-mono rounded-xl transition-all"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-mono rounded-xl transition-all"
                       >
                         <span className="material-symbols-outlined text-base">code</span>
                         Source Code Repo ↗

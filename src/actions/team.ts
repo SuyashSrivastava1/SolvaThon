@@ -210,15 +210,15 @@ export async function getTeamDetails(firebaseUid: string) {
           understanding: participant.team.understanding,
           solutionSummary: participant.team.solutionSummary,
           submittedAt: participant.team.submittedAt,
-          phase1Unlocked: participant.team.phase1Unlocked || false,
-          isPhase1Locked: Boolean(participant.team.submittedAt && !participant.team.phase1Unlocked),
           finalDocUrl: participant.team.finalDocUrl,
           finalRepoUrl: participant.team.finalRepoUrl,
           finalDemoUrl: participant.team.finalDemoUrl,
           finalSummary: participant.team.finalSummary,
           finalSubmittedAt: participant.team.finalSubmittedAt,
-          phase2Unlocked: participant.team.phase2Unlocked || false,
-          isPhase2Locked: Boolean(participant.team.finalSubmittedAt && !participant.team.phase2Unlocked),
+          phase1Unlocked: participant.team.phase1Unlocked,
+          phase2Unlocked: participant.team.phase2Unlocked,
+          isPhase1Locked: Boolean(participant.team.submittedAt && participant.team.phase1Unlocked !== true),
+          isPhase2Locked: Boolean(participant.team.finalSubmittedAt && participant.team.phase2Unlocked !== true),
           members: participant.team.participants.map((p: any) => ({
             id: p.id,
             name: p.fullName,
@@ -261,11 +261,12 @@ export async function selectProblemStatement(firebaseUid: string, problemStateme
       return { success: false, error: `Only the team leader (${leader.fullName}) can select the problem statement.` };
     }
 
-    const isLocked = Boolean(participant.team.submittedAt && !participant.team.phase1Unlocked);
+    // Submission Lock Guard: If Phase 1 is submitted and locked, track cannot be modified
+    const isLocked = Boolean(participant.team.submittedAt && participant.team.phase1Unlocked !== true);
     if (isLocked) {
       return {
         success: false,
-        error: "Problem statement track is locked because your team has already submitted Phase 1. Only a Super Admin can unlock your team's submission."
+        error: "Problem Statement is locked because your team's submission has been finalized. Only a Super Admin can unlock it."
       };
     }
 
@@ -317,12 +318,12 @@ export async function submitProject(
       return { success: false, error: `Only the team leader (${leader.fullName}) can submit the presentation.` };
     }
 
-    // Check if submission is already locked (team submitted and not unlocked by Super Admin)
-    const isLocked = Boolean(participant.team.submittedAt && !participant.team.phase1Unlocked);
+    // Submission Lock Guard: Once submitted, team cannot edit unless Super Admin unlocks
+    const isLocked = Boolean(participant.team.submittedAt && participant.team.phase1Unlocked !== true);
     if (isLocked) {
       return {
         success: false,
-        error: "Idea submission is locked. Once submitted, changes cannot be undone. Only a Super Admin can unlock your team's submission."
+        error: "Phase 1 submission is locked. Once submitted, changes cannot be undone unless unlocked by a Super Admin."
       };
     }
 
@@ -347,7 +348,7 @@ export async function submitProject(
         understanding: data.understanding.trim(),
         solutionSummary: data.solutionSummary.trim(),
         submittedAt: new Date(),
-        phase1Unlocked: false, // Automatically re-locks after submission!
+        phase1Unlocked: false, // Immediately locked upon submission
       },
     });
 
@@ -394,12 +395,12 @@ export async function submitFinalProject(
       return { success: false, error: `Only the team leader (${leader.fullName}) can submit the final project deliverable.` };
     }
 
-    // Check if final submission is already locked (team submitted and not unlocked by Super Admin)
-    const isLocked = Boolean(participant.team.finalSubmittedAt && !participant.team.phase2Unlocked);
-    if (isLocked) {
+    // Submission Lock Guard: Once submitted, team cannot edit unless Super Admin unlocks
+    const isFinalLocked = Boolean(participant.team.finalSubmittedAt && participant.team.phase2Unlocked !== true);
+    if (isFinalLocked) {
       return {
         success: false,
-        error: "Final project submission is locked. Once submitted, changes cannot be undone. Only a Super Admin can unlock your team's submission."
+        error: "Final project submission is locked. Once submitted, changes cannot be undone unless unlocked by a Super Admin."
       };
     }
 
@@ -431,7 +432,7 @@ export async function submitFinalProject(
         finalDemoUrl: data.finalDemoUrl?.trim() || null,
         finalSummary: data.finalSummary?.trim() || null,
         finalSubmittedAt: new Date(),
-        phase2Unlocked: false, // Automatically re-locks after submission!
+        phase2Unlocked: false, // Immediately locked upon submission
       },
     });
 

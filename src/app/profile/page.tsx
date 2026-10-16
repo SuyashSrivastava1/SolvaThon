@@ -93,6 +93,15 @@ export default function ProfilePage() {
     Boolean(finalSubmission.finalRepoUrl?.trim()) &&
     Boolean(finalSubmission.finalSummary?.trim());
 
+  // Lock status helpers
+  const isPhase1Submitted = Boolean(teamData?.team?.submittedAt);
+  const isPhase1Locked = Boolean(teamData?.team?.isPhase1Locked ?? (isPhase1Submitted && teamData?.team?.phase1Unlocked !== true));
+  const isPhase1UnlockedByAdmin = Boolean(isPhase1Submitted && teamData?.team?.phase1Unlocked === true);
+
+  const isPhase2Submitted = Boolean(teamData?.team?.finalSubmittedAt);
+  const isPhase2Locked = Boolean(teamData?.team?.isPhase2Locked ?? (isPhase2Submitted && teamData?.team?.phase2Unlocked !== true));
+  const isPhase2UnlockedByAdmin = Boolean(isPhase2Submitted && teamData?.team?.phase2Unlocked === true);
+
   useEffect(() => {
     if (isLoggingOut.current) return;
     if (!loading && !user) {
@@ -209,7 +218,7 @@ export default function ProfilePage() {
 
   const handleSaveTrack = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTrack) return;
+    if (!selectedTrack || isPhase1Locked) return;
     setTrackStatus("loading");
     setTrackMsg("");
     const res = await selectProblemStatement(user!.uid, selectedTrack);
@@ -225,12 +234,13 @@ export default function ProfilePage() {
 
   const handleSubmitProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPhase1Locked) return;
     setSubmitting(true);
     setSubError("");
     setSubMsg("");
     const res = await submitProject(user!.uid, submission);
     if (res.success) {
-      setSubMsg("Idea presentation updated successfully! Ready for jury evaluation.");
+      setSubMsg("Idea presentation submitted and locked successfully! Ready for jury evaluation.");
       fetchTeam();
     } else {
       setSubError(res.error || "Failed to submit presentation.");
@@ -240,12 +250,13 @@ export default function ProfilePage() {
 
   const handleSubmitFinalProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPhase2Locked) return;
     setSubmittingFinal(true);
     setFinalError("");
     setFinalMsg("");
     const res = await submitFinalProject(user!.uid, finalSubmission);
     if (res.success) {
-      setFinalMsg("Final project deliverable submitted successfully! Stored for jury evaluation.");
+      setFinalMsg("Final project deliverable submitted and locked successfully! Stored for jury evaluation.");
       fetchTeam();
     } else {
       setFinalError(res.error || "Failed to submit final deliverable.");
@@ -292,8 +303,8 @@ export default function ProfilePage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
-        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
+        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
       </div>
     );
@@ -301,8 +312,8 @@ export default function ProfilePage() {
 
   if (fetchError) {
     return (
-      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
-        <div className="max-w-md w-full bg-[#0e091c]/80 border border-violet-500/20 p-8 rounded-3xl backdrop-blur-2xl text-center space-y-5 shadow-2xl">
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
+        <div className="max-w-md w-full bg-white/[0.04] border border-white/10 p-8 rounded-3xl backdrop-blur-2xl text-center space-y-5 shadow-2xl">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
             <span className="material-symbols-outlined text-3xl">warning</span>
           </div>
@@ -313,13 +324,13 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-3 pt-2">
             <button
               onClick={fetchTeam}
-              className="w-full py-3.5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-500/20 cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
             >
               Retry Connection
             </button>
             <Link
               href="/register"
-              className="w-full py-3.5 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-violet-500/30 text-white font-semibold rounded-xl text-xs uppercase tracking-wider transition-all"
+              className="w-full py-3.5 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-xl text-xs uppercase tracking-wider transition-all"
             >
               Complete Registration
             </Link>
@@ -331,8 +342,8 @@ export default function ProfilePage() {
 
   if (!teamData || !teamData.participant) {
     return (
-      <div className="min-h-screen bg-[#07050e] flex flex-col items-center justify-center text-white px-4">
-        <div className="w-12 h-12 border-4 border-violet-500/20 border-t-violet-400 rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center text-white px-4">
+        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
         <p className="text-white/60 font-mono text-xs tracking-widest uppercase">RETRIEVING PROFILE TELEMETRY...</p>
       </div>
     );
@@ -341,26 +352,18 @@ export default function ProfilePage() {
   const { participant } = teamData;
   const isFinalActive = teamData.submissionPhase === "FINAL";
 
-  const isPhase1Submitted = Boolean(teamData?.team?.submittedAt);
-  const isPhase1Unlocked = Boolean(teamData?.team?.phase1Unlocked);
-  const isPhase1Locked = isPhase1Submitted && !isPhase1Unlocked;
-
-  const isPhase2Submitted = Boolean(teamData?.team?.finalSubmittedAt);
-  const isPhase2Unlocked = Boolean(teamData?.team?.phase2Unlocked);
-  const isPhase2Locked = isPhase2Submitted && !isPhase2Unlocked;
-
   return (
-    <div className="min-h-screen bg-[#07050e] relative text-white font-sans selection:bg-violet-500/30 py-12 px-4 md:px-8">
+    <div className="min-h-screen bg-[#030712] relative text-white font-sans selection:bg-cyan-500/30 py-12 px-4 md:px-8">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-fuchsia-600/12 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"></div>
 
       <div className="container mx-auto max-w-5xl relative z-10 space-y-10">
         
         {/* Navigation & Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Back to Portal
           </Link>
@@ -377,7 +380,7 @@ export default function ProfilePage() {
 
         {/* Global Phase Notification Banner */}
         {isFinalActive && (
-          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-teal-500/20 border border-emerald-500/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/10">
+          <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-cyan-500/20 border border-emerald-500/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-emerald-500/10">
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
                 <span className="material-symbols-outlined text-2xl">rocket_launch</span>
@@ -397,17 +400,17 @@ export default function ProfilePage() {
 
         {/* Participant Identification Pass */}
         {participant && (
-          <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-4 w-full">
               <div className="border-b border-white/10 pb-4">
-                <div className="text-[11px] font-mono text-violet-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
+                <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest">OFFICIAL PARTICIPANT BADGE</div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <h1 className="text-2xl md:text-3xl font-black text-white">{participant.fullName}</h1>
                   {participant.gender && (
                     <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
                       participant.gender === "Female"
-                        ? "bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300"
-                        : "bg-violet-500/10 border-violet-500/30 text-violet-300"
+                        ? "bg-pink-500/10 border-pink-500/30 text-pink-300"
+                        : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
                     }`}>
                       {participant.gender}
                     </span>
@@ -431,7 +434,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="bg-black/40 p-3.5 rounded-2xl border border-white/10 space-y-0.5">
                   <span className="text-[10px] text-white/40 uppercase font-mono tracking-wider block">Meal Plan</span>
-                  <span className="text-sm font-bold text-violet-400 block">{participant.messType}</span>
+                  <span className="text-sm font-bold text-cyan-400 block">{participant.messType}</span>
                 </div>
               </div>
             </div>
@@ -443,17 +446,17 @@ export default function ProfilePage() {
           <div className="space-y-10">
             
             {/* Active Team Cluster Card */}
-            <div className="bg-gradient-to-br from-violet-950/40 via-[#0e091c] to-purple-950/30 border border-violet-500/30 rounded-3xl p-6 md:p-8 shadow-[0_0_35px_rgba(168,85,247,0.12)] backdrop-blur-2xl space-y-6">
+            <div className="bg-gradient-to-br from-blue-950/30 via-cyan-950/10 to-slate-900/40 border border-cyan-500/30 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-2xl space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-white/10 gap-4">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center text-xs font-mono text-violet-400 uppercase tracking-widest font-semibold">
+                  <div className="inline-flex items-center text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
                     ACTIVE TEAM CLUSTER
                   </div>
                   <h2 className="text-2xl md:text-3xl font-black text-white">{teamData.team.name}</h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="bg-black/60 border border-violet-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
+                  <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-3 sm:p-4 text-center min-w-[170px] shadow-lg">
                     <p className="text-[10px] uppercase font-mono text-white/50 tracking-widest mb-0.5">TEAM INVITE CODE</p>
                     <div className="flex items-center justify-center gap-2 my-0.5">
                       <p className="font-mono text-2xl font-black tracking-widest text-emerald-400 select-all">
@@ -468,7 +471,7 @@ export default function ProfilePage() {
                             setTimeout(() => setCopiedCode(false), 2000);
                           }
                         }}
-                        className="p-1 rounded-lg bg-white/5 hover:bg-violet-500/20 text-white/60 hover:text-violet-300 border border-white/10 hover:border-violet-500/30 transition-all cursor-pointer"
+                        className="p-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-white/60 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/30 transition-all cursor-pointer"
                         title="Copy Team Code"
                       >
                         <span className="material-symbols-outlined text-sm block">
@@ -478,7 +481,7 @@ export default function ProfilePage() {
                     </div>
                     <p className="text-[10px] text-white/40 font-mono">
                       {copiedCode ? (
-                        <span className="text-violet-400 font-bold">Code copied!</span>
+                        <span className="text-cyan-400 font-bold">Code copied!</span>
                       ) : (
                         `${teamData.team.members.length}/4 Members Joined`
                       )}
@@ -519,7 +522,7 @@ export default function ProfilePage() {
                 {teamData.team.members.map((m: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between bg-black/40 p-3.5 rounded-2xl border border-white/10 group">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center font-mono text-xs text-violet-300 font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-mono text-xs text-cyan-400 font-bold shrink-0">
                         0{idx + 1}
                       </div>
                       <div className="overflow-hidden">
@@ -559,50 +562,47 @@ export default function ProfilePage() {
             {teamData.isLeader && !isFinalActive && (
               <div className="space-y-8 animate-fadeIn">
                 {/* Problem Statement Track Selection */}
-                <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_0_30px_rgba(168,85,247,0.08)] space-y-6">
+                <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
                   <div className="border-b border-white/10 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1">
-                      <div className="inline-flex items-center gap-2 text-xs font-mono text-violet-400 uppercase tracking-widest font-semibold">
+                      <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
                         PROTOCOL: TRACK ALLOCATION
                       </div>
                       <h3 className="text-xl font-bold text-white">Select Your Problem Statement</h3>
                     </div>
                     {teamData.team.problemStatement && (
-                      <span className={`px-3.5 py-1 rounded-full text-xs font-mono font-semibold border ${
+                      <span className={`px-3.5 py-1 rounded-full text-xs font-mono font-semibold ${
                         isPhase1Locked
-                          ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                          : "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
+                          ? "bg-amber-500/20 border border-amber-500/30 text-amber-300"
+                          : "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
                       }`}>
                         {isPhase1Locked ? `🔒 TRACK LOCKED: ${teamData.team.problemStatement}` : `✓ TRACK SELECTED: ${teamData.team.problemStatement}`}
                       </span>
                     )}
                   </div>
 
-                  {isPhase1Locked && (
-                    <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs font-mono text-amber-300 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base text-amber-400">lock</span>
-                      <span>Problem statement track cannot be changed because your team has already submitted Phase 1. Only a Super Admin can unlock this submission.</span>
-                    </div>
-                  )}
-
                   <form onSubmit={handleSaveTrack} className="space-y-6">
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${isPhase1Locked ? "opacity-75 pointer-events-none" : ""}`}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {problemStatements.map((ps) => {
                         const isSelected = selectedTrack === ps.id;
                         return (
                           <div
                             key={ps.id}
-                            onClick={() => !isPhase1Locked && setSelectedTrack(ps.id)}
+                            onClick={() => {
+                              if (!isPhase1Locked) setSelectedTrack(ps.id);
+                            }}
                             className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 ${
                               isPhase1Locked ? "cursor-not-allowed" : "cursor-pointer"
                             } ${
                               isSelected
-                                ? "bg-violet-500/15 border-violet-500 shadow-xl shadow-violet-500/15 ring-1 ring-violet-500/50"
-                                : "bg-black/40 border-white/10 hover:border-violet-500/30 hover:bg-violet-950/10"
+                                ? "bg-cyan-500/10 border-cyan-500 shadow-xl shadow-cyan-500/10 ring-1 ring-cyan-500/50"
+                                : isPhase1Locked
+                                  ? "bg-black/20 border-white/5 opacity-50"
+                                  : "bg-black/30 border-white/10 hover:border-white/20 hover:bg-white/[0.02]"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-violet-400">
+                              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-400">
                                 {ps.id}
                               </span>
                               <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
@@ -626,22 +626,20 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="flex items-center justify-end pt-3 border-t border-white/5">
-                      <button
-                        type="submit"
-                        disabled={!selectedTrack || trackStatus === "loading" || isPhase1Locked}
-                        className="px-6 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/20 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        {isPhase1Locked ? (
-                          <>
-                            <span className="material-symbols-outlined text-sm">lock</span>
-                            <span>Track Locked (Submitted)</span>
-                          </>
-                        ) : trackStatus === "loading" ? (
-                          "Locking Track..."
-                        ) : (
-                          "Confirm Problem Statement"
-                        )}
-                      </button>
+                      {isPhase1Locked ? (
+                        <div className="px-5 py-2.5 bg-white/5 border border-white/10 text-white/40 font-mono text-xs rounded-xl flex items-center gap-2 cursor-not-allowed">
+                          <span className="material-symbols-outlined text-sm">lock</span>
+                          <span>Track Locked with Idea Submission</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="submit"
+                          disabled={!selectedTrack || trackStatus === "loading"}
+                          className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
+                        >
+                          {trackStatus === "loading" ? "Locking Track..." : "Confirm Problem Statement"}
+                        </button>
+                      )}
                     </div>
 
                     {trackMsg && (
@@ -655,9 +653,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Phase 1: Presentation & Abstract Submission Form */}
-                <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_0_30px_rgba(168,85,247,0.08)] space-y-6">
+                <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6">
                   <div className="border-b border-white/10 pb-4 space-y-1">
-                    <div className="inline-flex items-center gap-2 text-xs font-mono text-violet-400 uppercase tracking-widest font-semibold">
+                    <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
                       STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                     </div>
                     <h3 className="text-xl font-bold text-white">Idea &amp; Presentation Submission</h3>
@@ -666,80 +664,81 @@ export default function ProfilePage() {
                     </p>
                   </div>
 
-                  {/* Submission Status Banners */}
+                  {/* Submission Status & Lock Banners */}
                   {isPhase1Locked && (
-                    <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-amber-300">
-                      <div className="flex items-center gap-2.5">
-                        <span className="material-symbols-outlined text-xl text-amber-400">lock</span>
-                        <div>
-                          <span className="font-bold">Submission Locked:</span> Changes cannot be undone once submitted.
-                          <span className="block text-[11px] text-amber-300/70 mt-0.5">
-                            Idea presentation recorded on {new Date(teamData.team.submittedAt).toLocaleString()}. Only a Super Admin can unlock your team's submission for revisions.
+                    <div className="space-y-3">
+                      <div className="p-4 md:p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono shadow-lg shadow-amber-500/5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+                            <span className="material-symbols-outlined text-2xl">lock</span>
+                          </div>
+                          <div>
+                            <span className="font-bold text-white text-sm block">Stage 1 Submission Locked</span>
+                            <span className="text-white/70">
+                              Recorded on {new Date(teamData.team.submittedAt).toLocaleString()}. Submissions are locked and cannot be edited.
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {submission.pptUrl && (
+                            <a
+                              href={submission.pptUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-mono text-xs font-bold transition-all flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-sm">open_in_new</span>
+                              <span>View Slides ↗</span>
+                            </a>
+                          )}
+                          <span className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-bold uppercase shrink-0 border border-amber-500/30">
+                            🔒 Locked
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {teamData.team.pptUrl && (
-                          <a
-                            href={teamData.team.pptUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 rounded-lg text-[11px] font-bold inline-flex items-center gap-1"
-                          >
-                            <span className="material-symbols-outlined text-xs">open_in_new</span>
-                            View Slides ↗
-                          </a>
-                        )}
-                        <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg flex items-center gap-1">
-                          <span className="material-symbols-outlined text-xs">lock</span>
-                          LOCKED (READ ONLY)
-                        </span>
-                      </div>
+                      <p className="text-[11px] text-amber-300/80 font-mono bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base text-amber-400">info</span>
+                        <span>Only a Super Admin can unlock your team&apos;s submission page if you require revisions. Please contact the hackathon administration to request an unlock.</span>
+                      </p>
                     </div>
                   )}
 
-                  {isPhase1Submitted && isPhase1Unlocked && (
-                    <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-cyan-300">
-                      <div className="flex items-center gap-2.5">
-                        <span className="material-symbols-outlined text-xl text-cyan-400">lock_open</span>
+                  {isPhase1UnlockedByAdmin && (
+                    <div className="p-4 md:p-5 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono shadow-lg shadow-cyan-500/10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shrink-0">
+                          <span className="material-symbols-outlined text-2xl">lock_open</span>
+                        </div>
                         <div>
-                          <span className="font-bold">Revisions Unlocked by Super Admin:</span> You have permission to update your Phase 1 presentation and abstract.
-                          <span className="block text-[11px] text-cyan-300/70 mt-0.5">
-                            Notice: Once you submit your updated changes, the submission will automatically lock again.
+                          <span className="font-bold text-white text-sm block">🔓 Submission Unlocked by Super Admin</span>
+                          <span className="text-cyan-200/80">
+                            A Super Admin has unlocked your submission page. You can now update your presentation link and abstract. Note: Submitting will lock your changes again.
                           </span>
                         </div>
                       </div>
-                      <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-lg flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">lock_open</span>
-                        UNLOCKED FOR EDIT
+                      <span className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono text-xs font-bold uppercase shrink-0 border border-cyan-500/40">
+                        UNLOCKED FOR EDITING
                       </span>
                     </div>
                   )}
 
                   {!isPhase1Submitted && (
-                    <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-2.5 text-xs font-mono text-white/60">
-                      <span className="material-symbols-outlined text-lg text-cyan-400">info</span>
-                      <span>Notice: Once submitted, your idea deliverables will be locked. Changes cannot be undone without Super Admin authorization.</span>
+                    <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-cyan-300">
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-xl">info</span>
+                        <span>Note: Once submitted, your presentation and abstract will be locked and cannot be changed unless unlocked by a Super Admin.</span>
+                      </div>
+                      <span className="uppercase font-bold tracking-wider px-2.5 py-0.5 bg-cyan-500/20 rounded">
+                        SUBMISSION EDITABLE
+                      </span>
                     </div>
                   )}
 
                   <form onSubmit={handleSubmitProject} className="space-y-5">
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                          Presentation / PPT Link <span className="text-violet-400">*</span>
-                        </label>
-                        {teamData.team.pptUrl && (
-                          <a
-                            href={teamData.team.pptUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] font-mono text-violet-400 hover:text-violet-300 underline inline-flex items-center gap-1"
-                          >
-                            Open current slides ↗
-                          </a>
-                        )}
-                      </div>
+                      <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+                        Presentation / PPT Link <span className="text-cyan-400">*</span>
+                      </label>
                       <input
                         type="url"
                         required
@@ -747,13 +746,13 @@ export default function ProfilePage() {
                         value={submission.pptUrl}
                         onChange={(e) => setSubmission({ ...submission, pptUrl: e.target.value })}
                         placeholder="https://docs.google.com/presentation/d/... or Canva / Drive link"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        Understanding of Problem Statement <span className="text-violet-400">*</span>
+                        Understanding of Problem Statement <span className="text-cyan-400">*</span>
                       </label>
                       <textarea
                         required
@@ -762,13 +761,13 @@ export default function ProfilePage() {
                         value={submission.understanding}
                         onChange={(e) => setSubmission({ ...submission, understanding: e.target.value })}
                         placeholder="Explain your team's understanding of the core issues and technical constraints..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        Proposed Solution Architecture <span className="text-violet-400">*</span>
+                        Proposed Solution Architecture <span className="text-cyan-400">*</span>
                       </label>
                       <textarea
                         required
@@ -777,15 +776,15 @@ export default function ProfilePage() {
                         value={submission.solutionSummary}
                         onChange={(e) => setSubmission({ ...submission, solutionSummary: e.target.value })}
                         placeholder="Outline your tech stack, system architecture, and novelty of your idea..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
 
                     <div className="pt-2 flex justify-end">
                       {isPhase1Locked ? (
-                        <div className="px-7 py-3.5 bg-white/5 border border-white/10 text-white/50 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-2 select-none shadow-inner">
-                          <span className="material-symbols-outlined text-sm text-amber-400">lock</span>
-                          <span>Phase 1 Submission Locked</span>
+                        <div className="flex items-center gap-2 px-6 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white/40 font-mono text-xs font-bold uppercase cursor-not-allowed">
+                          <span className="material-symbols-outlined text-base">lock</span>
+                          <span>Submission Locked — Only Super Admin Can Unlock</span>
                         </div>
                       ) : (
                         <button
@@ -794,20 +793,18 @@ export default function ProfilePage() {
                           className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
                             !isIdeaComplete || submitting
                               ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                              : "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-500/20 cursor-pointer"
+                              : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20 cursor-pointer"
                           }`}
                         >
                           {submitting ? (
                             <>
                               <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                              <span>Saving &amp; Locking Submission...</span>
+                              <span>Saving &amp; Locking...</span>
                             </>
                           ) : (
                             <>
-                              <span className="material-symbols-outlined text-lg">
-                                {isPhase1Submitted ? "lock" : "cloud_upload"}
-                              </span>
-                              <span>{isPhase1Submitted ? "Update & Lock Idea Deliverable" : "Submit Idea Deliverable"}</span>
+                              <span className="material-symbols-outlined text-lg">cloud_upload</span>
+                              <span>{isPhase1UnlockedByAdmin ? "Update & Re-lock Idea Submission" : "Submit Idea Deliverable"}</span>
                             </>
                           )}
                         </button>
@@ -831,7 +828,7 @@ export default function ProfilePage() {
 
             {/* ═════════ VIEW 2: PHASE 2 (FINAL PROJECT SUBMISSION PAGE) ═════════ */}
             {teamData.isLeader && isFinalActive && (
-              <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_0_30px_rgba(168,85,247,0.08)] space-y-6 animate-fadeIn">
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl space-y-6 animate-fadeIn">
                 <div className="border-b border-white/10 pb-4 space-y-1">
                   <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
                     STAGE 02: FINAL PROJECT DELIVERABLE SUBMISSION
@@ -842,69 +839,82 @@ export default function ProfilePage() {
                   </p>
                 </div>
 
-                {/* Status Banners for Phase 2 */}
+                {/* Phase 2 Submission Status & Lock Banners */}
                 {isPhase2Locked && (
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-amber-300">
-                    <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-xl text-amber-400">lock</span>
-                      <div>
-                        <span className="font-bold">Final Project Submission Locked:</span> Changes cannot be undone once submitted.
-                        <span className="block text-[11px] text-amber-300/70 mt-0.5">
-                          Final deliverables recorded on {new Date(teamData.team.finalSubmittedAt).toLocaleString()}. Only a Super Admin can unlock your team's submission for revisions.
+                  <div className="space-y-3">
+                    <div className="p-4 md:p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono shadow-lg shadow-amber-500/5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+                          <span className="material-symbols-outlined text-2xl">lock</span>
+                        </div>
+                        <div>
+                          <span className="font-bold text-white text-sm block">Stage 2 Final Project Deliverables Locked</span>
+                          <span className="text-white/70">
+                            Recorded on {new Date(teamData.team.finalSubmittedAt).toLocaleString()}. Final deliverables are locked for jury review.
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {teamData.team.finalDocUrl && (
+                          <a
+                            href={teamData.team.finalDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-[11px] underline"
+                          >
+                            View Document ↗
+                          </a>
+                        )}
+                        {teamData.team.finalRepoUrl && (
+                          <a
+                            href={teamData.team.finalRepoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded text-[11px] underline"
+                          >
+                            View Code Repo ↗
+                          </a>
+                        )}
+                        <span className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-bold uppercase shrink-0 border border-amber-500/30">
+                          🔒 Locked
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {teamData.team.finalDocUrl && (
-                        <a
-                          href={teamData.team.finalDocUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-[11px] font-bold"
-                        >
-                          View Doc ↗
-                        </a>
-                      )}
-                      {teamData.team.finalRepoUrl && (
-                        <a
-                          href={teamData.team.finalRepoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 rounded text-[11px] font-bold"
-                        >
-                          View Repo ↗
-                        </a>
-                      )}
-                      <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">lock</span>
-                        LOCKED (READ ONLY)
-                      </span>
-                    </div>
+                    <p className="text-[11px] text-amber-300/80 font-mono bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl flex items-center gap-2">
+                      <span className="material-symbols-outlined text-base text-amber-400">info</span>
+                      <span>Only a Super Admin can unlock your final project submission page if you require revisions. Please contact the hackathon administration to request an unlock.</span>
+                    </p>
                   </div>
                 )}
 
-                {isPhase2Submitted && isPhase2Unlocked && (
-                  <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-cyan-300">
-                    <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-xl text-cyan-400">lock_open</span>
+                {isPhase2UnlockedByAdmin && (
+                  <div className="p-4 md:p-5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono shadow-lg shadow-emerald-500/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shrink-0">
+                        <span className="material-symbols-outlined text-2xl">lock_open</span>
+                      </div>
                       <div>
-                        <span className="font-bold">Revisions Unlocked by Super Admin:</span> You have permission to update your final deliverables.
-                        <span className="block text-[11px] text-cyan-300/70 mt-0.5">
-                          Notice: Once you submit your updated deliverables, the submission will automatically lock again.
+                        <span className="font-bold text-white text-sm block">🔓 Final Submission Unlocked by Super Admin</span>
+                        <span className="text-emerald-200/80">
+                          A Super Admin has unlocked your submission page. You can now update your document, code repository, and demo. Note: Submitting will lock your changes again.
                         </span>
                       </div>
                     </div>
-                    <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-lg flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">lock_open</span>
-                      UNLOCKED FOR EDIT
+                    <span className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold uppercase shrink-0 border border-emerald-500/40">
+                      UNLOCKED FOR EDITING
                     </span>
                   </div>
                 )}
 
                 {!isPhase2Submitted && (
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-2.5 text-xs font-mono text-white/60">
-                    <span className="material-symbols-outlined text-lg text-emerald-400">info</span>
-                    <span>Notice: Once submitted, your final project deliverables will lock immediately. Changes cannot be undone without Super Admin authorization.</span>
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-emerald-400">
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-xl">info</span>
+                      <span>Note: Once submitted, your final deliverables will be locked and cannot be changed unless unlocked by a Super Admin.</span>
+                    </div>
+                    <span className="uppercase font-bold tracking-wider px-2.5 py-0.5 bg-emerald-500/20 rounded">
+                      DELIVERABLES EDITABLE
+                    </span>
                   </div>
                 )}
 
@@ -920,7 +930,7 @@ export default function ProfilePage() {
                       value={finalSubmission.finalDocUrl}
                       onChange={(e) => setFinalSubmission({ ...finalSubmission, finalDocUrl: e.target.value })}
                       placeholder="https://docs.google.com/document/d/... or Drive PDF / Notion Report"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <p className="text-[11px] text-white/40 font-mono">
                       Must be accessible by jury (ensure view permissions are enabled on Google Drive).
@@ -930,7 +940,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        GitHub / Source Code Repository <span className="text-violet-400">*</span>
+                        GitHub / Source Code Repository <span className="text-cyan-400">*</span>
                       </label>
                       <input
                         type="url"
@@ -939,7 +949,7 @@ export default function ProfilePage() {
                         value={finalSubmission.finalRepoUrl}
                         onChange={(e) => setFinalSubmission({ ...finalSubmission, finalRepoUrl: e.target.value })}
                         placeholder="https://github.com/organization/repo"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
 
@@ -953,7 +963,7 @@ export default function ProfilePage() {
                         value={finalSubmission.finalDemoUrl}
                         onChange={(e) => setFinalSubmission({ ...finalSubmission, finalDemoUrl: e.target.value })}
                         placeholder="https://youtu.be/... or deployed Vercel URL"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-cyan-500/50 outline-none font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -969,15 +979,15 @@ export default function ProfilePage() {
                       value={finalSubmission.finalSummary}
                       onChange={(e) => setFinalSubmission({ ...finalSubmission, finalSummary: e.target.value })}
                       placeholder="Detail your engineering progress, hardware/software stack, how you tested your solution, and future roadmap..."
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
 
                   <div className="pt-2 flex justify-end">
                     {isPhase2Locked ? (
-                      <div className="px-7 py-4 bg-white/5 border border-white/10 text-white/50 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-2 select-none shadow-inner">
-                        <span className="material-symbols-outlined text-sm text-amber-400">lock</span>
-                        <span>Final Project Submission Locked</span>
+                      <div className="flex items-center gap-2 px-6 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white/40 font-mono text-xs font-bold uppercase cursor-not-allowed">
+                        <span className="material-symbols-outlined text-base">lock</span>
+                        <span>Final Submission Locked — Only Super Admin Can Unlock</span>
                       </div>
                     ) : (
                       <button
@@ -992,14 +1002,12 @@ export default function ProfilePage() {
                         {submittingFinal ? (
                           <>
                             <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
-                            <span>Saving &amp; Locking Deliverables...</span>
+                            <span>Uploading &amp; Locking...</span>
                           </>
                         ) : (
                           <>
-                            <span className="material-symbols-outlined text-xl">
-                              {isPhase2Submitted ? "lock" : "rocket_launch"}
-                            </span>
-                            <span>{isPhase2Submitted ? "Update & Lock Final Deliverables" : "Submit Final Project"}</span>
+                            <span className="material-symbols-outlined text-xl">rocket_launch</span>
+                            <span>{isPhase2UnlockedByAdmin ? "Update & Re-lock Final Project" : "Submit Final Project"}</span>
                           </>
                         )}
                       </button>
@@ -1022,25 +1030,25 @@ export default function ProfilePage() {
 
             {/* ═════════ VIEW 3: NON-LEADER MEMBER DASHBOARD VIEW ═════════ */}
             {!teamData.isLeader && (
-              <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-6 animate-fadeIn shadow-[0_0_30px_rgba(168,85,247,0.08)]">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 shadow-lg shadow-violet-500/10">
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl text-center space-y-6 animate-fadeIn">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/10">
                   <span className="material-symbols-outlined text-3xl">verified_user</span>
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold text-white">Team Member Dashboard</h3>
                   <p className="text-sm text-white/60 max-w-lg mx-auto">
-                    Submissions are managed exclusively by your team leader, <strong className="text-violet-300">{teamData.leaderName || "Team Leader"}</strong>.
+                    Submissions are managed exclusively by your team leader, <strong className="text-cyan-400">{teamData.leaderName || "Team Leader"}</strong>.
                   </p>
                 </div>
 
                 {/* Team Invite Code for Non-Leaders */}
-                <div className="p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 max-w-lg mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
                   <div>
                     <p className="text-xs font-bold text-white">Team Invite Code</p>
                     <p className="text-[11px] text-white/60">Share with peers to join your team ({teamData.team.members.length}/4 spots filled).</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono text-base font-black tracking-widest text-emerald-400 bg-black/60 px-3 py-1.5 rounded-xl border border-violet-500/30 select-all">
+                    <span className="font-mono text-base font-black tracking-widest text-emerald-400 bg-black/60 px-3 py-1.5 rounded-xl border border-cyan-500/30 select-all">
                       {teamData.team.teamCode}
                     </span>
                     <button
@@ -1052,7 +1060,7 @@ export default function ProfilePage() {
                           setTimeout(() => setCopiedCode(false), 2000);
                         }
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-500/40 text-violet-300 font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                      className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">
                         {copiedCode ? "check" : "content_copy"}
@@ -1076,28 +1084,16 @@ export default function ProfilePage() {
                   )}
 
                   {teamData.team.submittedAt && (
-                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-xs font-semibold border ${
-                      isPhase1Locked
-                        ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                        : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
-                    }`}>
-                      <span className="material-symbols-outlined text-base">
-                        {isPhase1Locked ? "lock" : "lock_open"}
-                      </span>
-                      Idea Submission {isPhase1Locked ? "Locked" : "Unlocked for Edit"}
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-semibold">
+                      <span className="material-symbols-outlined text-base">task_alt</span>
+                      Stage 1: {isPhase1Locked ? "Submission Locked 🔒" : "Submission Recorded 🔓"}
                     </span>
                   )}
 
                   {teamData.team.finalSubmittedAt && (
-                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-xs font-semibold border ${
-                      isPhase2Locked
-                        ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                        : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                    }`}>
-                      <span className="material-symbols-outlined text-base">
-                        {isPhase2Locked ? "lock" : "lock_open"}
-                      </span>
-                      Final Project {isPhase2Locked ? "Locked" : "Unlocked for Edit"}
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-semibold">
+                      <span className="material-symbols-outlined text-base">verified</span>
+                      Stage 2: {isPhase2Locked ? "Final Project Locked 🔒" : "Final Project Submitted 🔓"}
                     </span>
                   )}
                 </div>
@@ -1108,7 +1104,7 @@ export default function ProfilePage() {
           /* Not in a team yet: Create or Join */
           <div className="grid md:grid-cols-2 gap-8">
             {leaveNotice && (
-              <div className="md:col-span-2 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
+              <div className="md:col-span-2 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">info</span>
                   <span>{leaveNotice}</span>
@@ -1123,9 +1119,9 @@ export default function ProfilePage() {
               </div>
             )}
             {/* Create Team */}
-            <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
+            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                   <span className="material-symbols-outlined text-2xl">add_circle</span>
                 </div>
                 <div>
@@ -1149,13 +1145,13 @@ export default function ProfilePage() {
                         setTeamName(e.target.value);
                         if (createMsg) setCreateMsg("");
                       }}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/50 font-sans text-sm"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 font-sans text-sm"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={createStatus === "loading"}
-                    className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
                   >
                     {createStatus === "loading" ? "Creating Team..." : "Create Team Cluster"}
                   </button>
@@ -1176,9 +1172,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Join Team */}
-            <div className="bg-[#0e091c]/80 border border-fuchsia-500/20 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
+            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <span className="material-symbols-outlined text-2xl">group_add</span>
                 </div>
                 <div>
@@ -1203,13 +1199,13 @@ export default function ProfilePage() {
                         setTeamCode(e.target.value.toUpperCase());
                         if (joinMsg) setJoinMsg("");
                       }}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 font-mono tracking-widest text-lg uppercase text-center"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono tracking-widest text-lg uppercase text-center"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={joinStatus === "loading"}
-                    className="w-full bg-gradient-to-r from-fuchsia-600 via-purple-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-fuchsia-500/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
                   >
                     {joinStatus === "loading" ? "Joining Team..." : "Join Team"}
                   </button>
@@ -1307,7 +1303,7 @@ export default function ProfilePage() {
                 teamData.team.members.length > 1 ? (
                   <>
                     <p className="text-sm text-white/90">
-                      You are currently the <strong className="text-amber-300">Team Leader</strong> of <strong className="text-violet-300">{teamData.team.name}</strong>.
+                      You are currently the <strong className="text-amber-300">Team Leader</strong> of <strong className="text-cyan-300">{teamData.team.name}</strong>.
                     </p>
                     <p className="text-xs text-amber-200/80 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl leading-relaxed">
                       Notice: If you leave, team leadership will automatically be randomly allocated to one of your remaining teammates.
@@ -1316,7 +1312,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <p className="text-sm text-white/90">
-                      You are the <strong className="text-amber-300">only member</strong> in <strong className="text-violet-300">{teamData.team.name}</strong>.
+                      You are the <strong className="text-amber-300">only member</strong> in <strong className="text-cyan-300">{teamData.team.name}</strong>.
                     </p>
                     <p className="text-xs text-red-200/80 bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl leading-relaxed">
                       Warning: Leaving will permanently disband and delete this team.
@@ -1326,7 +1322,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <p className="text-sm text-white/90">
-                    Are you sure you want to leave team <strong className="text-violet-300">{teamData.team.name}</strong>?
+                    Are you sure you want to leave team <strong className="text-cyan-300">{teamData.team.name}</strong>?
                   </p>
                   <p className="text-xs text-white/50 leading-relaxed">
                     You will be removed from this team and can join another team with an invite code or create a new team.
