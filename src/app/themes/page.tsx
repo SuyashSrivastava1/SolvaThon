@@ -55,9 +55,6 @@ export default function ThemesCatalogPage() {
                   <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
                     <span className="material-symbols-outlined text-2xl">{theme.icon}</span>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-cyan-400">
-                    THEME 0{theme.number}
-                  </span>
                 </div>
 
                 <div>

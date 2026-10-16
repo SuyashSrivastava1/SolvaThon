@@ -576,9 +576,6 @@ export default function Home() {
                             {theme.icon}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1.5 font-bold">
-                          THEME 0{theme.number}
-                        </span>
                         <h3
                           style={{
                             fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -595,9 +592,6 @@ export default function Home() {
 
                       {/* Hover state: Clean Centered Title + Short Description */}
                       <div className="ps-desc-container">
-                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1 font-bold">
-                          THEME 0{theme.number}
-                        </span>
                         <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.45rem' }}>
                           {theme.shortTitle}
                         </h3>
@@ -634,9 +628,6 @@ export default function Home() {
                             {theme.icon}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1.5 font-bold">
-                          THEME 0{theme.number}
-                        </span>
                         <h3
                           style={{
                             fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -653,9 +644,6 @@ export default function Home() {
 
                       {/* Hover state: Clean Centered Title + Short Description */}
                       <div className="ps-desc-container">
-                        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-1 font-bold">
-                          THEME 0{theme.number}
-                        </span>
                         <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: 1.35, color: '#f8fafc', marginBottom: '0.45rem' }}>
                           {theme.shortTitle}
                         </h3>
