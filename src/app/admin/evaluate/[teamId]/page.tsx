@@ -775,6 +775,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             Team Submissions &amp; Project Deliverables
           </h3>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Stage 1 Deliverables Card */}
             <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
               <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
