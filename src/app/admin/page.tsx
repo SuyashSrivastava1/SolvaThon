@@ -1112,23 +1112,6 @@ export default function AdminPortalPage() {
                   {timerCtrlMsg}
                 </div>
               )}
-
-              {/* Collapsible Homepage Target Synchronizer */}
-              <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
-                <span>Homepage Target: {systemSettings?.targetDate ? new Date(systemSettings.targetDate).toLocaleDateString() : "Dec 10, 2026"}</span>
-                <button
-                  type="button"
-                  disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                  onClick={() => {
-                    const now = Date.now();
-                    const target = new Date(now + (hackathonTimer?.remainingSeconds ?? 86400) * 1000);
-                    handleUpdateTimer(target.toISOString());
-                  }}
-                  className="text-purple-300 hover:text-purple-200 underline cursor-pointer disabled:opacity-40"
-                >
-                  Sync Homepage Deadline
-                </button>
-              </div>
             </div>
 
             {/* Feature 3: Active Review Round Selector */}
