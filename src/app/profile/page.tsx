@@ -341,6 +341,14 @@ export default function ProfilePage() {
   const { participant } = teamData;
   const isFinalActive = teamData.submissionPhase === "FINAL";
 
+  const isPhase1Submitted = Boolean(teamData?.team?.submittedAt);
+  const isPhase1Unlocked = Boolean(teamData?.team?.phase1Unlocked);
+  const isPhase1Locked = isPhase1Submitted && !isPhase1Unlocked;
+
+  const isPhase2Submitted = Boolean(teamData?.team?.finalSubmittedAt);
+  const isPhase2Unlocked = Boolean(teamData?.team?.phase2Unlocked);
+  const isPhase2Locked = isPhase2Submitted && !isPhase2Unlocked;
+
   return (
     <div className="min-h-screen bg-[#07050e] relative text-white font-sans selection:bg-violet-500/30 py-12 px-4 md:px-8">
       {/* Background Ambience */}
@@ -560,21 +568,34 @@ export default function ProfilePage() {
                       <h3 className="text-xl font-bold text-white">Select Your Problem Statement</h3>
                     </div>
                     {teamData.team.problemStatement && (
-                      <span className="px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold">
-                        ✓ TRACK LOCKED: {teamData.team.problemStatement}
+                      <span className={`px-3.5 py-1 rounded-full text-xs font-mono font-semibold border ${
+                        isPhase1Locked
+                          ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                          : "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
+                      }`}>
+                        {isPhase1Locked ? `🔒 TRACK LOCKED: ${teamData.team.problemStatement}` : `✓ TRACK SELECTED: ${teamData.team.problemStatement}`}
                       </span>
                     )}
                   </div>
 
+                  {isPhase1Locked && (
+                    <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs font-mono text-amber-300 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-base text-amber-400">lock</span>
+                      <span>Problem statement track cannot be changed because your team has already submitted Phase 1. Only a Super Admin can unlock this submission.</span>
+                    </div>
+                  )}
+
                   <form onSubmit={handleSaveTrack} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${isPhase1Locked ? "opacity-75 pointer-events-none" : ""}`}>
                       {problemStatements.map((ps) => {
                         const isSelected = selectedTrack === ps.id;
                         return (
                           <div
                             key={ps.id}
-                            onClick={() => setSelectedTrack(ps.id)}
-                            className={`p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between space-y-3 ${
+                            onClick={() => !isPhase1Locked && setSelectedTrack(ps.id)}
+                            className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 ${
+                              isPhase1Locked ? "cursor-not-allowed" : "cursor-pointer"
+                            } ${
                               isSelected
                                 ? "bg-violet-500/15 border-violet-500 shadow-xl shadow-violet-500/15 ring-1 ring-violet-500/50"
                                 : "bg-black/40 border-white/10 hover:border-violet-500/30 hover:bg-violet-950/10"
@@ -607,10 +628,19 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-end pt-3 border-t border-white/5">
                       <button
                         type="submit"
-                        disabled={!selectedTrack || trackStatus === "loading"}
-                        className="px-6 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/20 cursor-pointer"
+                        disabled={!selectedTrack || trackStatus === "loading" || isPhase1Locked}
+                        className="px-6 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-500/20 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                        {trackStatus === "loading" ? "Locking Track..." : "Confirm Problem Statement"}
+                        {isPhase1Locked ? (
+                          <>
+                            <span className="material-symbols-outlined text-sm">lock</span>
+                            <span>Track Locked (Submitted)</span>
+                          </>
+                        ) : trackStatus === "loading" ? (
+                          "Locking Track..."
+                        ) : (
+                          "Confirm Problem Statement"
+                        )}
                       </button>
                     </div>
 
@@ -636,30 +666,88 @@ export default function ProfilePage() {
                     </p>
                   </div>
 
-                  {teamData.team.submittedAt && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-emerald-400">
+                  {/* Submission Status Banners */}
+                  {isPhase1Locked && (
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-amber-300">
                       <div className="flex items-center gap-2.5">
-                        <span className="material-symbols-outlined text-xl">task_alt</span>
-                        <span>Idea Submission Recorded on {new Date(teamData.team.submittedAt).toLocaleString()}</span>
+                        <span className="material-symbols-outlined text-xl text-amber-400">lock</span>
+                        <div>
+                          <span className="font-bold">Submission Locked:</span> Changes cannot be undone once submitted.
+                          <span className="block text-[11px] text-amber-300/70 mt-0.5">
+                            Idea presentation recorded on {new Date(teamData.team.submittedAt).toLocaleString()}. Only a Super Admin can unlock your team's submission for revisions.
+                          </span>
+                        </div>
                       </div>
-                      <span className="uppercase font-bold tracking-wider px-2.5 py-0.5 bg-emerald-500/20 rounded">
-                        RECORDED IN DATABASE
+                      <div className="flex items-center gap-2">
+                        {teamData.team.pptUrl && (
+                          <a
+                            href={teamData.team.pptUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 rounded-lg text-[11px] font-bold inline-flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-xs">open_in_new</span>
+                            View Slides ↗
+                          </a>
+                        )}
+                        <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">lock</span>
+                          LOCKED (READ ONLY)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {isPhase1Submitted && isPhase1Unlocked && (
+                    <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-cyan-300">
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-xl text-cyan-400">lock_open</span>
+                        <div>
+                          <span className="font-bold">Revisions Unlocked by Super Admin:</span> You have permission to update your Phase 1 presentation and abstract.
+                          <span className="block text-[11px] text-cyan-300/70 mt-0.5">
+                            Notice: Once you submit your updated changes, the submission will automatically lock again.
+                          </span>
+                        </div>
+                      </div>
+                      <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-lg flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">lock_open</span>
+                        UNLOCKED FOR EDIT
                       </span>
+                    </div>
+                  )}
+
+                  {!isPhase1Submitted && (
+                    <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-2.5 text-xs font-mono text-white/60">
+                      <span className="material-symbols-outlined text-lg text-cyan-400">info</span>
+                      <span>Notice: Once submitted, your idea deliverables will be locked. Changes cannot be undone without Super Admin authorization.</span>
                     </div>
                   )}
 
                   <form onSubmit={handleSubmitProject} className="space-y-5">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
-                        Presentation / PPT Link <span className="text-violet-400">*</span>
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-white/80 uppercase tracking-wider block">
+                          Presentation / PPT Link <span className="text-violet-400">*</span>
+                        </label>
+                        {teamData.team.pptUrl && (
+                          <a
+                            href={teamData.team.pptUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-mono text-violet-400 hover:text-violet-300 underline inline-flex items-center gap-1"
+                          >
+                            Open current slides ↗
+                          </a>
+                        )}
+                      </div>
                       <input
                         type="url"
                         required
+                        disabled={isPhase1Locked}
                         value={submission.pptUrl}
                         onChange={(e) => setSubmission({ ...submission, pptUrl: e.target.value })}
                         placeholder="https://docs.google.com/presentation/d/... or Canva / Drive link"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                       />
                     </div>
 
@@ -670,10 +758,11 @@ export default function ProfilePage() {
                       <textarea
                         required
                         rows={3}
+                        disabled={isPhase1Locked}
                         value={submission.understanding}
                         onChange={(e) => setSubmission({ ...submission, understanding: e.target.value })}
                         placeholder="Explain your team's understanding of the core issues and technical constraints..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                       />
                     </div>
 
@@ -684,35 +773,45 @@ export default function ProfilePage() {
                       <textarea
                         required
                         rows={3}
+                        disabled={isPhase1Locked}
                         value={submission.solutionSummary}
                         onChange={(e) => setSubmission({ ...submission, solutionSummary: e.target.value })}
                         placeholder="Outline your tech stack, system architecture, and novelty of your idea..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                       />
                     </div>
 
                     <div className="pt-2 flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={!isIdeaComplete || submitting}
-                        className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
-                          !isIdeaComplete || submitting
-                            ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                            : "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-500/20 cursor-pointer"
-                        }`}
-                      >
-                        {submitting ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                            <span>Saving Submission...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="material-symbols-outlined text-lg">cloud_upload</span>
-                            <span>{teamData.team.submittedAt ? "Update Idea Submission" : "Submit Idea Deliverable"}</span>
-                          </>
-                        )}
-                      </button>
+                      {isPhase1Locked ? (
+                        <div className="px-7 py-3.5 bg-white/5 border border-white/10 text-white/50 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-2 select-none shadow-inner">
+                          <span className="material-symbols-outlined text-sm text-amber-400">lock</span>
+                          <span>Phase 1 Submission Locked</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="submit"
+                          disabled={!isIdeaComplete || submitting}
+                          className={`px-8 py-3.5 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
+                            !isIdeaComplete || submitting
+                              ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                              : "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-500/20 cursor-pointer"
+                          }`}
+                        >
+                          {submitting ? (
+                            <>
+                              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                              <span>Saving &amp; Locking Submission...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-lg">
+                                {isPhase1Submitted ? "lock" : "cloud_upload"}
+                              </span>
+                              <span>{isPhase1Submitted ? "Update & Lock Idea Deliverable" : "Submit Idea Deliverable"}</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     {subMsg && (
@@ -743,11 +842,17 @@ export default function ProfilePage() {
                   </p>
                 </div>
 
-                {teamData.team.finalSubmittedAt && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-emerald-400">
+                {/* Status Banners for Phase 2 */}
+                {isPhase2Locked && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-amber-300">
                     <div className="flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-xl">verified</span>
-                      <span>Final Project Submitted on {new Date(teamData.team.finalSubmittedAt).toLocaleString()}</span>
+                      <span className="material-symbols-outlined text-xl text-amber-400">lock</span>
+                      <div>
+                        <span className="font-bold">Final Project Submission Locked:</span> Changes cannot be undone once submitted.
+                        <span className="block text-[11px] text-amber-300/70 mt-0.5">
+                          Final deliverables recorded on {new Date(teamData.team.finalSubmittedAt).toLocaleString()}. Only a Super Admin can unlock your team's submission for revisions.
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {teamData.team.finalDocUrl && (
@@ -755,9 +860,9 @@ export default function ProfilePage() {
                           href={teamData.team.finalDocUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 rounded text-[11px] underline"
+                          className="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded text-[11px] font-bold"
                         >
-                          View Document ↗
+                          View Doc ↗
                         </a>
                       )}
                       {teamData.team.finalRepoUrl && (
@@ -765,12 +870,41 @@ export default function ProfilePage() {
                           href={teamData.team.finalRepoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 rounded text-[11px] underline"
+                          className="px-2.5 py-1 bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 rounded text-[11px] font-bold"
                         >
-                          View Code Repo ↗
+                          View Repo ↗
                         </a>
                       )}
+                      <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">lock</span>
+                        LOCKED (READ ONLY)
+                      </span>
                     </div>
+                  </div>
+                )}
+
+                {isPhase2Submitted && isPhase2Unlocked && (
+                  <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-cyan-300">
+                    <div className="flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-xl text-cyan-400">lock_open</span>
+                      <div>
+                        <span className="font-bold">Revisions Unlocked by Super Admin:</span> You have permission to update your final deliverables.
+                        <span className="block text-[11px] text-cyan-300/70 mt-0.5">
+                          Notice: Once you submit your updated deliverables, the submission will automatically lock again.
+                        </span>
+                      </div>
+                    </div>
+                    <span className="uppercase font-bold tracking-wider px-2.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-lg flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">lock_open</span>
+                      UNLOCKED FOR EDIT
+                    </span>
+                  </div>
+                )}
+
+                {!isPhase2Submitted && (
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-2.5 text-xs font-mono text-white/60">
+                    <span className="material-symbols-outlined text-lg text-emerald-400">info</span>
+                    <span>Notice: Once submitted, your final project deliverables will lock immediately. Changes cannot be undone without Super Admin authorization.</span>
                   </div>
                 )}
 
@@ -782,10 +916,11 @@ export default function ProfilePage() {
                     <input
                       type="url"
                       required
+                      disabled={isPhase2Locked}
                       value={finalSubmission.finalDocUrl}
                       onChange={(e) => setFinalSubmission({ ...finalSubmission, finalDocUrl: e.target.value })}
                       placeholder="https://docs.google.com/document/d/... or Drive PDF / Notion Report"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                     />
                     <p className="text-[11px] text-white/40 font-mono">
                       Must be accessible by jury (ensure view permissions are enabled on Google Drive).
@@ -800,10 +935,11 @@ export default function ProfilePage() {
                       <input
                         type="url"
                         required
+                        disabled={isPhase2Locked}
                         value={finalSubmission.finalRepoUrl}
                         onChange={(e) => setFinalSubmission({ ...finalSubmission, finalRepoUrl: e.target.value })}
                         placeholder="https://github.com/organization/repo"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                       />
                     </div>
 
@@ -813,10 +949,11 @@ export default function ProfilePage() {
                       </label>
                       <input
                         type="url"
+                        disabled={isPhase2Locked}
                         value={finalSubmission.finalDemoUrl}
                         onChange={(e) => setFinalSubmission({ ...finalSubmission, finalDemoUrl: e.target.value })}
                         placeholder="https://youtu.be/... or deployed Vercel URL"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-violet-500/50 outline-none font-mono text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                       />
                     </div>
                   </div>
@@ -828,35 +965,45 @@ export default function ProfilePage() {
                     <textarea
                       required
                       rows={4}
+                      disabled={isPhase2Locked}
                       value={finalSubmission.finalSummary}
                       onChange={(e) => setFinalSubmission({ ...finalSubmission, finalSummary: e.target.value })}
                       placeholder="Detail your engineering progress, hardware/software stack, how you tested your solution, and future roadmap..."
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm leading-relaxed"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:ring-2 focus:ring-emerald-500/50 outline-none font-mono text-sm leading-relaxed disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-white/[0.02]"
                     />
                   </div>
 
                   <div className="pt-2 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={!isFinalComplete || submittingFinal}
-                      className={`px-9 py-4 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
-                        !isFinalComplete || submittingFinal
-                          ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                          : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black shadow-xl shadow-emerald-500/20 cursor-pointer"
-                      }`}
-                    >
-                      {submittingFinal ? (
-                        <>
-                          <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
-                          <span>Uploading Final Deliverables...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="material-symbols-outlined text-xl">rocket_launch</span>
-                          <span>{teamData.team.finalSubmittedAt ? "Update Final Project Submission" : "Submit Final Project"}</span>
-                        </>
-                      )}
-                    </button>
+                    {isPhase2Locked ? (
+                      <div className="px-7 py-4 bg-white/5 border border-white/10 text-white/50 text-xs font-mono font-bold uppercase tracking-wider rounded-xl flex items-center gap-2 select-none shadow-inner">
+                        <span className="material-symbols-outlined text-sm text-amber-400">lock</span>
+                        <span>Final Project Submission Locked</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={!isFinalComplete || submittingFinal}
+                        className={`px-9 py-4 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 ${
+                          !isFinalComplete || submittingFinal
+                            ? "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                            : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black shadow-xl shadow-emerald-500/20 cursor-pointer"
+                        }`}
+                      >
+                        {submittingFinal ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
+                            <span>Saving &amp; Locking Deliverables...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-xl">
+                              {isPhase2Submitted ? "lock" : "rocket_launch"}
+                            </span>
+                            <span>{isPhase2Submitted ? "Update & Lock Final Deliverables" : "Submit Final Project"}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
 
                   {finalMsg && (
@@ -929,16 +1076,28 @@ export default function ProfilePage() {
                   )}
 
                   {teamData.team.submittedAt && (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-300 font-mono text-xs font-semibold">
-                      <span className="material-symbols-outlined text-base">check_circle</span>
-                      Idea Submission Recorded
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-xs font-semibold border ${
+                      isPhase1Locked
+                        ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                        : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                    }`}>
+                      <span className="material-symbols-outlined text-base">
+                        {isPhase1Locked ? "lock" : "lock_open"}
+                      </span>
+                      Idea Submission {isPhase1Locked ? "Locked" : "Unlocked for Edit"}
                     </span>
                   )}
 
                   {teamData.team.finalSubmittedAt && (
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-semibold">
-                      <span className="material-symbols-outlined text-base">verified</span>
-                      Final Project Submitted
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-mono text-xs font-semibold border ${
+                      isPhase2Locked
+                        ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                        : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    }`}>
+                      <span className="material-symbols-outlined text-base">
+                        {isPhase2Locked ? "lock" : "lock_open"}
+                      </span>
+                      Final Project {isPhase2Locked ? "Locked" : "Unlocked for Edit"}
                     </span>
                   )}
                 </div>

@@ -23,6 +23,7 @@ model Team {
   understanding    String?
   solutionSummary  String?
   submittedAt      DateTime?
+  phase1Unlocked   Boolean       @default(false)
 
   // Phase 2: Final Project submission
   finalDocUrl      String?
@@ -30,6 +31,7 @@ model Team {
   finalDemoUrl     String?
   finalSummary     String?
   finalSubmittedAt DateTime?
+  phase2Unlocked   Boolean       @default(false)
 
   // Evaluation & Scoring (3 Criteria: Innovation, Understanding of Problem Statement, Progress)
   scoreInnovation     Float?

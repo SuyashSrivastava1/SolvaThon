@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { getAdminData, saveTeamEvaluation, toggleTeamFreezeStatus } from "@/actions/admin";
+import { getAdminData, saveTeamEvaluation, toggleTeamFreezeStatus, toggleTeamSubmissionUnlock } from "@/actions/admin";
 import { RUBRICS, getRoundInfo } from "@/config/rubrics";
 import Link from "next/link";
 
@@ -35,6 +35,7 @@ export default function TeamEvaluationPage({ params }: PageProps) {
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
   const [togglingFreeze, setTogglingFreeze] = useState(false);
   const [freezeMsg, setFreezeMsg] = useState("");
+  const [togglingUnlockPhase, setTogglingUnlockPhase] = useState<string | null>(null);
 
   const adminIdentifier = user?.email || "unknown_admin";
   const isCurrentUserSuperAdmin = isSuperAdmin;
@@ -279,6 +280,28 @@ export default function TeamEvaluationPage({ params }: PageProps) {
       alert(res.error || "Failed to toggle freeze state.");
     }
     setTogglingFreeze(false);
+  };
+
+  // Super Admin: Toggle Team Submission Unlock Status
+  const handleToggleSubmissionUnlock = async (phase: "PHASE_1" | "PHASE_2", targetUnlocked: boolean) => {
+    if (!currentTeam || !isCurrentUserSuperAdmin) return;
+    setTogglingUnlockPhase(phase);
+
+    const res = await toggleTeamSubmissionUnlock(adminIdentifier, currentTeam.id, phase, targetUnlocked);
+    if (res.success) {
+      const updatedTeam = {
+        ...currentTeam,
+        phase1Unlocked: res.phase1Unlocked !== undefined ? res.phase1Unlocked : currentTeam.phase1Unlocked,
+        phase2Unlocked: res.phase2Unlocked !== undefined ? res.phase2Unlocked : currentTeam.phase2Unlocked,
+        isPhase1Locked: res.isPhase1Locked !== undefined ? res.isPhase1Locked : currentTeam.isPhase1Locked,
+        isPhase2Locked: res.isPhase2Locked !== undefined ? res.isPhase2Locked : currentTeam.isPhase2Locked,
+      };
+      setCurrentTeam(updatedTeam);
+      setTeams((prev) => prev.map((t) => (t.id === currentTeam.id ? updatedTeam : t)));
+    } else {
+      alert(res.error || "Failed to toggle submission unlock status.");
+    }
+    setTogglingUnlockPhase(null);
   };
 
   if (loading || authLoading) {
@@ -752,17 +775,44 @@ export default function TeamEvaluationPage({ params }: PageProps) {
             Team Submissions &amp; Project Deliverables
           </h3>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Stage 1 Deliverables Card */}
             <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
                 <span className="text-xs font-mono text-violet-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">lightbulb</span>
                   STAGE 01: IDEA &amp; ABSTRACT SUBMISSION
                 </span>
-                <span className="text-[11px] font-mono text-white/40">
-                  {currentTeam.submittedAt ? new Date(currentTeam.submittedAt).toLocaleString() : "Not submitted"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono text-white/40">
+                    {currentTeam.submittedAt ? new Date(currentTeam.submittedAt).toLocaleString() : "Not submitted"}
+                  </span>
+                  {currentTeam.submittedAt && (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                      currentTeam.phase1Unlocked
+                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                    }`}>
+                      {currentTeam.phase1Unlocked ? "🔓 UNLOCKED" : "🔒 LOCKED"}
+                    </span>
+                  )}
+                  {isCurrentUserSuperAdmin && currentTeam.submittedAt && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSubmissionUnlock("PHASE_1", !currentTeam.phase1Unlocked)}
+                      disabled={togglingUnlockPhase === "PHASE_1"}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                        currentTeam.phase1Unlocked
+                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                      } disabled:opacity-50`}
+                    >
+                      <span className="material-symbols-outlined text-xs">
+                        {currentTeam.phase1Unlocked ? "lock" : "lock_open"}
+                      </span>
+                      <span>{togglingUnlockPhase === "PHASE_1" ? "..." : (currentTeam.phase1Unlocked ? "Lock S1" : "Unlock S1")}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {currentTeam.pptUrl ? (
@@ -807,14 +857,42 @@ export default function TeamEvaluationPage({ params }: PageProps) {
 
             {/* Stage 2 Deliverables Card */}
             <div className="bg-[#0e091c]/80 border border-violet-500/20 rounded-3xl p-6 backdrop-blur-xl space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
                 <span className="text-xs font-mono text-emerald-400 uppercase font-bold flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-base">rocket_launch</span>
                   STAGE 02: FINAL PROJECT DELIVERABLE
                 </span>
-                <span className="text-[11px] font-mono text-white/40">
-                  {currentTeam.finalSubmittedAt ? new Date(currentTeam.finalSubmittedAt).toLocaleString() : "Not submitted"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono text-white/40">
+                    {currentTeam.finalSubmittedAt ? new Date(currentTeam.finalSubmittedAt).toLocaleString() : "Not submitted"}
+                  </span>
+                  {currentTeam.finalSubmittedAt && (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                      currentTeam.phase2Unlocked
+                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                    }`}>
+                      {currentTeam.phase2Unlocked ? "🔓 UNLOCKED" : "🔒 LOCKED"}
+                    </span>
+                  )}
+                  {isCurrentUserSuperAdmin && currentTeam.finalSubmittedAt && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSubmissionUnlock("PHASE_2", !currentTeam.phase2Unlocked)}
+                      disabled={togglingUnlockPhase === "PHASE_2"}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                        currentTeam.phase2Unlocked
+                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                      } disabled:opacity-50`}
+                    >
+                      <span className="material-symbols-outlined text-xs">
+                        {currentTeam.phase2Unlocked ? "lock" : "lock_open"}
+                      </span>
+                      <span>{togglingUnlockPhase === "PHASE_2" ? "..." : (currentTeam.phase2Unlocked ? "Lock S2" : "Unlock S2")}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {currentTeam.finalDocUrl || currentTeam.finalRepoUrl ? (

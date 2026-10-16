@@ -210,11 +210,15 @@ export async function getTeamDetails(firebaseUid: string) {
           understanding: participant.team.understanding,
           solutionSummary: participant.team.solutionSummary,
           submittedAt: participant.team.submittedAt,
+          phase1Unlocked: participant.team.phase1Unlocked || false,
+          isPhase1Locked: Boolean(participant.team.submittedAt && !participant.team.phase1Unlocked),
           finalDocUrl: participant.team.finalDocUrl,
           finalRepoUrl: participant.team.finalRepoUrl,
           finalDemoUrl: participant.team.finalDemoUrl,
           finalSummary: participant.team.finalSummary,
           finalSubmittedAt: participant.team.finalSubmittedAt,
+          phase2Unlocked: participant.team.phase2Unlocked || false,
+          isPhase2Locked: Boolean(participant.team.finalSubmittedAt && !participant.team.phase2Unlocked),
           members: participant.team.participants.map((p: any) => ({
             id: p.id,
             name: p.fullName,
@@ -255,6 +259,14 @@ export async function selectProblemStatement(firebaseUid: string, problemStateme
     const leader = getTeamLeader(participant.team);
     if (leader && leader.id !== participant.id && leader.firebaseUid !== participant.firebaseUid) {
       return { success: false, error: `Only the team leader (${leader.fullName}) can select the problem statement.` };
+    }
+
+    const isLocked = Boolean(participant.team.submittedAt && !participant.team.phase1Unlocked);
+    if (isLocked) {
+      return {
+        success: false,
+        error: "Problem statement track is locked because your team has already submitted Phase 1. Only a Super Admin can unlock your team's submission."
+      };
     }
 
     const cleanStatement = problemStatement?.trim();
@@ -305,6 +317,15 @@ export async function submitProject(
       return { success: false, error: `Only the team leader (${leader.fullName}) can submit the presentation.` };
     }
 
+    // Check if submission is already locked (team submitted and not unlocked by Super Admin)
+    const isLocked = Boolean(participant.team.submittedAt && !participant.team.phase1Unlocked);
+    if (isLocked) {
+      return {
+        success: false,
+        error: "Idea submission is locked. Once submitted, changes cannot be undone. Only a Super Admin can unlock your team's submission."
+      };
+    }
+
     // 2. Strict URL Validation & Domain Allowlist (MED-01)
     const urlValidation = validatePresentationUrl(data.pptUrl);
     if (!urlValidation.valid) {
@@ -326,6 +347,7 @@ export async function submitProject(
         understanding: data.understanding.trim(),
         solutionSummary: data.solutionSummary.trim(),
         submittedAt: new Date(),
+        phase1Unlocked: false, // Automatically re-locks after submission!
       },
     });
 
@@ -372,6 +394,15 @@ export async function submitFinalProject(
       return { success: false, error: `Only the team leader (${leader.fullName}) can submit the final project deliverable.` };
     }
 
+    // Check if final submission is already locked (team submitted and not unlocked by Super Admin)
+    const isLocked = Boolean(participant.team.finalSubmittedAt && !participant.team.phase2Unlocked);
+    if (isLocked) {
+      return {
+        success: false,
+        error: "Final project submission is locked. Once submitted, changes cannot be undone. Only a Super Admin can unlock your team's submission."
+      };
+    }
+
     // 2. Strict URL Validations (MED-01)
     const docValidation = validateDeliverableUrl(data.finalDocUrl, "Final Document");
     if (!docValidation.valid) {
@@ -400,6 +431,7 @@ export async function submitFinalProject(
         finalDemoUrl: data.finalDemoUrl?.trim() || null,
         finalSummary: data.finalSummary?.trim() || null,
         finalSubmittedAt: new Date(),
+        phase2Unlocked: false, // Automatically re-locks after submission!
       },
     });
 

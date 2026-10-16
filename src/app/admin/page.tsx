@@ -8,6 +8,7 @@ import {
   saveTeamEvaluation,
   setActiveReviewRound,
   toggleTeamFreezeStatus,
+  toggleTeamSubmissionUnlock,
 } from "@/actions/admin";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ export default function AdminPortalPage() {
   const [roundUpdating, setRoundUpdating] = useState(false);
   const [roundMsg, setRoundMsg] = useState("");
   const [togglingFreezeId, setTogglingFreezeId] = useState<string | null>(null);
+  const [togglingUnlockId, setTogglingUnlockId] = useState<string | null>(null);
 
   // Evaluator Marks State (by teamId)
   const [evalForms, setEvalForms] = useState<
@@ -306,6 +308,36 @@ export default function AdminPortalPage() {
       alert(res.error || "Failed to toggle freeze state.");
     }
     setTogglingFreezeId(null);
+  };
+
+  // Super Admin: Toggle Team Submission Unlock Status
+  const handleToggleSubmissionUnlock = async (
+    teamId: string,
+    phase: "PHASE_1" | "PHASE_2" | "ALL",
+    targetUnlocked: boolean
+  ) => {
+    if (!isCurrentUserSuperAdmin) return;
+    setTogglingUnlockId(`${teamId}_${phase}`);
+
+    const res = await toggleTeamSubmissionUnlock(adminIdentifier, teamId, phase, targetUnlocked);
+    if (res.success) {
+      setData((prev: any) => ({
+        ...prev,
+        teams: prev.teams.map((t: any) => {
+          if (t.id !== teamId) return t;
+          return {
+            ...t,
+            phase1Unlocked: res.phase1Unlocked !== undefined ? res.phase1Unlocked : t.phase1Unlocked,
+            phase2Unlocked: res.phase2Unlocked !== undefined ? res.phase2Unlocked : t.phase2Unlocked,
+            isPhase1Locked: res.isPhase1Locked !== undefined ? res.isPhase1Locked : t.isPhase1Locked,
+            isPhase2Locked: res.isPhase2Locked !== undefined ? res.isPhase2Locked : t.isPhase2Locked,
+          };
+        }),
+      }));
+    } else {
+      alert(res.error || "Failed to toggle submission unlock status.");
+    }
+    setTogglingUnlockId(null);
   };
 
   // Export full evaluation report in native Excel (.xlsx) using ExcelJS
@@ -1146,20 +1178,69 @@ export default function AdminPortalPage() {
                               </span>
                             </td>
 
-                            {/* Deliverables */}
+                            {/* Deliverables & Submission Lock Status */}
                             <td className="py-4 px-5">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${t.pptUrl ? "bg-emerald-400" : "bg-white/20"}`} />
-                                  <span className={`text-[10px] font-mono ${t.pptUrl ? "text-emerald-300" : "text-white/40"}`}>
-                                    S1: {t.pptUrl ? "Submitted" : "Pending"}
-                                  </span>
+                              <div className="flex flex-col gap-2">
+                                {/* Stage 1: Idea / PPT */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.pptUrl ? (t.phase1Unlocked ? "bg-cyan-400" : "bg-emerald-400") : "bg-white/20"}`} />
+                                    <span className={`text-[10px] font-mono truncate ${t.pptUrl ? (t.phase1Unlocked ? "text-cyan-300 font-bold" : "text-emerald-300") : "text-white/40"}`}>
+                                      S1: {t.pptUrl ? (t.phase1Unlocked ? "Unlocked" : "Locked") : "Pending"}
+                                    </span>
+                                  </div>
+                                  {isCurrentUserSuperAdmin && t.pptUrl && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleSubmissionUnlock(t.id, "PHASE_1", !t.phase1Unlocked);
+                                      }}
+                                      disabled={togglingUnlockId === `${t.id}_PHASE_1`}
+                                      title={t.phase1Unlocked ? "Click to lock Phase 1 idea submission" : "Click to unlock Phase 1 idea submission for revisions"}
+                                      className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                                        t.phase1Unlocked
+                                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                                      } disabled:opacity-50`}
+                                    >
+                                      <span className="material-symbols-outlined text-[11px]">
+                                        {t.phase1Unlocked ? "lock" : "lock_open"}
+                                      </span>
+                                      <span>{togglingUnlockId === `${t.id}_PHASE_1` ? "..." : (t.phase1Unlocked ? "Lock" : "Unlock")}</span>
+                                    </button>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${t.finalDocUrl ? "bg-emerald-400" : "bg-white/20"}`} />
-                                  <span className={`text-[10px] font-mono ${t.finalDocUrl ? "text-emerald-300" : "text-white/40"}`}>
-                                    S2: {t.finalDocUrl ? "Submitted" : "Pending"}
-                                  </span>
+
+                                {/* Stage 2: Final Deliverables */}
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${t.finalDocUrl ? (t.phase2Unlocked ? "bg-cyan-400" : "bg-emerald-400") : "bg-white/20"}`} />
+                                    <span className={`text-[10px] font-mono truncate ${t.finalDocUrl ? (t.phase2Unlocked ? "text-cyan-300 font-bold" : "text-emerald-300") : "text-white/40"}`}>
+                                      S2: {t.finalDocUrl ? (t.phase2Unlocked ? "Unlocked" : "Locked") : "Pending"}
+                                    </span>
+                                  </div>
+                                  {isCurrentUserSuperAdmin && t.finalDocUrl && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleSubmissionUnlock(t.id, "PHASE_2", !t.phase2Unlocked);
+                                      }}
+                                      disabled={togglingUnlockId === `${t.id}_PHASE_2`}
+                                      title={t.phase2Unlocked ? "Click to lock Phase 2 final deliverables" : "Click to unlock Phase 2 final deliverables for revisions"}
+                                      className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                                        t.phase2Unlocked
+                                          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                                      } disabled:opacity-50`}
+                                    >
+                                      <span className="material-symbols-outlined text-[11px]">
+                                        {t.phase2Unlocked ? "lock" : "lock_open"}
+                                      </span>
+                                      <span>{togglingUnlockId === `${t.id}_PHASE_2` ? "..." : (t.phase2Unlocked ? "Lock" : "Unlock")}</span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </td>
