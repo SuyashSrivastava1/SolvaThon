@@ -139,7 +139,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         });
 
         configs = await prisma.systemConfig.findMany({
-          where: { key: { in: ["submission_phase", "target_date", "timer_paused", "active_review_round"] } }
+          where: { key: { in: ["submission_phase", "target_date", "timer_paused", "active_review_round", "hackathon_timer"] } }
         }).catch(() => []);
 
         queryError = null;
@@ -161,7 +161,22 @@ export async function getAdminData(tokenOrEmail?: string | null) {
     const timerConfig = configs.find((c: any) => c.key === "target_date");
     const pauseConfig = configs.find((c: any) => c.key === "timer_paused");
     const activeRoundConfig = configs.find((c: any) => c.key === "active_review_round");
+    const hackathonTimerConfig = configs.find((c: any) => c.key === "hackathon_timer");
     const activeReviewRound = activeRoundConfig ? parseInt(activeRoundConfig.value, 10) || 1 : 1;
+
+    let hackathonTimer = null;
+    if (hackathonTimerConfig?.value) {
+      try {
+        const { calculateCurrentRemaining, DEFAULT_TIMER_STATE } = await import("@/lib/timer");
+        const parsed = { ...DEFAULT_TIMER_STATE, ...JSON.parse(hackathonTimerConfig.value) };
+        hackathonTimer = {
+          ...parsed,
+          currentRemainingSeconds: calculateCurrentRemaining(parsed),
+        };
+      } catch (e) {
+        console.error("Failed to parse hackathon_timer in getAdminData:", e);
+      }
+    }
 
     // Purge and filter out any blank/empty teams with 0 participants
     const emptyTeamIds = teams.filter((t: any) => !t.participants || t.participants.length === 0).map((t: any) => t.id);
@@ -201,6 +216,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
         targetDate: timerConfig?.value || "2026-12-10T23:59:59+05:30",
         isPaused: pauseConfig?.value === "true",
         activeReviewRound,
+        hackathonTimer,
       },
       stats: {
         totalParticipants: participants.length,
@@ -677,3 +693,186 @@ export async function toggleTeamSubmissionLock(
     return { success: false, error: "Failed to update team submission lock status in database." };
   }
 }
+
+/**
+ * Super Admin: Fetch current hackathon timer configuration.
+ */
+export async function getTimerState(adminEmailOrToken: string) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller) {
+    return { success: false, error: "Unauthorized access." };
+  }
+
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "hackathon_timer" },
+    });
+
+    const { DEFAULT_TIMER_STATE, calculateCurrentRemaining } = await import("@/lib/timer");
+    let state = DEFAULT_TIMER_STATE;
+
+    if (config?.value) {
+      try {
+        state = { ...DEFAULT_TIMER_STATE, ...JSON.parse(config.value) };
+      } catch (e) {
+        console.error("Failed to parse timer JSON:", e);
+      }
+    }
+
+    const currentRemainingSeconds = calculateCurrentRemaining(state);
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        currentRemainingSeconds,
+      },
+    };
+  } catch (error) {
+    console.error("getTimerState error:", error);
+    return { success: false, error: "Failed to load timer state." };
+  }
+}
+
+export type TimerControlAction = "START" | "PAUSE" | "RESUME" | "RESET" | "SET_TIME" | "ADJUST_TIME" | "SET_LABEL";
+
+/**
+ * Super Admin Exclusive: Control Hackathon Timer
+ * Supports Start, Pause, Resume, Reset, Custom Time Setting, and Adding/Subtracting Time.
+ */
+export async function controlHackathonTimer(
+  adminEmailOrToken: string,
+  payload: {
+    action: TimerControlAction;
+    durationSeconds?: number;
+    deltaSeconds?: number;
+    phaseLabel?: string;
+    title?: string;
+  }
+) {
+  const caller = await resolveAdminCaller(adminEmailOrToken);
+  if (!caller?.isSuperAdmin) {
+    return {
+      success: false,
+      error: "Access Denied: Only Super Admin can control the hackathon countdown timer.",
+    };
+  }
+
+  try {
+    const { DEFAULT_TIMER_STATE, calculateCurrentRemaining } = await import("@/lib/timer");
+
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "hackathon_timer" },
+    });
+
+    let state = DEFAULT_TIMER_STATE;
+    if (config?.value) {
+      try {
+        state = { ...DEFAULT_TIMER_STATE, ...JSON.parse(config.value) };
+      } catch (e) {
+        console.error("Failed to parse timer JSON:", e);
+      }
+    }
+
+    const now = Date.now();
+
+    switch (payload.action) {
+      case "START":
+      case "RESUME": {
+        const remaining = state.status === "PAUSED"
+          ? state.remainingSeconds
+          : (state.remainingSeconds > 0 ? state.remainingSeconds : state.durationSeconds);
+
+        state.status = "RUNNING";
+        state.remainingSeconds = remaining;
+        state.targetTimestamp = now + remaining * 1000;
+        if (!state.startedAt) state.startedAt = now;
+        state.pausedAt = null;
+        break;
+      }
+
+      case "PAUSE": {
+        if (state.status === "RUNNING") {
+          const currentRemaining = calculateCurrentRemaining(state);
+          state.status = "PAUSED";
+          state.remainingSeconds = currentRemaining;
+          state.targetTimestamp = null;
+          state.pausedAt = now;
+        }
+        break;
+      }
+
+      case "RESET": {
+        state.status = "STOPPED";
+        state.remainingSeconds = state.durationSeconds;
+        state.targetTimestamp = null;
+        state.startedAt = null;
+        state.pausedAt = null;
+        break;
+      }
+
+      case "SET_TIME": {
+        if (typeof payload.durationSeconds === "number" && payload.durationSeconds > 0) {
+          state.durationSeconds = payload.durationSeconds;
+          state.remainingSeconds = payload.durationSeconds;
+          if (state.status === "RUNNING") {
+            state.targetTimestamp = now + payload.durationSeconds * 1000;
+          } else {
+            state.targetTimestamp = null;
+          }
+        }
+        break;
+      }
+
+      case "ADJUST_TIME": {
+        if (typeof payload.deltaSeconds === "number") {
+          if (state.status === "RUNNING" && state.targetTimestamp) {
+            const newTarget = state.targetTimestamp + payload.deltaSeconds * 1000;
+            state.targetTimestamp = Math.max(now, newTarget);
+            state.remainingSeconds = Math.max(0, Math.floor((state.targetTimestamp - now) / 1000));
+          } else {
+            state.remainingSeconds = Math.max(0, state.remainingSeconds + payload.deltaSeconds);
+          }
+        }
+        break;
+      }
+
+      case "SET_LABEL": {
+        if (payload.phaseLabel !== undefined) state.phaseLabel = payload.phaseLabel.trim();
+        if (payload.title !== undefined) state.title = payload.title.trim();
+        break;
+      }
+    }
+
+    state.updatedAt = now;
+    if (payload.phaseLabel !== undefined) state.phaseLabel = payload.phaseLabel.trim();
+    if (payload.title !== undefined) state.title = payload.title.trim();
+
+    await prisma.systemConfig.upsert({
+      where: { key: "hackathon_timer" },
+      update: {
+        value: JSON.stringify(state),
+        updatedAt: new Date(),
+      },
+      create: {
+        key: "hackathon_timer",
+        value: JSON.stringify(state),
+      },
+    });
+
+    const currentRemainingSeconds = calculateCurrentRemaining(state);
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        currentRemainingSeconds,
+      },
+      message: `Timer successfully updated (${payload.action}).`,
+    };
+  } catch (error: any) {
+    console.error("controlHackathonTimer error:", error);
+    return { success: false, error: "Failed to update hackathon timer in database." };
+  }
+}
+

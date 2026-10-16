@@ -9,7 +9,11 @@ import {
   setActiveReviewRound,
   toggleTeamFreezeStatus,
   toggleTeamSubmissionLock,
+  controlHackathonTimer,
+  getTimerState,
+  type TimerControlAction,
 } from "@/actions/admin";
+import type { HackathonTimerState } from "@/lib/timer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -41,6 +45,15 @@ export default function AdminPortalPage() {
   const [roundMsg, setRoundMsg] = useState("");
   const [togglingFreezeId, setTogglingFreezeId] = useState<string | null>(null);
   const [togglingSubLockId, setTogglingSubLockId] = useState<string | null>(null);
+
+  // Hackathon Live Auditorium Timer States (timer.solvathon26.co.in)
+  const [hackathonTimer, setHackathonTimer] = useState<HackathonTimerState | null>(null);
+  const [timerCtrlLoading, setTimerCtrlLoading] = useState(false);
+  const [timerCtrlMsg, setTimerCtrlMsg] = useState("");
+  const [customDurationHours, setCustomDurationHours] = useState(24);
+  const [customDurationMinutes, setCustomDurationMinutes] = useState(0);
+  const [phaseLabelInput, setPhaseLabelInput] = useState("Official Hackathon Countdown");
+  const [liveDisplaySeconds, setLiveDisplaySeconds] = useState<number>(24 * 3600);
 
   // Evaluator Marks State (by teamId)
   const [evalForms, setEvalForms] = useState<
@@ -92,6 +105,24 @@ export default function AdminPortalPage() {
           initEvalForms(res.teams);
           if (res.systemSettings?.targetDate) {
             setCustomTimerDate(toDatetimeLocal(res.systemSettings.targetDate));
+          }
+          if (res.systemSettings?.hackathonTimer) {
+            const ht = res.systemSettings.hackathonTimer;
+            setHackathonTimer(ht);
+            setLiveDisplaySeconds(ht.currentRemainingSeconds ?? ht.remainingSeconds);
+            setCustomDurationHours(Math.floor(ht.durationSeconds / 3600));
+            setCustomDurationMinutes(Math.floor((ht.durationSeconds % 3600) / 60));
+            if (ht.phaseLabel) setPhaseLabelInput(ht.phaseLabel);
+          } else {
+            getTimerState(tokenOrEmail).then((tres) => {
+              if (tres.success && tres.state) {
+                setHackathonTimer(tres.state);
+                setLiveDisplaySeconds(tres.state.currentRemainingSeconds ?? tres.state.remainingSeconds);
+                setCustomDurationHours(Math.floor(tres.state.durationSeconds / 3600));
+                setCustomDurationMinutes(Math.floor((tres.state.durationSeconds % 3600) / 60));
+                if (tres.state.phaseLabel) setPhaseLabelInput(tres.state.phaseLabel);
+              }
+            }).catch(() => {});
           }
           setLoading(false);
           return;
@@ -167,15 +198,88 @@ export default function AdminPortalPage() {
   const handleRefresh = async () => {
     if (!user?.email) return;
     setLoading(true);
-    const res = await getAdminData(user.email);
+    let tokenOrEmail = user?.email || "";
+    try {
+      tokenOrEmail = (await user.getIdToken()) || user.email || "";
+    } catch {}
+
+    const res = await getAdminData(tokenOrEmail);
     if (res.success) {
       setData(res);
       initEvalForms(res.teams);
       if (res.systemSettings?.targetDate) {
         setCustomTimerDate(toDatetimeLocal(res.systemSettings.targetDate));
       }
+      if (res.systemSettings?.hackathonTimer) {
+        const ht = res.systemSettings.hackathonTimer;
+        setHackathonTimer(ht);
+        setLiveDisplaySeconds(ht.currentRemainingSeconds ?? ht.remainingSeconds);
+      }
     }
     setLoading(false);
+  };
+
+  // Live ticking for the Hackathon Timer in the Super Admin dashboard
+  useEffect(() => {
+    if (!hackathonTimer) return;
+    if (hackathonTimer.status === "RUNNING" && hackathonTimer.targetTimestamp) {
+      const updateClock = () => {
+        const diff = Math.max(0, Math.floor((hackathonTimer.targetTimestamp! - Date.now()) / 1000));
+        setLiveDisplaySeconds(diff);
+      };
+      updateClock();
+      const interval = setInterval(updateClock, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setLiveDisplaySeconds(hackathonTimer.remainingSeconds);
+    }
+  }, [hackathonTimer]);
+
+  const formatTimerClock = (totalSec: number) => {
+    const s = Math.max(0, totalSec);
+    const hours = Math.floor(s / 3600);
+    const minutes = Math.floor((s % 3600) / 60);
+    const seconds = s % 60;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  };
+
+  // Super Admin: Hackathon Timer Master Controller (timer.solvathon26.co.in)
+  const handleTimerControl = async (
+    action: TimerControlAction,
+    payload: {
+      durationSeconds?: number;
+      deltaSeconds?: number;
+      phaseLabel?: string;
+      title?: string;
+    } = {}
+  ) => {
+    if (!isCurrentUserSuperAdmin) {
+      setTimerCtrlMsg("Access Denied: Only Super Admin can control the hackathon countdown timer.");
+      return;
+    }
+    setTimerCtrlLoading(true);
+    setTimerCtrlMsg("");
+
+    let tokenOrEmail = user?.email || "";
+    try {
+      if (user) {
+        tokenOrEmail = (await user.getIdToken()) || user.email || "";
+      }
+    } catch {}
+
+    const res = await controlHackathonTimer(tokenOrEmail, { action, ...payload });
+    if (res.success && res.state) {
+      setHackathonTimer(res.state);
+      setLiveDisplaySeconds(res.state.currentRemainingSeconds ?? res.state.remainingSeconds);
+      if (payload.phaseLabel !== undefined) {
+        setPhaseLabelInput(payload.phaseLabel);
+      }
+      setTimerCtrlMsg(`✓ ${res.message || "Timer command executed successfully!"}`);
+    } else {
+      setTimerCtrlMsg(res.error || "Failed to update timer.");
+    }
+    setTimerCtrlLoading(false);
   };
 
   const handleFullSignOut = async () => {
@@ -762,103 +866,269 @@ export default function AdminPortalPage() {
               )}
             </div>
 
-            {/* Feature 2: Live Hackathon Countdown Timer Console */}
+            {/* Feature 2: Official Hackathon Countdown Timer Console (timer.solvathon26.co.in) */}
             <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
-              <div className="flex items-start justify-between">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest block font-bold">
-                    CONTROL 02: COUNTDOWN TIMER CONSOLE
+                  <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block font-bold">
+                    CONTROL 02: HACKATHON LIVE TIMER (timer.solvathon26.co.in)
                   </span>
                   <h3 className="text-base font-bold text-white mt-0.5">
-                    Live Hackathon Countdown Timer
+                    Live Hackathon Clock &amp; Auditorium Screen
                   </h3>
                   <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                    Modify the live deadline synchronized across the homepage &amp; participant portals.
+                    Master controls for the live hackathon countdown clock on{" "}
+                    <code className="text-cyan-300 font-mono">timer.solvathon26.co.in</code> and auditorium screens.
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-mono text-white/40 block">TARGET SET TO</span>
-                  <span className="text-xs font-mono font-bold text-purple-300">
-                    {systemSettings?.targetDate
-                      ? new Date(systemSettings.targetDate).toLocaleDateString() + " " + new Date(systemSettings.targetDate).toLocaleTimeString()
-                      : "Dec 1, 2026"}
-                  </span>
+                <div className="flex flex-col items-end gap-1.5">
+                  {hackathonTimer?.status === "RUNNING" ? (
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      LIVE RUNNING
+                    </span>
+                  ) : hackathonTimer?.status === "PAUSED" ? (
+                    <span className="px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[11px] font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                      PAUSED
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white/60 font-mono text-[11px] font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-white/40"></span>
+                      STANDBY / STOPPED
+                    </span>
+                  )}
+                  <a
+                    href="/timer"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline flex items-center gap-1 transition-colors"
+                  >
+                    <span>Open Timer Screen</span>
+                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                  </a>
                 </div>
               </div>
 
-              {/* Timer Quick Presets & Custom Picker */}
+              {/* Live Digital Readout & Elapsed Bar */}
+              <div className="p-4 bg-black/60 border border-cyan-500/20 rounded-xl relative overflow-hidden">
+                <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+                  <div className="text-3xl sm:text-4xl font-mono font-black text-cyan-400 tracking-wider drop-shadow-[0_0_12px_rgba(56,189,248,0.4)]">
+                    {formatTimerClock(liveDisplaySeconds)}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono text-white/40 uppercase block">Configured Duration</span>
+                    <span className="text-xs font-mono font-semibold text-white/80">
+                      {Math.floor((hackathonTimer?.durationSeconds ?? 86400) / 3600)}h{" "}
+                      {Math.floor(((hackathonTimer?.durationSeconds ?? 86400) % 3600) / 60)}m
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[11px] font-mono text-white/50 truncate mb-2">
+                  <span className="text-cyan-400/80">BANNER:</span> {hackathonTimer?.phaseLabel || "Official 24-Hour Hackathon Clock"}
+                </div>
+
+                {/* Micro Progress Bar */}
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          (((hackathonTimer?.durationSeconds ?? 86400) - liveDisplaySeconds) /
+                            (hackathonTimer?.durationSeconds ?? 86400)) *
+                            100
+                        )
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Master Control Buttons */}
               <div className="space-y-3 pt-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] font-mono text-white/50">Presets:</span>
+                  {hackathonTimer?.status !== "RUNNING" ? (
+                    <button
+                      type="button"
+                      disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                      onClick={() => handleTimerControl(hackathonTimer?.status === "PAUSED" ? "RESUME" : "START")}
+                      className="flex-1 py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {timerCtrlLoading ? (
+                        <span className="w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
+                      ) : (
+                        <span className="material-symbols-outlined text-base">play_arrow</span>
+                      )}
+                      <span>{hackathonTimer?.status === "PAUSED" ? "Resume Timer" : "Start Hackathon Timer"}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                      onClick={() => handleTimerControl("PAUSE")}
+                      className="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {timerCtrlLoading ? (
+                        <span className="w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
+                      ) : (
+                        <span className="material-symbols-outlined text-base">pause</span>
+                      )}
+                      <span>Pause Timer</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleTimerPreset(1)}
-                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-mono text-white/80 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to RESET the Hackathon Countdown Timer?")) {
+                        handleTimerControl("RESET");
+                      }
+                    }}
+                    className="py-2.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-base">restart_alt</span>
+                    <span>Reset</span>
+                  </button>
+                </div>
+
+                {/* Quick Add / Subtract Time */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] font-mono text-white/50 mr-1">Adjust Time:</span>
+                  <button
+                    type="button"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => handleTimerControl("ADJUST_TIME", { deltaSeconds: 15 * 60 })}
+                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-cyan-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    +15m
+                  </button>
+                  <button
+                    type="button"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => handleTimerControl("ADJUST_TIME", { deltaSeconds: 30 * 60 })}
+                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-cyan-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    +30m
+                  </button>
+                  <button
+                    type="button"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => handleTimerControl("ADJUST_TIME", { deltaSeconds: 3600 })}
+                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-cyan-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
                   >
                     +1 Hour
                   </button>
                   <button
                     type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleTimerPreset(6)}
-                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-mono text-white/80 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => handleTimerControl("ADJUST_TIME", { deltaSeconds: -15 * 60 })}
+                    className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-[11px] font-mono text-red-300 transition-colors cursor-pointer disabled:opacity-40"
                   >
-                    +6 Hours
+                    -15m
                   </button>
                   <button
                     type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleTimerPreset(24)}
-                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-mono text-white/80 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => handleTimerControl("ADJUST_TIME", { deltaSeconds: -30 * 60 })}
+                    className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-[11px] font-mono text-red-300 transition-colors cursor-pointer disabled:opacity-40"
                   >
-                    +24 Hours
-                  </button>
-                  <button
-                    type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleUpdateTimer("2026-12-10T23:59:59+05:30")}
-                    className="px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg text-xs font-mono text-purple-300 transition-colors cursor-pointer disabled:opacity-40"
-                  >
-                    Reset Default
+                    -30m
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Custom Total Duration Setting */}
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 flex-1 bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5">
+                    <span className="text-[10px] font-mono text-white/40">DURATION:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={168}
+                      value={customDurationHours}
+                      onChange={(e) => setCustomDurationHours(Math.max(0, parseInt(e.target.value) || 0))}
+                      disabled={!isCurrentUserSuperAdmin || timerCtrlLoading}
+                      className="w-12 bg-transparent text-center text-xs font-mono font-bold text-white outline-none border-b border-white/20 focus:border-cyan-400"
+                    />
+                    <span className="text-[11px] font-mono text-white/50">hrs</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={customDurationMinutes}
+                      onChange={(e) => setCustomDurationMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      disabled={!isCurrentUserSuperAdmin || timerCtrlLoading}
+                      className="w-10 bg-transparent text-center text-xs font-mono font-bold text-white outline-none border-b border-white/20 focus:border-cyan-400"
+                    />
+                    <span className="text-[11px] font-mono text-white/50">mins</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => {
+                      const totalSec = customDurationHours * 3600 + customDurationMinutes * 60;
+                      if (totalSec <= 0) return alert("Duration must be greater than 0");
+                      handleTimerControl("SET_TIME", { durationSeconds: totalSec });
+                    }}
+                    className="px-3.5 py-2 bg-white/10 hover:bg-white/15 border border-white/15 text-white font-mono text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Set Time
+                  </button>
+                </div>
+
+                {/* Banner / Phase Customizer */}
+                <div className="flex items-center gap-2 pt-1">
                   <input
-                    type="datetime-local"
-                    value={customTimerDate}
-                    onChange={(e) => setCustomTimerDate(e.target.value)}
-                    disabled={!isCurrentUserSuperAdmin}
-                    className="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:ring-2 focus:ring-purple-500/50 outline-none flex-1 disabled:opacity-50"
+                    type="text"
+                    value={phaseLabelInput}
+                    onChange={(e) => setPhaseLabelInput(e.target.value)}
+                    placeholder="Auditorium Banner (e.g. Coding Phase - 24 Hours)"
+                    disabled={!isCurrentUserSuperAdmin || timerCtrlLoading}
+                    className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:ring-1 focus:ring-cyan-500 outline-none"
                   />
                   <button
                     type="button"
-                    disabled={timerUpdating || !customTimerDate || !isCurrentUserSuperAdmin}
-                    onClick={() => handleUpdateTimer(new Date(customTimerDate).toISOString())}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                    disabled={timerCtrlLoading || !isCurrentUserSuperAdmin}
+                    onClick={() => handleTimerControl("SET_LABEL", { phaseLabel: phaseLabelInput })}
+                    className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-mono text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50"
                   >
-                    {timerUpdating ? (
-                      <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                    ) : (
-                      <span className="material-symbols-outlined text-base">save</span>
-                    )}
-                    <span>Apply</span>
+                    Set Banner
                   </button>
                 </div>
               </div>
 
-              {timerMsg && (
+              {timerCtrlMsg && (
                 <div
                   className={`p-3 rounded-xl text-xs font-mono border ${
-                    timerMsg.startsWith("✓")
+                    timerCtrlMsg.startsWith("✓")
                       ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                       : "bg-red-500/10 border-red-500/30 text-red-300"
                   }`}
                 >
-                  {timerMsg}
+                  {timerCtrlMsg}
                 </div>
               )}
+
+              {/* Collapsible Homepage Target Synchronizer */}
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
+                <span>Homepage Target: {systemSettings?.targetDate ? new Date(systemSettings.targetDate).toLocaleDateString() : "Dec 10, 2026"}</span>
+                <button
+                  type="button"
+                  disabled={timerUpdating || !isCurrentUserSuperAdmin}
+                  onClick={() => {
+                    const now = Date.now();
+                    const target = new Date(now + (hackathonTimer?.remainingSeconds ?? 86400) * 1000);
+                    handleUpdateTimer(target.toISOString());
+                  }}
+                  className="text-purple-300 hover:text-purple-200 underline cursor-pointer disabled:opacity-40"
+                >
+                  Sync Homepage Deadline
+                </button>
+              </div>
             </div>
 
             {/* Feature 3: Active Review Round Selector */}
