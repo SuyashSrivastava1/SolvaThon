@@ -374,8 +374,8 @@ export default function Home() {
                 { l: 'Timeline', id: 'timeline' },
                 { l: 'Committee', id: 'committee' },
                 { l: 'Prizes', id: 'guests-prizes' },
-                { l: 'Hostel Team', id: 'hostel-team' },
                 { l: 'FAQ', id: 'faq' },
+                { l: 'Hostel Team', id: 'hostel-team' },
               ].map(n => (
                 <a
                   key={n.id}
@@ -1069,66 +1069,6 @@ export default function Home() {
             </div>
           </ScrollFadeSection>
 
-          {/* ════════ HOSTEL TEAM ════════ */}
-          <ScrollFadeSection
-            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
-            id="hostel-team"
-          >
-            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(56,189,248,0.02) 0%, transparent 70%)' }} />
-            <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-14 relative z-10">
-              <div className="flex flex-col items-start gap-2">
-                <motion.h2
-                  variants={fadeItem}
-                  style={{
-                    fontFamily: "'Outfit', sans-serif",
-                    fontWeight: 900,
-                    fontSize: 'clamp(2rem, 4vw, 3.2rem)',
-                    color: '#f1f5f9',
-                    letterSpacing: '-0.03em',
-                  }}
-                >
-                  Hostel Team
-                </motion.h2>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14">
-                {hostelTeam.map((colGroup, colIdx) => (
-                  <div key={colIdx} className="flex flex-col">
-                    {colGroup.members.map((member) => (
-                      <motion.div
-                        variants={fadeItem}
-                        key={member.name}
-                        className="flex items-center justify-between py-3 sm:py-3.5 border-b border-white/[0.04] hover:bg-white/[0.02] px-2 rounded-lg transition-colors gap-4"
-                      >
-                        <span
-                          style={{
-                            fontFamily: "'Plus Jakarta Sans', sans-serif",
-                            fontWeight: 600,
-                            fontSize: 'clamp(0.92rem, 1.15vw, 1.05rem)',
-                            color: '#f8fafc',
-                          }}
-                        >
-                          {member.name}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: 'clamp(0.78rem, 1vw, 0.88rem)',
-                            color: '#64748b',
-                            letterSpacing: '0.02em',
-                          }}
-                          className="text-right shrink-0"
-                        >
-                          {member.role}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollFadeSection>
-
           {/* ════════ FREQUENTLY ASKED QUESTIONS ════════ */}
           <ScrollFadeSection
             className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
@@ -1225,6 +1165,66 @@ export default function Home() {
                     </motion.div>
                   );
                 })}
+              </div>
+            </div>
+          </ScrollFadeSection>
+
+          {/* ════════ HOSTEL TEAM ════════ */}
+          <ScrollFadeSection
+            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
+            id="hostel-team"
+          >
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(56,189,248,0.02) 0%, transparent 70%)' }} />
+            <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-14 relative z-10">
+              <div className="flex flex-col items-start gap-2">
+                <motion.h2
+                  variants={fadeItem}
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontWeight: 900,
+                    fontSize: 'clamp(2rem, 4vw, 3.2rem)',
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.03em',
+                  }}
+                >
+                  Hostel Team
+                </motion.h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14">
+                {hostelTeam.map((colGroup, colIdx) => (
+                  <div key={colIdx} className="flex flex-col">
+                    {colGroup.members.map((member) => (
+                      <motion.div
+                        variants={fadeItem}
+                        key={member.name}
+                        className="flex items-center justify-between py-3 sm:py-3.5 border-b border-white/[0.04] hover:bg-white/[0.02] px-2 rounded-lg transition-colors gap-4"
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            fontWeight: 600,
+                            fontSize: 'clamp(0.92rem, 1.15vw, 1.05rem)',
+                            color: '#f8fafc',
+                          }}
+                        >
+                          {member.name}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: 'clamp(0.78rem, 1vw, 0.88rem)',
+                            color: '#64748b',
+                            letterSpacing: '0.02em',
+                          }}
+                          className="text-right shrink-0"
+                        >
+                          {member.role}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
           </ScrollFadeSection>
