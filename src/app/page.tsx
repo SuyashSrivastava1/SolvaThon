@@ -389,16 +389,6 @@ export default function Home() {
             </nav>
 
             <div className="flex items-center gap-3 shrink-0">
-              {/* Live registration counter pill */}
-              <div
-                className="hidden sm:flex items-center px-3.5 py-1.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: '#34d399', letterSpacing: '0.08em' }}>
-                  {Math.max(100, participantCount)} REGISTERED
-                </span>
-              </div>
-
               <Link
                 href={isAdmin ? "/admin" : user ? "/profile" : "/register"}
                 className="inline-flex items-center justify-center px-4 sm:px-5 py-2 rounded-xl font-semibold text-[13px] transition-all hover:scale-[1.03] active:scale-[0.98]"
@@ -412,17 +402,6 @@ export default function Home() {
                 }}
               >
                 {isAdmin ? "Admin Portal" : user ? "Dashboard" : "Register / Login"}
-              </Link>
-
-              <Link
-                href={isAdmin ? "/admin" : "/profile"}
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all hover:bg-white/[0.08]"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-                title={isAdmin ? "Admin Console" : "Profile / Team"}
-              >
-                <span className={`material-symbols-outlined ${isAdmin ? 'text-purple-400' : 'text-slate-400'}`} style={{ fontSize: 17 }}>
-                  {isAdmin ? 'admin_panel_settings' : 'person'}
-                </span>
               </Link>
             </div>
           </div>
