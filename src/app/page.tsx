@@ -259,18 +259,8 @@ const DEFAULT_TARGET_DATE_ISO = eventConfig.targetDate;
 
 export default function Home() {
   const { user, isAdmin } = useAuth();
-  const [targetDate, setTargetDate] = useState<Date>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('solvathon_target_date');
-        if (cached) {
-          const d = new Date(cached);
-          if (!isNaN(d.getTime())) return d;
-        }
-      } catch {}
-    }
-    return new Date(DEFAULT_TARGET_DATE_ISO);
-  });
+  const [targetDate, setTargetDate] = useState<Date>(() => new Date(DEFAULT_TARGET_DATE_ISO));
+  const [timerReady, setTimerReady] = useState(false);
   const timeLeft = useCountdown(targetDate);
 
   const [rawCount, setRawCount] = useState(100);
@@ -289,16 +279,28 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Sync live hackathon timer from system config without jumping
+  // Sync live hackathon timer from system config — only show timer after server confirms the date
   useEffect(() => {
     getSystemSettings().then((res) => {
       if (res?.targetDate) {
         try {
           localStorage.setItem('solvathon_target_date', res.targetDate);
         } catch {}
-        const newTime = new Date(res.targetDate).getTime();
-        setTargetDate((prev) => (prev.getTime() !== newTime ? new Date(res.targetDate) : prev));
+        setTargetDate(new Date(res.targetDate));
       }
+      setTimerReady(true);
+    }).catch(() => {
+      // On error, fall back to cached or default date
+      if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem('solvathon_target_date');
+          if (cached) {
+            const d = new Date(cached);
+            if (!isNaN(d.getTime())) setTargetDate(d);
+          }
+        } catch {}
+      }
+      setTimerReady(true);
     });
   }, []);
 
@@ -528,6 +530,7 @@ export default function Home() {
               <motion.div 
                 variants={fadeItem}
                 className="w-full pt-2 sm:pt-3 pb-8 sm:pb-12 mt-auto"
+                style={{ opacity: timerReady ? 1 : 0, transition: 'opacity 0.4s ease-in-out' }}
               >
                 {/* Centered 'Registration Ends in' header with glowing cyan lines beside it */}
                 <div className="w-full flex items-center justify-center gap-3 sm:gap-5 pb-2 px-2">

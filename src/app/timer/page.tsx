@@ -10,41 +10,15 @@ interface LiveTimerData extends HackathonTimerState {
 }
 
 export default function HackathonTimerPage() {
-  const [timerData, setTimerData] = useState<LiveTimerData>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("solvathon_timer_state_cache");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed && typeof parsed.currentRemainingSeconds === "number") {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return {
-      ...DEFAULT_TIMER_STATE,
-      currentRemainingSeconds: DEFAULT_TIMER_STATE.remainingSeconds,
-      isCompleted: false,
-      serverTime: Date.now(),
-    };
-  });
+  const [timerData, setTimerData] = useState<LiveTimerData>(() => ({
+    ...DEFAULT_TIMER_STATE,
+    currentRemainingSeconds: DEFAULT_TIMER_STATE.remainingSeconds,
+    isCompleted: false,
+    serverTime: Date.now(),
+  }));
 
-  const [remaining, setRemaining] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("solvathon_timer_state_cache");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.status === "RUNNING" && parsed.targetTimestamp) {
-            return Math.max(0, Math.floor((parsed.targetTimestamp - Date.now()) / 1000));
-          }
-          if (typeof parsed.remainingSeconds === "number") return parsed.remainingSeconds;
-        }
-      } catch {}
-    }
-    return DEFAULT_TIMER_STATE.remainingSeconds;
-  });
+  const [remaining, setRemaining] = useState<number>(DEFAULT_TIMER_STATE.remainingSeconds);
+  const [timerReady, setTimerReady] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -76,8 +50,27 @@ export default function HackathonTimerPage() {
       if (data.serverTime) {
         serverOffsetRef.current = Date.now() - data.serverTime;
       }
-    } catch {}
-  }, []);
+
+      setTimerReady(true);
+    } catch {
+      // On error, try to fall back to cached state
+      if (!timerReady && typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem("solvathon_timer_state_cache");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && typeof parsed.currentRemainingSeconds === "number") {
+              setTimerData(parsed);
+              localStatusRef.current = parsed.status;
+              localTargetRef.current = parsed.targetTimestamp;
+              localRemainingRef.current = parsed.currentRemainingSeconds;
+            }
+          }
+        } catch {}
+      }
+      setTimerReady(true);
+    }
+  }, [timerReady]);
 
   // Initial fetch and 2-second background poll
   useEffect(() => {
@@ -176,8 +169,11 @@ export default function HackathonTimerPage() {
         <span className="material-symbols-outlined text-2xl">fullscreen</span>
       </button>
 
-      {/* Centered Content: Only the two lines of text and the timer */}
-      <main className="relative z-10 flex flex-col items-center justify-center text-center">
+      {/* Centered Content: Only the two lines of text and the timer — fades in after server confirms data */}
+      <main
+        className="relative z-10 flex flex-col items-center justify-center text-center"
+        style={{ opacity: timerReady ? 1 : 0, transition: 'opacity 0.4s ease-in-out' }}
+      >
         {/* Two lines of text just above the timer */}
         <div className="mb-6 sm:mb-8 md:mb-12 flex flex-col items-center gap-3 sm:gap-4">
           {/* Line 1: Pill badge */}
