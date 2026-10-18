@@ -11,12 +11,14 @@ import timelineData from "./timeline.json";
 
 import chiefGuestData from "./chiefGuest.json";
 import prizesData from "./prizes.json";
+import eventConfigData from "./eventConfig.json";
 
 export const problemStatements = problemStatementsData;
 export const committee = committeeData;
 export const timeline = timelineData;
 export const chiefGuest = chiefGuestData;
 export const prizes = prizesData;
+export const eventConfig = eventConfigData;
 
 export { themes, allProblemStatements, getThemeBySlug, getProblemStatementById } from "./themes";
 export type { Theme, ProblemStatement } from "./themes";

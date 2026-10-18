@@ -5,6 +5,7 @@ import { randomBytes, randomInt } from "crypto";
 import { getAuthenticatedUser } from "@/lib/firebase/admin";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { validatePresentationUrl, validateDeliverableUrl } from "@/lib/urlValidator";
+import eventConfig from "@/data/eventConfig.json";
 
 function generateSecureTeamCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -465,7 +466,7 @@ export async function getSystemSettings() {
     return {
       success: true,
       submissionPhase: (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA",
-      targetDate: timerConfig?.value || "2026-12-12T00:00:00.000Z",
+      targetDate: timerConfig?.value || eventConfig.targetDate,
       isPaused: pauseConfig?.value === "true",
     };
   } catch (error) {
@@ -473,7 +474,7 @@ export async function getSystemSettings() {
     return {
       success: true,
       submissionPhase: "IDEA" as const,
-      targetDate: "2026-12-12T00:00:00.000Z",
+      targetDate: eventConfig.targetDate,
       isPaused: false,
     };
   }

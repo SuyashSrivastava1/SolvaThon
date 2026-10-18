@@ -4,6 +4,7 @@ import prisma, { getDatabaseUrl } from "@/lib/prisma";
 import { isAdminEmail, isSuperAdminEmail } from "@/config/admin";
 import { cookies, headers } from "next/headers";
 import { verifyFirebaseIdToken } from "@/lib/firebase/admin";
+import eventConfig from "@/data/eventConfig.json";
 
 // Strictly require configured environment variable without any hardcoded backdoor fallback (HIGH-01)
 const ADMIN_KEY = process.env.ADMIN_ACCESS_KEY;
@@ -213,7 +214,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
       isSuperAdmin,
       systemSettings: {
         submissionPhase: (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA",
-        targetDate: timerConfig?.value || "2026-12-12T00:00:00.000Z",
+        targetDate: timerConfig?.value || eventConfig.targetDate,
         isPaused: pauseConfig?.value === "true",
         activeReviewRound,
         hackathonTimer,

@@ -12,6 +12,7 @@ import committeeMembers from '@/data/committee.json';
 import timelineMilestones from '@/data/timeline.json';
 import chiefGuest from '@/data/chiefGuest.json';
 import prizes from '@/data/prizes.json';
+import eventConfig from '@/data/eventConfig.json';
 
 
 
@@ -253,7 +254,7 @@ function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minut
 /* ═══════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════ */
-const DEFAULT_TARGET_DATE_ISO = '2026-12-12T00:00:00.000Z';
+const DEFAULT_TARGET_DATE_ISO = eventConfig.targetDate;
 
 export default function Home() {
   const { user, isAdmin } = useAuth();
