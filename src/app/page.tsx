@@ -1171,10 +1171,11 @@ export default function Home() {
                     <motion.div
                       key={faq.id}
                       variants={popCard}
-                      className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                      onMouseEnter={() => setOpenFaq(faq.id)}
+                      className={`rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer ${
                         isOpen
                           ? 'border-emerald-500/40 bg-[#091120]/90 shadow-[0_0_30px_rgba(52,211,153,0.08)]'
-                          : 'border-white/[0.08] bg-[#070b14]/70 hover:border-white/20 hover:bg-[#0a0f1d]'
+                          : 'border-white/[0.08] bg-[#070b14]/70 hover:border-emerald-500/30 hover:bg-[#0a0f1d]'
                       }`}
                     >
                       <button
@@ -1193,13 +1194,8 @@ export default function Home() {
                         >
                           {faq.question}
                         </span>
-                        <span
-                          className="text-xs transition-transform duration-300 shrink-0 text-slate-400 select-none"
-                          style={{
-                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                          }}
-                        >
-                          ▼
+                        <span className="text-xs shrink-0 text-slate-400 select-none transition-transform duration-200">
+                          {isOpen ? '▲' : '▼'}
                         </span>
                       </button>
                       <AnimatePresence initial={false}>
