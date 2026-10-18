@@ -37,6 +37,7 @@ function useCountdown(target: Date) {
 
   const [t, setT] = useState(calc);
   useEffect(() => {
+    setT(calc());
     const id = setInterval(() => setT(calc()), 1000);
     return () => clearInterval(id);
   }, [calc]);
@@ -252,9 +253,22 @@ function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minut
 /* ═══════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════ */
+const DEFAULT_TARGET_DATE_ISO = '2026-12-12T00:00:00.000Z';
+
 export default function Home() {
   const { user, isAdmin } = useAuth();
-  const [targetDate, setTargetDate] = useState(() => new Date('2026-12-10T23:59:59+05:30'));
+  const [targetDate, setTargetDate] = useState<Date>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('solvathon_target_date');
+        if (cached) {
+          const d = new Date(cached);
+          if (!isNaN(d.getTime())) return d;
+        }
+      } catch {}
+    }
+    return new Date(DEFAULT_TARGET_DATE_ISO);
+  });
   const timeLeft = useCountdown(targetDate);
 
   const [rawCount, setRawCount] = useState(100);
@@ -272,11 +286,15 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Sync live hackathon timer from system config
+  // Sync live hackathon timer from system config without jumping
   useEffect(() => {
     getSystemSettings().then((res) => {
       if (res?.targetDate) {
-        setTargetDate(new Date(res.targetDate));
+        try {
+          localStorage.setItem('solvathon_target_date', res.targetDate);
+        } catch {}
+        const newTime = new Date(res.targetDate).getTime();
+        setTargetDate((prev) => (prev.getTime() !== newTime ? new Date(res.targetDate) : prev));
       }
     });
   }, []);

@@ -213,7 +213,7 @@ export async function getAdminData(tokenOrEmail?: string | null) {
       isSuperAdmin,
       systemSettings: {
         submissionPhase: (phaseConfig?.value as "IDEA" | "FINAL") || "IDEA",
-        targetDate: timerConfig?.value || "2026-12-10T23:59:59+05:30",
+        targetDate: timerConfig?.value || "2026-12-12T00:00:00.000Z",
         isPaused: pauseConfig?.value === "true",
         activeReviewRound,
         hackathonTimer,

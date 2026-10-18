@@ -11,14 +11,41 @@ interface LiveTimerData extends HackathonTimerState {
 }
 
 export default function HackathonTimerPage() {
-  const [timerData, setTimerData] = useState<LiveTimerData>({
-    ...DEFAULT_TIMER_STATE,
-    currentRemainingSeconds: DEFAULT_TIMER_STATE.remainingSeconds,
-    isCompleted: false,
-    serverTime: Date.now(),
+  const [timerData, setTimerData] = useState<LiveTimerData>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("solvathon_timer_state_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed.currentRemainingSeconds === "number") {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return {
+      ...DEFAULT_TIMER_STATE,
+      currentRemainingSeconds: DEFAULT_TIMER_STATE.remainingSeconds,
+      isCompleted: false,
+      serverTime: Date.now(),
+    };
   });
 
-  const [remaining, setRemaining] = useState<number>(DEFAULT_TIMER_STATE.remainingSeconds);
+  const [remaining, setRemaining] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("solvathon_timer_state_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.status === "RUNNING" && parsed.targetTimestamp) {
+            return Math.max(0, Math.floor((parsed.targetTimestamp - Date.now()) / 1000));
+          }
+          if (typeof parsed.remainingSeconds === "number") return parsed.remainingSeconds;
+        }
+      } catch {}
+    }
+    return DEFAULT_TIMER_STATE.remainingSeconds;
+  });
   const [millis, setMillis] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
@@ -67,6 +94,9 @@ export default function HackathonTimerPage() {
       if (!res.ok) throw new Error("Network response error");
 
       const data: LiveTimerData = await res.json();
+      try {
+        localStorage.setItem("solvathon_timer_state_cache", JSON.stringify(data));
+      } catch {}
       setNetworkError(false);
       setTimerData(data);
 
