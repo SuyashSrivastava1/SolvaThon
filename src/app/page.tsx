@@ -218,35 +218,46 @@ function ScrollFadeSection({
 }
 
 /* ═══════════════════════════════════════════
-   GDG-STYLE LAYERED OUTLINE TIMER COMPONENT
+   PREMIUM GLASS-CARD COUNTDOWN TIMER
    ═══════════════════════════════════════════ */
-function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) {
-  const d = String(timeLeft.days).padStart(2, '0');
-  const h = String(timeLeft.hours).padStart(2, '0');
-  const m = String(timeLeft.minutes).padStart(2, '0');
-  const s = String(timeLeft.seconds).padStart(2, '0');
-
-  const timeDisplay = `${d}d : ${h}h : ${m}m : ${s}s`;
+function CountdownTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) {
+  const segments = [
+    { value: timeLeft.days, label: 'Days' },
+    { value: timeLeft.hours, label: 'Hours' },
+    { value: timeLeft.minutes, label: 'Minutes' },
+    { value: timeLeft.seconds, label: 'Seconds' },
+  ];
 
   return (
-    <div className="w-full flex flex-col items-center justify-center select-none py-2" suppressHydrationWarning>
-      <div
-        className="gdg-timer-stack w-full flex justify-center text-center tracking-tight"
-        style={{
-          fontSize: 'clamp(1.85rem, 6.8vw, 7.5rem)',
-        }}
-        suppressHydrationWarning
-      >
-        {/* Top 2nd layered outline */}
-        <div className="gdg-timer-layer-top2" suppressHydrationWarning>{timeDisplay}</div>
-        {/* Top 1st layered outline */}
-        <div className="gdg-timer-layer-top1" suppressHydrationWarning>{timeDisplay}</div>
-        {/* Center Glowing Main Outline */}
-        <div className="gdg-timer-layer-center" suppressHydrationWarning>{timeDisplay}</div>
-        {/* Bottom 1st layered outline */}
-        <div className="gdg-timer-layer-bot1" suppressHydrationWarning>{timeDisplay}</div>
-        {/* Bottom 2nd layered outline */}
-        <div className="gdg-timer-layer-bot2" suppressHydrationWarning>{timeDisplay}</div>
+    <div className="w-full flex items-center justify-center select-none py-4 sm:py-6" suppressHydrationWarning>
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-5" suppressHydrationWarning>
+        {segments.map((seg, idx) => (
+          <div key={seg.label} className="flex items-center gap-2 sm:gap-3 md:gap-5">
+            {/* Individual time card */}
+            <div className="countdown-card group">
+              {/* Glow backdrop */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              {/* Number */}
+              <span
+                className="countdown-number"
+                suppressHydrationWarning
+              >
+                {String(seg.value).padStart(2, '0')}
+              </span>
+              {/* Label */}
+              <span className="countdown-label">
+                {seg.label}
+              </span>
+            </div>
+            {/* Animated colon separator (not after last) */}
+            {idx < segments.length - 1 && (
+              <div className="countdown-separator" aria-hidden="true">
+                <span />
+                <span />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -515,7 +526,7 @@ export default function Home() {
                     <motion.div
                       variants={popCard}
                       key={s.label}
-                      className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#090e1a]/85 group"
+                      className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 bg-[#090e1a]/85 group"
                       style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.5)' }}
                     >
                       <span className="material-symbols-outlined transition-transform group-hover:scale-110" style={{ fontSize: 32, color: '#38bdf8' }}>{s.icon}</span>
@@ -542,7 +553,7 @@ export default function Home() {
                   </div>
                   <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-l from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                 </div>
-                <GDGTimer timeLeft={timeLeft} />
+                <CountdownTimer timeLeft={timeLeft} />
               </motion.div>
             </div>
           </ScrollFadeSection>
@@ -821,7 +832,7 @@ export default function Home() {
                           height="115"
                         >
                           <div
-                            className="w-full flex flex-col items-center text-center p-2.5 rounded-xl card-pop cursor-pointer transition-all"
+                            className="w-full flex flex-col items-center text-center p-2.5 rounded-xl card-pop transition-all"
                             style={{
                               background: 'rgba(8, 12, 24, 0.92)',
                               border: `1px solid ${m.color}45`,
@@ -869,7 +880,7 @@ export default function Home() {
 
                 <div className="flex flex-col gap-8">
                   {timelineMilestones.map((item, i) => (
-                    <div key={i} className="relative flex flex-col gap-1.5 glass-card card-pop p-4 rounded-xl cursor-pointer">
+                    <div key={i} className="relative flex flex-col gap-1.5 glass-card card-pop p-4 rounded-xl">
                       {/* Node circle on the line */}
                       <div
                         className="absolute -left-[30px] top-4 w-[24px] h-[24px] rounded-full flex items-center justify-center"
@@ -921,7 +932,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
                 {committeeMembers.map(p => (
-                  <motion.div variants={popCard} key={p.name} className="glass-card card-pop rounded-2xl overflow-hidden flex flex-col cursor-pointer">
+                  <motion.div variants={popCard} key={p.name} className="glass-card card-pop rounded-2xl overflow-hidden flex flex-col">
                     <div className="w-full h-48 overflow-hidden relative" style={{ background: '#0f172a' }}>
                       <img className="w-full h-full object-cover" src={p.img} alt={p.name} />
                       <div
@@ -956,7 +967,7 @@ export default function Home() {
               {/* Distinguished Chief Guest */}
               <motion.div
                 variants={popCard}
-                className="glass-card card-pop rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 cursor-pointer"
+                className="glass-card card-pop rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12"
                 style={{ boxShadow: '0 0 60px rgba(56,189,248,0.06), 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)' }}
               >
                 <div className="w-full lg:w-1/3 aspect-square max-w-[280px] rounded-2xl overflow-hidden relative shadow-2xl shrink-0" style={{ background: '#0f172a' }}>
@@ -1012,7 +1023,7 @@ export default function Home() {
                     <motion.div
                       key={tier.rank}
                       variants={popCard}
-                      className={`glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-4 relative overflow-hidden ${tier.order} ${tier.rank.includes('1ST') ? 'border-cyan-400/30' : ''} cursor-pointer`}
+                      className={`glass-card card-pop rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-4 relative overflow-hidden ${tier.order} ${tier.rank.includes('1ST') ? 'border-cyan-400/30' : ''}`}
                       style={{
                         boxShadow: tier.rank.includes('1ST')
                           ? '0 0 60px rgba(56,189,248,0.12), 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'
@@ -1038,7 +1049,7 @@ export default function Home() {
                 {/* Certificate & Resume Enhancement Card */}
                 <motion.div
                   variants={popCard}
-                  className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-cyan-500/25 cursor-pointer relative overflow-hidden"
+                  className="glass-card card-pop rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-cyan-500/25 relative overflow-hidden"
                   style={{
                     background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.06) 0%, rgba(10, 15, 26, 0.8) 100%)',
                     boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
