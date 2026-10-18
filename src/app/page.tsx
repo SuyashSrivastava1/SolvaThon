@@ -279,7 +279,7 @@ export default function Home() {
 
   const [scrolled, setScrolled] = useState(false);
   const [activeModalPS, setActiveModalPS] = useState<typeof problemStatements[0] | null>(null);
-  const [openFaq, setOpenFaq] = useState<string | null>("faq-1");
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   // Close modal on escape key
   useEffect(() => {
@@ -1112,6 +1112,7 @@ export default function Home() {
                       key={faq.id}
                       variants={popCard}
                       onMouseEnter={() => setOpenFaq(faq.id)}
+                      onMouseLeave={() => setOpenFaq(null)}
                       className={`rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer ${
                         isOpen
                           ? 'border-emerald-500/40 bg-[#091120]/90 shadow-[0_0_30px_rgba(52,211,153,0.08)]'
