@@ -218,46 +218,35 @@ function ScrollFadeSection({
 }
 
 /* ═══════════════════════════════════════════
-   PREMIUM GLASS-CARD COUNTDOWN TIMER
+   GDG-STYLE LAYERED OUTLINE TIMER COMPONENT
    ═══════════════════════════════════════════ */
-function CountdownTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) {
-  const segments = [
-    { value: timeLeft.days, label: 'Days' },
-    { value: timeLeft.hours, label: 'Hours' },
-    { value: timeLeft.minutes, label: 'Minutes' },
-    { value: timeLeft.seconds, label: 'Seconds' },
-  ];
+function GDGTimer({ timeLeft }: { timeLeft: { days: number; hours: number; minutes: number; seconds: number } }) {
+  const d = String(timeLeft.days).padStart(2, '0');
+  const h = String(timeLeft.hours).padStart(2, '0');
+  const m = String(timeLeft.minutes).padStart(2, '0');
+  const s = String(timeLeft.seconds).padStart(2, '0');
+
+  const timeDisplay = `${d}d : ${h}h : ${m}m : ${s}s`;
 
   return (
-    <div className="w-full flex items-center justify-center select-none py-4 sm:py-6" suppressHydrationWarning>
-      <div className="flex items-center gap-2 sm:gap-3 md:gap-5" suppressHydrationWarning>
-        {segments.map((seg, idx) => (
-          <div key={seg.label} className="flex items-center gap-2 sm:gap-3 md:gap-5">
-            {/* Individual time card */}
-            <div className="countdown-card group">
-              {/* Glow backdrop */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              {/* Number */}
-              <span
-                className="countdown-number"
-                suppressHydrationWarning
-              >
-                {String(seg.value).padStart(2, '0')}
-              </span>
-              {/* Label */}
-              <span className="countdown-label">
-                {seg.label}
-              </span>
-            </div>
-            {/* Animated colon separator (not after last) */}
-            {idx < segments.length - 1 && (
-              <div className="countdown-separator" aria-hidden="true">
-                <span />
-                <span />
-              </div>
-            )}
-          </div>
-        ))}
+    <div className="w-full flex flex-col items-center justify-center select-none py-2" suppressHydrationWarning>
+      <div
+        className="gdg-timer-stack w-full flex justify-center text-center tracking-tight"
+        style={{
+          fontSize: 'clamp(1.85rem, 6.8vw, 7.5rem)',
+        }}
+        suppressHydrationWarning
+      >
+        {/* Top 2nd layered outline */}
+        <div className="gdg-timer-layer-top2" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Top 1st layered outline */}
+        <div className="gdg-timer-layer-top1" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Center Glowing Main Outline */}
+        <div className="gdg-timer-layer-center" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Bottom 1st layered outline */}
+        <div className="gdg-timer-layer-bot1" suppressHydrationWarning>{timeDisplay}</div>
+        {/* Bottom 2nd layered outline */}
+        <div className="gdg-timer-layer-bot2" suppressHydrationWarning>{timeDisplay}</div>
       </div>
     </div>
   );
@@ -553,7 +542,7 @@ export default function Home() {
                   </div>
                   <div className="h-[1px] flex-1 max-w-[280px] sm:max-w-md bg-gradient-to-l from-transparent via-cyan-400/50 to-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
                 </div>
-                <CountdownTimer timeLeft={timeLeft} />
+                <GDGTimer timeLeft={timeLeft} />
               </motion.div>
             </div>
           </ScrollFadeSection>

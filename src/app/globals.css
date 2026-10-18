@@ -207,109 +207,70 @@
 }
 
 /* ══════════════════════════════════════
-   PREMIUM GLASS-CARD COUNTDOWN TIMER
+   GDG STYLE LAYERED OUTLINE TIMER
    ══════════════════════════════════════ */
-.countdown-card {
+.gdg-timer-stack {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 10px 10px;
-  min-width: 64px;
-  border-radius: 16px;
-  background: rgba(8, 15, 30, 0.75);
-  border: 1px solid rgba(56, 189, 248, 0.15);
-  backdrop-filter: blur(20px);
-  box-shadow:
-    0 0 40px rgba(56, 189, 248, 0.06),
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
-}
-
-.countdown-card:hover {
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow:
-    0 0 50px rgba(56, 189, 248, 0.12),
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.countdown-number {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.8rem, 5.5vw, 4.5rem);
-  letter-spacing: -0.04em;
-  line-height: 1;
-  background: linear-gradient(180deg, #ffffff 0%, #94e4ff 60%, #38bdf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
-  font-variant-numeric: tabular-nums;
-}
-
-.countdown-label {
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #64748b;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
 }
 
-.countdown-separator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 18px;
+.gdg-timer-layer-top2 {
+  position: absolute;
+  top: -20%;
+  left: 0;
+  right: 0;
+  opacity: 0.12;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.45);
+  pointer-events: none;
+  user-select: none;
 }
 
-.countdown-separator span {
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
-  animation: separator-pulse 1.2s ease-in-out infinite;
+.gdg-timer-layer-top1 {
+  position: absolute;
+  top: -10%;
+  left: 0;
+  right: 0;
+  opacity: 0.32;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(56, 189, 248, 0.65);
+  pointer-events: none;
+  user-select: none;
 }
 
-.countdown-separator span:nth-child(2) {
-  animation-delay: 0.6s;
+.gdg-timer-layer-center {
+  position: relative;
+  color: transparent;
+  -webkit-text-stroke: 2.5px rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.45));
+  user-select: none;
 }
 
-@keyframes separator-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.75); }
+.gdg-timer-layer-bot1 {
+  position: absolute;
+  bottom: -10%;
+  left: 0;
+  right: 0;
+  opacity: 0.32;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(56, 189, 248, 0.65);
+  pointer-events: none;
+  user-select: none;
 }
 
-/* Responsive: larger cards on bigger screens */
-@media (min-width: 640px) {
-  .countdown-card {
-    min-width: 100px;
-    padding: 18px 16px 14px;
-    gap: 8px;
-    border-radius: 20px;
-  }
-  .countdown-label { font-size: 10px; }
-  .countdown-separator { gap: 10px; padding-bottom: 22px; }
-  .countdown-separator span { width: 7px; height: 7px; }
-}
-
-@media (min-width: 1024px) {
-  .countdown-card {
-    min-width: 140px;
-    padding: 24px 20px 18px;
-    gap: 10px;
-    border-radius: 24px;
-  }
-  .countdown-label { font-size: 11px; }
-  .countdown-separator { gap: 14px; padding-bottom: 28px; }
-  .countdown-separator span { width: 8px; height: 8px; }
+.gdg-timer-layer-bot2 {
+  position: absolute;
+  bottom: -20%;
+  left: 0;
+  right: 0;
+  opacity: 0.12;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.45);
+  pointer-events: none;
+  user-select: none;
 }
 
 /* ══════════════════════════════════════
