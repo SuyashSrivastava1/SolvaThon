@@ -467,9 +467,18 @@ export default function Home() {
                         boxShadow: isAdmin ? '0 0 30px rgba(168,85,247,0.4)' : '0 0 30px rgba(56,189,248,0.35)',
                       }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
-                        {isAdmin ? 'admin_panel_settings' : 'how_to_reg'}
-                      </span>
+                      {isAdmin ? (
+                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <polyline points="16 11 18 13 22 9" />
+                        </svg>
+                      )}
                       {isAdmin ? "Open Admin Portal" : user ? "Go to Dashboard" : "Register Now"}
                     </Link>
                     <a
@@ -478,7 +487,10 @@ export default function Home() {
                       className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl glass-card font-semibold transition-all hover:scale-[1.02] text-sm sm:text-base text-slate-200"
                       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: 'none' }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>terminal</span>
+                      <svg className="w-4 h-4 shrink-0 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="4 17 10 11 4 5" />
+                        <line x1="12" y1="19" x2="20" y2="19" />
+                      </svg>
                       View Challenges
                     </a>
                   </motion.div>
