@@ -816,72 +816,214 @@ export default function AdminPortalPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Feature 1: Toggle Submission Phase */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block font-bold">
-                    CONTROL 01: PARTICIPANT SUBMISSION ROUTE
-                  </span>
-                  <h3 className="text-base font-bold text-white mt-0.5">
-                    Toggle Submission Phase
-                  </h3>
-                  <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                    When toggled to <strong>FINAL PROJECT</strong>, participants logging into their dashboard will automatically be directed to the <strong>Final Project Submission Page</strong> to submit their document, code, &amp; demo.
-                  </p>
-                </div>
-              </div>
-
-              {/* Interactive Toggle Switch */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
-                <div className="flex items-center p-1.5 bg-black/60 border border-white/10 rounded-xl flex-1">
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePhase("IDEA")}
-                    disabled={phaseUpdating || !isCurrentUserSuperAdmin}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      currentPhase === "IDEA"
-                        ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/30"
-                        : "text-white/60 hover:text-white"
-                    } disabled:opacity-50`}
-                  >
-                    <span className="material-symbols-outlined text-base">lightbulb</span>
-                    Stage 1: Idea Submission
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePhase("FINAL")}
-                    disabled={phaseUpdating || !isCurrentUserSuperAdmin}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      currentPhase === "FINAL"
-                        ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/30"
-                        : "text-white/60 hover:text-white"
-                    } disabled:opacity-50`}
-                  >
-                    <span className="material-symbols-outlined text-base">rocket_launch</span>
-                    Stage 2: Final Project
-                  </button>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Left Column: Feature 1 (Submission Route) & Feature 3 (Homepage Countdown) */}
+            <div className="space-y-6 flex flex-col">
+              {/* Feature 1: Toggle Submission Phase */}
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block font-bold">
+                      CONTROL 01: PARTICIPANT SUBMISSION ROUTE
+                    </span>
+                    <h3 className="text-base font-bold text-white mt-0.5">
+                      Toggle Submission Phase
+                    </h3>
+                    <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                      When toggled to <strong>FINAL PROJECT</strong>, participants logging into their dashboard will automatically be directed to the <strong>Final Project Submission Page</strong> to submit their document, code, &amp; demo.
+                    </p>
+                  </div>
                 </div>
 
-                {!isCurrentUserSuperAdmin && (
-                  <span className="text-[11px] font-mono text-amber-400/90 self-center">
-                    (Super Admin required)
-                  </span>
+                {/* Interactive Toggle Switch */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+                  <div className="flex items-center p-1.5 bg-black/60 border border-white/10 rounded-xl flex-1">
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePhase("IDEA")}
+                      disabled={phaseUpdating || !isCurrentUserSuperAdmin}
+                      className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        currentPhase === "IDEA"
+                          ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/30"
+                          : "text-white/60 hover:text-white"
+                      } disabled:opacity-50`}
+                    >
+                      <span className="material-symbols-outlined text-base">lightbulb</span>
+                      Stage 1: Idea Submission
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePhase("FINAL")}
+                      disabled={phaseUpdating || !isCurrentUserSuperAdmin}
+                      className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        currentPhase === "FINAL"
+                          ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/30"
+                          : "text-white/60 hover:text-white"
+                      } disabled:opacity-50`}
+                    >
+                      <span className="material-symbols-outlined text-base">rocket_launch</span>
+                      Stage 2: Final Project
+                    </button>
+                  </div>
+
+                  {!isCurrentUserSuperAdmin && (
+                    <span className="text-[11px] font-mono text-amber-400/90 self-center">
+                      (Super Admin required)
+                    </span>
+                  )}
+                </div>
+
+                {phaseMsg && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-mono border ${
+                      phaseMsg.startsWith("✓")
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                        : "bg-red-500/10 border-red-500/30 text-red-300"
+                    }`}
+                  >
+                    {phaseMsg}
+                  </div>
                 )}
               </div>
 
-              {phaseMsg && (
-                <div
-                  className={`p-3 rounded-xl text-xs font-mono border ${
-                    phaseMsg.startsWith("✓")
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                      : "bg-red-500/10 border-red-500/30 text-red-300"
-                  }`}
-                >
-                  {phaseMsg}
+              {/* Feature 3: Homepage Countdown Timer Console (solvathon26.co.in) */}
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest block font-bold">
+                      CONTROL 03: HOMEPAGE COUNTDOWN TIMER (solvathon26.co.in)
+                    </span>
+                    <h3 className="text-base font-bold text-white mt-0.5">
+                      Homepage Target Date &amp; Kickoff Clock
+                    </h3>
+                    <p className="text-xs text-white/60 mt-1 leading-relaxed">
+                      Master controls for the registration &amp; hackathon countdown displayed on the main landing page (<code className="text-purple-300 font-mono">solvathon26.co.in</code>). Synchronizes in real time across all participant browsers.
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-mono text-[11px] font-bold flex items-center gap-1.5 shadow-lg shadow-purple-500/10">
+                      <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                      LIVE SYNCED
+                    </span>
+                    <a
+                      href="/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-mono text-purple-400 hover:text-purple-300 underline flex items-center gap-1 transition-colors"
+                    >
+                      <span>Open Homepage</span>
+                      <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                    </a>
+                  </div>
                 </div>
-              )}
+
+                {/* Live Digital Readout & Current Target */}
+                <div className="p-4 bg-black/60 border border-purple-500/20 rounded-xl relative overflow-hidden">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+                    <div className="text-3xl sm:text-4xl font-mono font-black text-purple-400 tracking-wider drop-shadow-[0_0_12px_rgba(168,85,247,0.4)]">
+                      {formatDurationDHMS(Math.max(0, new Date(data?.systemSettings?.targetDate || eventConfig.targetDate).getTime() - currentNow))}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-mono text-white/40 uppercase block">Configured Target (IST)</span>
+                      <span className="text-xs font-mono font-semibold text-white/80">
+                        {new Date(data?.systemSettings?.targetDate || eventConfig.targetDate).toLocaleString("en-IN", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] font-mono text-white/50 truncate">
+                    <span className="text-purple-400/80">STATUS:</span>{" "}
+                    {new Date(data?.systemSettings?.targetDate || eventConfig.targetDate).getTime() > currentNow
+                      ? "Countdown In Progress (Active on Homepage)"
+                      : "Countdown Expired / Kickoff Complete"}
+                  </div>
+                </div>
+
+                {/* Master Controls: Presets and Date Picker */}
+                <div className="space-y-3 pt-1">
+                  {/* Presets */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-mono text-white/50 mr-1">Quick Add:</span>
+                    <button
+                      type="button"
+                      disabled={timerUpdating || !isCurrentUserSuperAdmin}
+                      onClick={() => handleTimerPreset(24)}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-purple-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      +24 Hours
+                    </button>
+                    <button
+                      type="button"
+                      disabled={timerUpdating || !isCurrentUserSuperAdmin}
+                      onClick={() => handleTimerPreset(72)}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-purple-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      +3 Days
+                    </button>
+                    <button
+                      type="button"
+                      disabled={timerUpdating || !isCurrentUserSuperAdmin}
+                      onClick={() => handleTimerPreset(168)}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-purple-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      +7 Days
+                    </button>
+                    <button
+                      type="button"
+                      disabled={timerUpdating || !isCurrentUserSuperAdmin}
+                      onClick={() => {
+                        setCustomTimerDate(toDatetimeLocal(eventConfig.targetDate));
+                        handleUpdateTimer(eventConfig.targetDate);
+                      }}
+                      className="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg text-[11px] font-mono text-purple-300 transition-colors cursor-pointer disabled:opacity-40 ml-auto"
+                    >
+                      Reset Default
+                    </button>
+                  </div>
+
+                  {/* Custom Date Picker & Save Button */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="datetime-local"
+                      value={customTimerDate}
+                      onChange={(e) => setCustomTimerDate(e.target.value)}
+                      disabled={!isCurrentUserSuperAdmin || timerUpdating}
+                      className="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:ring-1 focus:ring-purple-500 outline-none flex-1 disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      disabled={timerUpdating || !customTimerDate || !isCurrentUserSuperAdmin}
+                      onClick={() => {
+                        if (!customTimerDate) return;
+                        handleUpdateTimer(new Date(customTimerDate).toISOString());
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                    >
+                      {timerUpdating ? (
+                        <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                      ) : (
+                        <span className="material-symbols-outlined text-base">save</span>
+                      )}
+                      <span>Apply Date</span>
+                    </button>
+                  </div>
+                </div>
+
+                {timerMsg && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-mono border ${
+                      timerMsg.startsWith("✓")
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                        : "bg-red-500/10 border-red-500/30 text-red-300"
+                    }`}
+                  >
+                    {timerMsg}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Feature 2: Official Hackathon Countdown Timer Console (timer.solvathon26.co.in) */}
@@ -1132,147 +1274,8 @@ export default function AdminPortalPage() {
               )}
             </div>
 
-            {/* Feature 3: Homepage Countdown Timer Console (solvathon26.co.in) */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest block font-bold">
-                    CONTROL 03: HOMEPAGE COUNTDOWN TIMER (solvathon26.co.in)
-                  </span>
-                  <h3 className="text-base font-bold text-white mt-0.5">
-                    Homepage Target Date &amp; Kickoff Clock
-                  </h3>
-                  <p className="text-xs text-white/60 mt-1 leading-relaxed">
-                    Master controls for the registration &amp; hackathon countdown displayed on the main landing page (<code className="text-purple-300 font-mono">solvathon26.co.in</code>). Synchronizes in real time across all participant browsers.
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <span className="px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-mono text-[11px] font-bold flex items-center gap-1.5 shadow-lg shadow-purple-500/10">
-                    <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                    LIVE SYNCED
-                  </span>
-                  <a
-                    href="/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-mono text-purple-400 hover:text-purple-300 underline flex items-center gap-1 transition-colors"
-                  >
-                    <span>Open Homepage</span>
-                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* Live Digital Readout & Current Target */}
-              <div className="p-4 bg-black/60 border border-purple-500/20 rounded-xl relative overflow-hidden">
-                <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
-                  <div className="text-3xl sm:text-4xl font-mono font-black text-purple-400 tracking-wider drop-shadow-[0_0_12px_rgba(168,85,247,0.4)]">
-                    {formatDurationDHMS(Math.max(0, new Date(data?.systemSettings?.targetDate || eventConfig.targetDate).getTime() - currentNow))}
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-mono text-white/40 uppercase block">Configured Target (IST)</span>
-                    <span className="text-xs font-mono font-semibold text-white/80">
-                      {new Date(data?.systemSettings?.targetDate || eventConfig.targetDate).toLocaleString("en-IN", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-[11px] font-mono text-white/50 truncate">
-                  <span className="text-purple-400/80">STATUS:</span>{" "}
-                  {new Date(data?.systemSettings?.targetDate || eventConfig.targetDate).getTime() > currentNow
-                    ? "Countdown In Progress (Active on Homepage)"
-                    : "Countdown Expired / Kickoff Complete"}
-                </div>
-              </div>
-
-              {/* Master Controls: Presets and Date Picker */}
-              <div className="space-y-3 pt-1">
-                {/* Presets */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] font-mono text-white/50 mr-1">Quick Add:</span>
-                  <button
-                    type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleTimerPreset(24)}
-                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-purple-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
-                  >
-                    +24 Hours
-                  </button>
-                  <button
-                    type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleTimerPreset(72)}
-                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-purple-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
-                  >
-                    +3 Days
-                  </button>
-                  <button
-                    type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => handleTimerPreset(168)}
-                    className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] font-mono text-purple-300 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
-                  >
-                    +7 Days
-                  </button>
-                  <button
-                    type="button"
-                    disabled={timerUpdating || !isCurrentUserSuperAdmin}
-                    onClick={() => {
-                      setCustomTimerDate(toDatetimeLocal(eventConfig.targetDate));
-                      handleUpdateTimer(eventConfig.targetDate);
-                    }}
-                    className="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg text-[11px] font-mono text-purple-300 transition-colors cursor-pointer disabled:opacity-40 ml-auto"
-                  >
-                    Reset Default
-                  </button>
-                </div>
-
-                {/* Custom Date Picker & Save Button */}
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="datetime-local"
-                    value={customTimerDate}
-                    onChange={(e) => setCustomTimerDate(e.target.value)}
-                    disabled={!isCurrentUserSuperAdmin || timerUpdating}
-                    className="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:ring-1 focus:ring-purple-500 outline-none flex-1 disabled:opacity-50"
-                  />
-                  <button
-                    type="button"
-                    disabled={timerUpdating || !customTimerDate || !isCurrentUserSuperAdmin}
-                    onClick={() => {
-                      if (!customTimerDate) return;
-                      handleUpdateTimer(new Date(customTimerDate).toISOString());
-                    }}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shrink-0"
-                  >
-                    {timerUpdating ? (
-                      <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                    ) : (
-                      <span className="material-symbols-outlined text-base">save</span>
-                    )}
-                    <span>Apply Date</span>
-                  </button>
-                </div>
-              </div>
-
-              {timerMsg && (
-                <div
-                  className={`p-3 rounded-xl text-xs font-mono border ${
-                    timerMsg.startsWith("✓")
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                      : "bg-red-500/10 border-red-500/30 text-red-300"
-                  }`}
-                >
-                  {timerMsg}
-                </div>
-              )}
-            </div>
-
             {/* Feature 4: Active Review Round Selector */}
-            <div className="bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="lg:col-span-2 bg-black/40 border border-white/10 rounded-2xl p-5 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block font-bold">
@@ -1294,7 +1297,7 @@ export default function AdminPortalPage() {
               </div>
 
               {/* Review Round Selection Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {REVIEW_ROUNDS.map((r) => {
                   const isActive = activeReviewRound === r.round;
                   return (
