@@ -1,7 +1,7 @@
 [
   {
-    "name": "Dr. S. Ramanathan",
-    "role": "Director, Student Welfare",
+    "name": "Dr. Janardhan Reddy K",
+    "role": "Director, Hostels",
     "desc": "Overseeing campus residential life and overall event logistics clearance.",
     "tag": "DIRECTORATE",
     "jurisdiction": "Central Campus",
@@ -9,30 +9,21 @@
     "img": "https://lh3.googleusercontent.com/aida-public/AB6AXuAUdGnz3R9OB7qp_hGpHYYmMqu0KqgDWw2hsdC_-sBAGaKvzXPXWwzMt5BcvFftLPfNxAgnVSpp2Ht22eKhBAMxjfQu8ekSq5xvkaV2mRLDYeiZOsW3kcHUPDRaul689PTwdLfgVdU-jMYoh9K8zxGf0SVj7Z0F2KYghmSN9qsQuS2J2VYC168-FW7D1KFTPz2eruF97CI2iXHCIgCjj_LjgpZ16d97oYTbzljpIQs4VIxTJ5jjtc69"
   },
   {
-    "name": "Prof. K. Narayanan",
-    "role": "Senior Warden, Men's Blocks",
+    "name": "Dr. Felix A",
+    "role": "Deputy Director, Men's Blocks",
     "desc": "Hostel Blocks A–D nocturnal logistics, entry permissions and power grid sync.",
     "tag": "WARDEN · MH",
-    "jurisdiction": "Men's Hostel (Blocks A-D)",
+    "jurisdiction": "Men's Hostel (Blocks A, D, E, F)",
     "email": "warden.mh@vit.ac.in",
     "img": "https://lh3.googleusercontent.com/aida-public/AB6AXuCR1Psm8D6qvAeXUaQxiGZ7qiwAy6RlPSYWCw7mI0_T5xAGq2qpeM1EiXKp04mR6tz5JeSXGWkpC8rTp0rRaD_mMonEd6rTAS9UZesJ2L6iNBzsXI64WljzLJwreVbLv8OBJ7WrrIuLS-urURjLV6AkXaipMAqo-y5yfqyAlc2JDdQU6BVlz01VN7r4wsx50OfqFzomvl6-2Sw9S0zsor_ErFmU5KKb-WSbvUjvTVc6OdjnEiBhJ3iU"
   },
   {
-    "name": "Dr. Priya Nair",
-    "role": "Senior Warden, Women's Blocks",
+    "name": "Dr. Velmathi G",
+    "role": "Deputy Director, Women's Blocks",
     "desc": "Hostel Blocks E–G logistics, transit coordination and safety protocols.",
     "tag": "WARDEN · LH",
-    "jurisdiction": "Ladies' Hostel (Blocks E-G)",
+    "jurisdiction": "Ladies' Hostel (Blocks B, C)",
     "email": "warden.lh@vit.ac.in",
     "img": "https://lh3.googleusercontent.com/aida-public/AB6AXuBe6yhOf-rEFb-98r6YVo1J1K1N7CijZF_fSiLgE_zhpO98QM9uP9EhCqoD4kPxqlt-35YKSfmyWMHyUMfWxS1Aa0fjk-HtJ4ODKA3HsbOZLj0uvJvB1KRTgtTM2HEBcAwz0ri8ntA2SwiaetyDnc_5wjSUTLLq6axtN1ZR6m18Z9UtVHm7fr70yVcDCCvYTGoWzGVsLUEk4GiNgxa6s87L1-Hz_5gt4vMllUTpVQn8hs-kDAZXIN2G"
-  },
-  {
-    "name": "Arnav Deshmukh",
-    "role": "Chief Technical Convener",
-    "desc": "Lead architect of intranet judge pipelines, automated check-ins and hackathon logistics.",
-    "tag": "STUDENT CHAIR",
-    "jurisdiction": "Room 412, Block-B",
-    "email": "techlead@solve-a-thon.org",
-    "img": "https://lh3.googleusercontent.com/aida-public/AB6AXuBUftHvl3VM7sCzAefpwNWol6Jfbm2_B6_Pvxc9M4RWfXTwTXE9C1W8VrjyWZkuAsvFIvakishLU7tlwPu3C6kzzU1n39So-fOHKYKXQB0eGMRMLixdLrLvX4O1Pev0Hg87NuqXdHISvd6b5v7--6y1k_mwI8IDct6HxPDHDBAM7BBt5mObUKl6gptyDdu6ps_jD02k9EEuKM64j_dEzTGFumEH9wGn_pvzmZqPXmsla213_TViCiWw"
   }
 ]

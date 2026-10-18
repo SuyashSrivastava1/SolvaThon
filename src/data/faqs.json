@@ -1,0 +1,27 @@
+[
+  {
+    "id": "faq-1",
+    "question": "Who can participate in Solve-A-Thon?",
+    "answer": "Solve-A-Thon is exclusively for hostel students of VIT Chennai. Only hostellers are eligible to participate in the event."
+  },
+  {
+    "id": "faq-2",
+    "question": "What is the team size?",
+    "answer": "Each team can have 2–4 members. Please form your team before registering."
+  },
+  {
+    "id": "faq-3",
+    "question": "Is there any registration fee?",
+    "answer": "No, there is no registration fee for Solve-A-Thon."
+  },
+  {
+    "id": "faq-4",
+    "question": "Will participants receive certificates and prizes?",
+    "answer": "All participants will receive participation certificates. Prizes for the winning teams will be distributed on Hostel Day."
+  },
+  {
+    "id": "faq-5",
+    "question": "When and where will the event be conducted?",
+    "answer": "Solve-A-Thon will be conducted over two days — 11th December and 12th December at MG Auditorium, VIT Chennai."
+  }
+]

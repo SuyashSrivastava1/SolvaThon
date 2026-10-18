@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { motion, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { getParticipantCount } from '@/actions/stats';
 import { getSystemSettings } from '@/actions/team';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +13,8 @@ import timelineMilestones from '@/data/timeline.json';
 import chiefGuest from '@/data/chiefGuest.json';
 import prizes from '@/data/prizes.json';
 import eventConfig from '@/data/eventConfig.json';
+import hostelTeam from '@/data/hostelTeam.json';
+import faqs from '@/data/faqs.json';
 
 
 
@@ -277,6 +279,7 @@ export default function Home() {
 
   const [scrolled, setScrolled] = useState(false);
   const [activeModalPS, setActiveModalPS] = useState<typeof problemStatements[0] | null>(null);
+  const [openFaq, setOpenFaq] = useState<string | null>("faq-1");
 
   // Close modal on escape key
   useEffect(() => {
@@ -371,6 +374,8 @@ export default function Home() {
                 { l: 'Timeline', id: 'timeline' },
                 { l: 'Committee', id: 'committee' },
                 { l: 'Prizes', id: 'guests-prizes' },
+                { l: 'Hostel Team', id: 'hostel-team' },
+                { l: 'FAQ', id: 'faq' },
               ].map(n => (
                 <a
                   key={n.id}
@@ -910,7 +915,7 @@ export default function Home() {
                 </motion.h2>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
                 {committeeMembers.map(p => (
                   <motion.div variants={popCard} key={p.name} className="glass-card card-pop rounded-2xl overflow-hidden flex flex-col cursor-pointer">
                     <div className="w-full h-48 overflow-hidden relative" style={{ background: '#0f172a' }}>
@@ -1060,6 +1065,170 @@ export default function Home() {
                     </span>
                   </div>
                 </motion.div>
+              </div>
+            </div>
+          </ScrollFadeSection>
+
+          {/* ════════ HOSTEL TEAM ════════ */}
+          <ScrollFadeSection
+            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
+            id="hostel-team"
+          >
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(56,189,248,0.02) 0%, transparent 70%)' }} />
+            <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-14 relative z-10">
+              <div className="flex flex-col items-start gap-2">
+                <motion.h2
+                  variants={fadeItem}
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontWeight: 900,
+                    fontSize: 'clamp(2rem, 4vw, 3.2rem)',
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.03em',
+                  }}
+                >
+                  Hostel Team
+                </motion.h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14">
+                {hostelTeam.map((colGroup, colIdx) => (
+                  <div key={colIdx} className="flex flex-col">
+                    {colGroup.members.map((member) => (
+                      <motion.div
+                        variants={fadeItem}
+                        key={member.name}
+                        className="flex items-center justify-between py-3 sm:py-3.5 border-b border-white/[0.04] hover:bg-white/[0.02] px-2 rounded-lg transition-colors gap-4"
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            fontWeight: 600,
+                            fontSize: 'clamp(0.92rem, 1.15vw, 1.05rem)',
+                            color: '#f8fafc',
+                          }}
+                        >
+                          {member.name}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: 'clamp(0.78rem, 1vw, 0.88rem)',
+                            color: '#64748b',
+                            letterSpacing: '0.02em',
+                          }}
+                          className="text-right shrink-0"
+                        >
+                          {member.role}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollFadeSection>
+
+          {/* ════════ FREQUENTLY ASKED QUESTIONS ════════ */}
+          <ScrollFadeSection
+            className="w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative"
+            id="faq"
+          >
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 50% 30% at 50% 20%, rgba(56,189,248,0.025) 0%, transparent 70%)' }} />
+            <div className="max-w-[1400px] mx-auto flex flex-col gap-10 sm:gap-12 relative z-10">
+              <div className="flex flex-col items-start gap-2">
+                <motion.h2
+                  variants={fadeItem}
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontWeight: 900,
+                    fontSize: 'clamp(2rem, 4vw, 3.2rem)',
+                    color: '#f1f5f9',
+                    letterSpacing: '-0.03em',
+                  }}
+                >
+                  Frequently Asked Questions
+                </motion.h2>
+                <motion.span
+                  variants={fadeItem}
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#64748b',
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  GOT QUESTIONS? WE&apos;VE GOT ANSWERS!
+                </motion.span>
+              </div>
+
+              <div className="flex flex-col gap-3.5 sm:gap-4 w-full">
+                {faqs.map((faq) => {
+                  const isOpen = openFaq === faq.id;
+                  return (
+                    <motion.div
+                      key={faq.id}
+                      variants={popCard}
+                      className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                        isOpen
+                          ? 'border-emerald-500/40 bg-[#091120]/90 shadow-[0_0_30px_rgba(52,211,153,0.08)]'
+                          : 'border-white/[0.08] bg-[#070b14]/70 hover:border-white/20 hover:bg-[#0a0f1d]'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaq(isOpen ? null : faq.id)}
+                        className="w-full px-6 py-5 sm:py-6 flex items-center justify-between text-left cursor-pointer gap-4"
+                        aria-expanded={isOpen}
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            fontWeight: 600,
+                            fontSize: 'clamp(1rem, 1.3vw, 1.15rem)',
+                            color: isOpen ? '#f8fafc' : '#e2e8f0',
+                          }}
+                        >
+                          {faq.question}
+                        </span>
+                        <span
+                          className="text-xs transition-transform duration-300 shrink-0 text-slate-400 select-none"
+                          style={{
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                          }}
+                        >
+                          ▼
+                        </span>
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: 'easeInOut' }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-6 pb-6 pt-1 border-t border-white/[0.04]">
+                              <p
+                                style={{
+                                  fontFamily: "'Inter', sans-serif",
+                                  fontSize: 'clamp(0.92rem, 1.1vw, 1.02rem)',
+                                  color: '#94a3b8',
+                                  lineHeight: 1.7,
+                                }}
+                              >
+                                {faq.answer}
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </ScrollFadeSection>
