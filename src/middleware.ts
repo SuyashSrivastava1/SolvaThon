@@ -33,18 +33,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
-
-  // 3. Add defensive HTTP Security Headers (MED-04)
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), payment=()"
-  );
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
