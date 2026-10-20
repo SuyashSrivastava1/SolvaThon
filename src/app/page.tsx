@@ -381,12 +381,11 @@ export default function Home() {
         >
           <div className="h-16 max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <div
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center transition-transform group-hover:scale-105"
-                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 15, color: '#030712' }}
-              >
-                S
-              </div>
+              <img
+                src="/logo.png"
+                alt="Solve-a-thon Logo"
+                className="w-8 h-8 sm:w-9 sm:h-9 object-contain transition-transform group-hover:scale-105 drop-shadow-[0_0_12px_rgba(255,100,80,0.3)]"
+              />
               <div className="hidden sm:flex flex-col leading-none">
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: 14, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
                   Solve-a-thon
@@ -1210,12 +1209,11 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex flex-col gap-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <div
-                className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center"
-                style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: 12, color: '#030712' }}
-              >
-                S
-              </div>
+              <img
+                src="/logo.png"
+                alt="Solve-a-thon Logo"
+                className="w-7 h-7 object-contain"
+              />
               <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, fontSize: 13, color: '#64748b' }}>
                 Solve-a-thon 2026-27 · VIT Chennai
               </span>
