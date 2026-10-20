@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { checkIsRegistered } from "@/actions/register";
 import { checkIsAdmin } from "@/actions/admin";
 import { isValidAuthDomain } from "@/config/admin";
@@ -77,6 +78,16 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-400/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="relative z-10 w-full max-w-md p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            <span className="material-symbols-outlined text-base">arrow_back</span>
+            Back to Home
+          </Link>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Authenticate</h1>
           <p className="text-white/60 text-sm">Sign in securely using your VIT Google account.</p>

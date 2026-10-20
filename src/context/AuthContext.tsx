@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRemainingMs(0);
 
     if (reason === "session_expired" && typeof window !== "undefined") {
-      window.location.href = "/login?reason=session_expired";
+      window.location.replace("/?reason=session_expired");
     }
   }, []);
 

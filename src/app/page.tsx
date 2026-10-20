@@ -269,6 +269,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [activeModalPS, setActiveModalPS] = useState<typeof problemStatements[0] | null>(null);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
 
   // Close modal on escape key
   useEffect(() => {
@@ -327,6 +328,10 @@ export default function Home() {
   // Support direct section deep-linking via query parameter
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'session_expired') {
+      setSessionExpiredNotice(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
     const sec = params.get('section');
     if (sec) {
       setTimeout(() => {
@@ -342,6 +347,29 @@ export default function Home() {
 
   return (
     <>
+      {/* Session Expired Banner Notification */}
+      {sessionExpiredNotice && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[92%] bg-[#030712]/95 border border-amber-500/40 text-amber-200 backdrop-blur-2xl px-4 py-3.5 rounded-2xl shadow-[0_10px_35px_rgba(245,158,11,0.2)] flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <span className="material-symbols-outlined text-lg">schedule</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Session Expired</p>
+              <p className="text-[11px] text-amber-200/80 font-mono">You have been safely returned to the home screen. Sign in anytime when ready.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSessionExpiredNotice(false)}
+            className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+            title="Dismiss"
+          >
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+      )}
+
       {/* ── HIGH-DENSITY SOLID/GLASS NAV (PREVENTS OVERLAPPING CLASH) ── */}
       <header className="fixed top-0 w-full z-50 transition-all duration-300">
         <div
