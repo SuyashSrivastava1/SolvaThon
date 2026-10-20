@@ -27,13 +27,10 @@ export default function HackathonTimerPage() {
   const localRemainingRef = useRef<number>(DEFAULT_TIMER_STATE.remainingSeconds);
   const serverOffsetRef = useRef<number>(0);
 
-  // Fetch live state from server API
+  // Fetch live state from server API (served via Cloudflare edge cache)
   const fetchTimerState = useCallback(async () => {
     try {
-      const res = await fetch("/api/timer", {
-        cache: "no-store",
-        headers: { Pragma: "no-cache" },
-      });
+      const res = await fetch("/api/timer");
 
       if (!res.ok) return;
 
@@ -72,10 +69,10 @@ export default function HackathonTimerPage() {
     }
   }, [timerReady]);
 
-  // Initial fetch and 2-second background poll
+  // Initial fetch and 4-second background poll (optimized for edge cache)
   useEffect(() => {
     fetchTimerState();
-    const pollInterval = setInterval(fetchTimerState, 2000);
+    const pollInterval = setInterval(fetchTimerState, 4000);
     return () => clearInterval(pollInterval);
   }, [fetchTimerState]);
 

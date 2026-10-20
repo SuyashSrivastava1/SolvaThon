@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { DEFAULT_TIMER_STATE, HackathonTimerState, calculateCurrentRemaining } from "@/lib/timer";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 3;
 
 export async function GET() {
   try {
@@ -33,9 +33,8 @@ export async function GET() {
       },
       {
         headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+          "Cache-Control": "public, max-age=1, s-maxage=3, stale-while-revalidate=5",
+          "CDN-Cache-Control": "public, s-maxage=3, stale-while-revalidate=5",
         },
       }
     );
